@@ -64,18 +64,6 @@ export async function triggerGlobalPush(title, message) {
   }
 }
 
-export function convertToInputDate(dStr) {
-  if (!dStr) return "";
-  // Si c'est déjà au format YYYY-MM-DD
-  if (dStr.match(/^\d{4}-\d{2}-\d{2}$/)) return dStr;
-  // Si c'est au format DD/MM/YYYY
-  if (dStr.includes("/")) {
-    const p = dStr.split("/");
-    return `${p[2]}-${p[1].padStart(2, "0")}-${p[0].padStart(2, "0")}`;
-  }
-  return "";
-}
-
 export function getContrastColor(hexColor) {
   // Nettoyer le hex
   const hex = hexColor.replace("#", "");
