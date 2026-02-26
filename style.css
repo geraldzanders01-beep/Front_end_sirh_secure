@@ -1,0 +1,539 @@
+/* ============================================================
+   1. VARIABLES DE MARQUE & SYSTÈME DESIGN (ROOT)
+============================================================ */
+:root {
+    /* Couleurs de base */
+    --primary: #0f172a;
+    --accent: #2563eb;
+    --font-main: 'Plus Jakarta Sans', sans-serif;
+    --base-size: 16px;
+    
+    /* Échelle d'arrondis Premium */
+    --radius-sm: 0.5rem;   /* 8px */
+    --radius-md: 1rem;     /* 16px */
+    --radius-lg: 1.5rem;   /* 24px */
+    --radius-xl: 2.25rem;  /* 36px */
+    --radius-full: 9999px;
+
+    /* Ombres douces (Soft Shadows) */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.04), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+    --shadow-premium: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+
+    /* Couleurs de texte calculées par JS */
+    --text-on-primary: #ffffff;
+    --text-on-accent: #ffffff;
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================
+   2. DARK MODE ULTRA-MODERNE (Deep Slate & Navy)
+============================================================ */
+body.dark-mode { 
+    background-color: #020617 !important; 
+    color: #f8fafc !important; 
+}
+
+body.dark-mode aside { 
+    background-color: #020617 !important; 
+    border-right: 1px solid #1e293b !important; 
+}
+
+body.dark-mode header, body.dark-mode .glass { 
+    background: rgba(2, 6, 23, 0.8) !important; 
+    border-bottom: 1px solid #1e293b !important; 
+    backdrop-filter: blur(16px) !important;
+}
+
+body.dark-mode .bg-white, 
+body.dark-mode section, 
+body.dark-mode .bg-slate-50, 
+body.dark-mode .bg-slate-100 {
+    background-color: #0f172a !important; 
+    border: 1px solid #1e293b !important; 
+    color: #f1f5f9 !important;
+    box-shadow: none !important;
+}
+
+body.dark-mode input, body.dark-mode select, body.dark-mode textarea {
+    background-color: #1e293b !important; 
+    border: 1px solid #334155 !important; 
+    color: #ffffff !important;
+}
+
+body.dark-mode table thead { background-color: #1e293b !important; }
+body.dark-mode table tbody tr:hover { background-color: #1e293b !important; }
+body.dark-mode .text-slate-800, body.dark-mode .text-slate-900 { color: #f8fafc !important; }
+
+/* ============================================================
+   3. LAYOUT & BARRES DE SCROLL
+============================================================ */
+html, body { 
+    background-color: #f8fafc; 
+    font-family: var(--font-main); 
+    font-size: var(--base-size);
+    scroll-behavior: smooth;
+    /* Important pour éviter le scroll sur mobile quand la sidebar est ouverte */
+    overflow-x: hidden; 
+}
+
+/* Scrollbar Invisible mais Fonctionnelle */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { 
+    background: rgba(15, 23, 42, 0.08); 
+    border-radius: var(--radius-full); 
+}
+*:hover::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.15); }
+body.dark-mode ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); }
+
+/* ============================================================
+   4. ANIMATIONS & TRANSITIONS DE VUES
+============================================================ */
+.view-section { 
+    display: none !important; 
+    opacity: 0; 
+    transform: translateY(10px);
+}
+
+.view-section.active { 
+    display: block !important; 
+    opacity: 1; 
+    transform: translateY(0);
+    animation: premiumFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; 
+}
+
+@keyframes premiumFadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Micro-interactions Boutons */
+button, .nav-btn {
+    transition: var(--transition-smooth);
+    cursor: pointer;
+}
+
+button:active { transform: scale(0.96); }
+
+
+/* ============================================================
+   5. COMPOSANTS (MODALS & SWEETALERT REVISITÉS PRO)
+============================================================ */
+
+/* Conteneur principal de la modale */
+.swal2-popup {
+    border-radius: 1.25rem !important; /* 20px : Arrondi élégant mais professionnel */
+    padding: 1.5rem !important;        /* 24px : Respire sans écraser le contenu */
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+    font-family: var(--font-main) !important;
+}
+
+/* Le titre de la modale */
+.swal2-title {
+    font-size: 1.25rem !important; /* Un peu plus petit et subtil */
+    font-weight: 800 !important;
+    color: var(--primary) !important;
+    padding-top: 0 !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* ============================================================
+   GESTION INTELLIGENTE DU SCROLL DES MODALES
+============================================================ */
+/* 1. Comportement par défaut (Formulaires et vues standards) */
+.swal2-html-container {
+    max-height: 75vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-right: 5px !important;
+}
+
+/* 2. Sur PC : On donne plus d'espace aux formulaires sans bloquer le scroll */
+@media (min-width: 768px) {
+    .swal2-html-container {
+        max-height: 85vh !important;
+    }
+}
+
+/* 3. CLASSE MAGIQUE : Uniquement pour les visionneuses de documents (PDF/CV) */
+.swal2-popup.viewer-modal .swal2-html-container {
+    overflow-y: hidden !important;
+    padding-right: 0 !important;
+}
+
+/* Standardiser les inputs SweetAlert pour qu'ils matchent avec le fond */
+.swal2-input, .swal2-textarea, .swal2-select, .swal2-file {
+    box-sizing: border-box !important; /* Gère le padding sans déborder */
+    height: auto !important;           /* Empêche d'écraser le texte des select */
+    line-height: 1.5 !important;       /* Donne de l'espace vertical aux lettres */
+    border-radius: 0.75rem !important; /* 12px */
+    border: 1px solid #e2e8f0 !important;
+    background-color: #f8fafc !important;
+    box-shadow: none !important;
+    font-size: 0.875rem !important; /* 14px - Lisible */
+    padding: 0.75rem 1rem !important;
+    width: 100% !important;
+    margin-top: 0.5rem !important;
+    margin-bottom: 1rem !important;
+    color: #1e293b !important;
+}
+
+.swal2-input:focus, .swal2-textarea:focus, .swal2-select:focus {
+    border-color: var(--accent) !important;
+    background-color: #ffffff !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* Actions (Boutons SweetAlert) */
+.swal2-actions {
+    margin-top: 1.5rem !important;
+    gap: 0.75rem !important;
+}
+
+.swal2-confirm, .swal2-cancel, .swal2-deny {
+    border-radius: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.025em !important;
+    text-transform: none !important;
+    padding: 0.75rem 1.5rem !important;
+}
+
+/* ============================================================
+   6. BRANDING & RÔLES
+============================================================ */
+aside { background-color: var(--primary) !important; color: var(--text-on-primary) !important; }
+.nav-btn.bg-blue-600, #btn-login, .bg-blue-600 { background-color: var(--accent) !important; color: var(--text-on-accent) !important; }
+
+.admin-only, .rh-only, .management-only { display: none !important; }
+body.role-admin .admin-only, body.role-admin .rh-only, body.role-admin .management-only { display: block !important; } 
+body.role-rh .rh-only, body.role-rh .management-only { display: block !important; }       
+body.role-manager .management-only { display: block !important; }
+
+/* Squelettes Animés */
+.skeleton { 
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); 
+    background-size: 200% 100%; 
+    animation: skeleton-loading 1.8s infinite ease-in-out; 
+}
+@keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* Privacy & Sensitive Data */
+.sensitive-value {
+    filter: blur(6px);
+    transition: filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    background-color: rgba(226, 232, 240, 0.4);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    display: inline-block;
+}
+
+.sensitive-value.revealed {
+    filter: blur(0);
+    background-color: transparent;
+}
+
+/* Barre de progression Loader */
+@keyframes bar-slide {
+    0% { left: -40%; width: 30%; }
+    50% { width: 60%; }
+    100% { left: 100%; width: 30%; }
+}
+
+/* --- HARMONISATION DES BOUTONS (STYLE SAAS PREMIUM) --- */
+button[onclick^="switchView"], 
+button[onclick^="handle"], 
+button[onclick^="open"], 
+button[type="submit"],
+#btn-clock {
+    border-radius: 0.5rem !important; 
+    font-weight: 600 !important;      
+    font-size: 0.85rem !important;    
+    text-transform: none !important;  
+    letter-spacing: normal !important; 
+    transition: all 0.2s ease-in-out !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 8px 16px !important; 
+}
+
+button[type="submit"] {
+    padding: 12px 20px !important;
+    font-size: 0.9rem !important;
+}
+
+/* Animation fluide pour la sidebar */
+#sidebar {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease;
+}
+
+/* Quand la sidebar est masquée sur PC, elle ne doit pas prendre de place */
+#sidebar.-translate-x-full {
+    position: fixed; 
+}
+
+/* On force les boutons du menu à écouter le JavaScript */
+.nav-btn {
+    font-size: var(--base-size) !important;
+}
+
+.nav-btn i {
+    font-size: calc(var(--base-size) * 1.2) !important;
+    width: calc(var(--base-size) * 1.5) !important;
+}
+
+.menu-group p {
+    font-size: calc(var(--base-size) * 0.8) !important;
+    margin-bottom: 0.5rem;
+}
+
+/* Supprime les ombres colorées qui fatiguent l'oeil sur fond sombre */
+#login-screen .bg-white, 
+#login-screen button {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ============================================================
+   7. GESTION DU CHARGEMENT & OVERLAYS (CORRECTION ÉCRAN FUMÉ)
+============================================================ */
+
+/* L'application est visible par défaut, mais prête pour une transition fluide */
+#app-layout {
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* Quand on ajoute 'ready', elle devient opaque */
+#app-layout.ready {
+    opacity: 1 !important;
+}
+
+.swal2-shown {
+    overflow: hidden !important;
+    padding-right: 0 !important;
+}
+
+/* LE LOADER : Il doit être bleu nuit et couvrir tout l'écran */
+#initial-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background-color: #0f172a !important; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+    pointer-events: auto; /* Bloque les clics tant qu'il est là */
+}
+
+/* Quand on cache le loader (Animation de sortie) */
+#initial-loader.fade-out {
+    opacity: 0;
+    transform: scale(1.1);
+    pointer-events: none; /* CRUCIAL : Libère l'écran pour cliquer en dessous */
+}
+
+#initial-loader.hidden {
+    display: none !important;
+    pointer-events: none;
+}
+
+/* GESTION DE L'OVERLAY SIDEBAR (MOBILE) */
+#sidebar-overlay {
+    z-index: 40; /* Doit être sous la sidebar (z-50) mais sur le contenu */
+}
+
+/* SÉCURITÉ LOGIN : Le login doit être au-dessus de tout sauf du loader */
+#login-screen {
+    z-index: 500;
+}
+
+
+/* ============================================================
+   8. ADAPTATION CIBLÉE (PLANNING & RAPPORT UNIQUEMENT)
+============================================================ */
+@media (min-width: 1024px) {
+    /* On ne touche qu'aux popups qui ont la classe 'wide-modal' */
+    .swal2-popup.wide-modal {
+        max-width: 900px !important;
+        width: 900px !important;
+        padding: 2rem !important;
+    }
+    
+    /* On s'assure que le contenu prend toute la place */
+    .swal2-popup.wide-modal .swal2-html-container {
+        max-width: 100% !important;
+        margin: 0 !important;
+    }
+}
+
+.signature-zone {
+    background-color: #f8fafc;
+    border: 2px dashed #e2e8f0;
+    border-radius: 1rem;
+    cursor: crosshair;
+    touch-action: none; /* Important pour le tactile */
+}
+
+/* On s'assure que SweetAlert passe toujours devant tout le monde */
+.swal2-container {
+    z-index: 10000 !important;
+}
+
+/* Empêche les tableaux de casser le design sur mobile */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Scroll fluide sur iPhone */
+    border-radius: 1rem;
+}
+
+
+
+/* Personnalisation du scroll pour les tableaux */
+.table-container::-webkit-scrollbar {
+    height: 4px;
+}
+.table-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+/* Empêche le chevauchement lors de l'agrandissement des notes */
+[data-fixed="true"], .whitespace-normal {
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    max-width: 300px; /* Limite la largeur pour éviter de casser tout le tableau */
+    word-break: break-word; /* Force le retour à la ligne */
+}
+
+/* On s'assure que le wrapper de tableau fonctionne bien */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: block;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ============================================================
+   9. COMPOSANTS (MODALS VS TOASTS) - LE FIX EST ICI
+============================================================ */
+
+/* 1. Règle Globale de base (Priorité à la protection mobile) */
+.swal2-popup:not(.swal2-toast) {
+    border-radius: 1rem !important;
+    padding: 1.5rem !important;
+    box-sizing: border-box !important;
+    /* On force à ne jamais dépasser la taille de l'écran */
+    max-width: 95vw !important; 
+}
+
+/* 2. Comportement sur Mobile Uniquement (Écrans < 768px) */
+@media (max-width: 767px) {
+    .swal2-popup:not(.swal2-toast) {
+        width: 95% !important; /* Prend 95% de la largeur du téléphone */
+        max-width: 500px !important; /* Limite raisonnable */
+    }
+}
+
+/* 3. Comportement sur PC (Écrans >= 768px) */
+@media (min-width: 768px) {
+    .swal2-popup:not(.swal2-toast) {
+        /* On autorise une très grande largeur (jusqu'à 1200px) */
+        max-width: 1200px !important; 
+        
+        /* 
+           ⚠️ C'EST ICI QU'ÉTAIT LE BUG ⚠️
+           On a enlevé le "width: auto !important;" et le "width: 95% !important;".
+           Maintenant, le CSS laisse le JavaScript gérer la taille.
+           Si ton JS dit "width: 900px" (pour un contrat), ça fera 900px.
+        */
+    }
+}
+
+/* 4. Les petites alertes de succès (Toasts en haut à droite) */
+.swal2-toast {
+    padding: 0.5rem 1rem !important; /* Très fin */
+    border-radius: 0.75rem !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    width: auto !important;
+    max-width: 300px !important;
+}
+
+.swal2-toast .swal2-title {
+    font-size: 0.85rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-weight: 700 !important;
+}
+
+/* 5. Harmonisation des boutons (Exporter, Actualiser, etc.) */
+button.flex-1, button.md\:flex-none {
+    padding: 0.5rem 1rem !important; /* Réduction de la taille des bulles */
+    font-size: 0.75rem !important; /* Texte plus fin */
+    border-radius: 0.75rem !important;
+    height: 40px !important; /* Hauteur fixe pour éviter les boutons "géants" */
+}
+
+/* Empêche les icônes de flotter */
+button i {
+    font-size: 0.9rem !important;
+}
+
+
+
+/* Animation d'apparition fluide */
+.animate-fadeIn {
+    animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Fix visibilité Select Wizard */
+.wizard-step select option {
+    color: #1e293b !important;
+    background-color: #ffffff !important;
+}
+
+#f-manager {
+    color: white !important;
+}
+
+#f-manager option {
+    color: #1e293b !important;
+}
+
+
+
+/* Rend l'en-tête du tableau de compta "collant" en haut de l'écran au scroll */
+#view-accounting thead {
+    position: sticky;
+    top: -20px; /* S'ajuste pour coller sous ton header principal */
+    z-index: 20;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Optionnel : Améliore le confort de lecture sur mobile pour les longs tableurs */
+.accounting-row {
+    transition: background-color 0.2s;
+}
+
+/* Force le conteneur principal à laisser le contenu s'étendre */
+#view-accounting .bg-white.rounded-xl.shadow-2xl {
+    overflow: visible !important;
+}

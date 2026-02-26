@@ -1,0 +1,9 @@
+# Fichiers système Windows/Mac
+.DS_Store
+Thumbs.db
+
+# Configurations d'éditeurs de code
+.vscode/
+.idea/
+
+# (Si un jour tu utilises npm, tu ajouteras node_modules/ ici)
