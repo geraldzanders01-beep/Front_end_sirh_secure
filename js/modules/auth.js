@@ -431,11 +431,3 @@ export function handleAutoLogout() {
     handleLogout(); // Ta fonction de déconnexion existante
   });
 }
-
-["mousedown", "mousemove", "keypress", "scroll", "touchstart"].forEach(
-  (evt) => {
-    document.addEventListener(evt, Auth.resetInactivityTimer, {
-      passive: true,
-    });
-  },
-);
