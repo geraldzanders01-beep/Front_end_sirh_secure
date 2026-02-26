@@ -37,6 +37,8 @@ window.applyModulesUI = UI.applyModulesUI;
 window.applyPermissionsUI = UI.applyPermissionsUI;
 window.applyWidgetPreferences = UI.applyWidgetPreferences;
 window.requestNotificationPermission = UI.requestNotificationPermission;
+window.applyBranding = UI.applyBranding;
+window.initDarkMode = UI.initDarkMode;
 
 // --- Ressources Humaines (HR) ---
 window.fetchData = HR.fetchData;
