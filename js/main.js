@@ -85,6 +85,7 @@ window.syncAllRoleSelects = HR.syncAllRoleSelects;
 window.fetchContractTemplatesForSelection = HR.fetchContractTemplatesForSelection;
 window.populateManagerSelects = HR.populateManagerSelects;
 window.fetchMyActivityRecap = HR.fetchMyActivityRecap;
+window.resetCamera = HR.resetCamera;
 
 // --- Congés & Absences (Leaves) ---
 window.openLeaveModal = Leaves.openLeaveModal;
@@ -103,6 +104,8 @@ window.triggerPayrollImport = Payroll.triggerPayrollImport;
 window.handlePayrollImport = Payroll.handlePayrollImport;
 window.resetAccountingFilters = Payroll.resetAccountingFilters;
 window.filterAccountingTableLocally = Payroll.filterAccountingTableLocally;
+window.fetchPayrollData = Payroll.fetchPayrollData; 
+window.fetchPayrollConstants = Payroll.fetchPayrollConstants; 
 
 // --- Dash ---
 window.updateManagementSignals = Dash.updateManagementSignals;
@@ -141,6 +144,8 @@ window.openAttendancePicker = Ops.openAttendancePicker;
 window.fetchAttendanceReport = Ops.fetchAttendanceReport;
 window.renderPersonalReport = Ops.renderPersonalReport;
 window.downloadReportCSV = Ops.downloadReportCSV;
+window.fetchMobileSchedules = Ops.fetchMobileSchedules; 
+
 
 // --- Communication (Chat) ---
 window.fetchMessages = Chat.fetchMessages;
