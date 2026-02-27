@@ -148,8 +148,7 @@ export function initChatRealtime() {
 
   console.log("📡 Connexion au Chat Realtime...");
 
-  AppState.chatSubscription = supabaseClient
-    .channel("public:messages")
+    AppState.chatSubscription = supabaseClient.channel("public:messages")
     .on(
       "postgres_changes",
       {
