@@ -4,8 +4,7 @@ import { secureFetch } from "../core/api.js";
 
 export async function updateManagementSignals() {
   const container = document.getElementById("signals-container");
-  if (!container || AppState.currentUser.role === "EMPLOYEE") return;
-
+  if (!container || !AppState.currentUser || AppState.currentUser.role === "EMPLOYEE") return;
   let signals = [];
 
   try {
