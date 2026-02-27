@@ -28,49 +28,40 @@ export function showLeaveDetailFromSafeData(
   // Appel de la vraie fonction d'affichage
   showLeaveDetail(nom, type, debut, fin, motif, docLink);
 }
+
+
+
+
 export async function submitLeaveRequest(e) {
   e.preventDefault();
 
   const fd = new FormData();
+  // Utilisation stricte de AppState
   fd.append("employee_id", AppState.currentUser.id);
   fd.append("nom", AppState.currentUser.nom);
-  fd.append(
-    "type",
-    document.querySelector('input[name="leave_type"]:checked').value,
-  );
+  fd.append("type", document.querySelector('input[name="leave_type"]:checked').value);
   fd.append("date_debut", document.getElementById("leave-start").value);
   fd.append("date_fin", document.getElementById("leave-end").value);
   fd.append("motif", document.getElementById("leave-reason").value);
-  fd.append("date_demande", new Date().toISOString());
   fd.append("agent", AppState.currentUser.nom);
 
-  // Ajout du justificatif s'il a été pris en photo ou uploadé
+  // CORRECTION ICI : AppState.docBlobs
   if (AppState.docBlobs.leave_justif) {
-    fd.append("justificatif", AppState.docBlobs.leave_justif, "justificatif_conge.jpg"); 
+    fd.append("justificatif", AppState.docBlobs.leave_justif, "justificatif_conge.jpg");
   }
 
-  Swal.fire({
-    title: "Envoi...",
-    text: "Traitement de votre demande",
-    didOpen: () => Swal.showLoading(),
-    allowOutsideClick: false,
-  });
+  Swal.fire({ title: "Envoi...", didOpen: () => Swal.showLoading() });
 
   try {
-    const response = await secureFetch(URL_LEAVE_REQUEST, {
-      method: "POST",
-      body: fd,
-    });
+    const response = await secureFetch(URL_LEAVE_REQUEST, { method: "POST", body: fd });
     if (response.ok) {
       document.getElementById("leave-modal").classList.add("hidden");
       e.target.reset();
-      AppState.docBlobs.leave_justif = null;      
-      document.getElementById("leave-doc-preview").innerHTML =
-        '<i class="fa-solid fa-camera"></i>';
-      Swal.fire("Succès", "Votre demande de congé a été envoyée.", "success");
+      AppState.docBlobs.leave_justif = null; // Reset AppState
+      Swal.fire("Succès", "Demande envoyée.", "success");
     }
   } catch (error) {
-    Swal.fire("Erreur", "Échec de l'envoi : " + error.message, "error");
+    Swal.fire("Erreur", error.message, "error");
   }
 }
 
