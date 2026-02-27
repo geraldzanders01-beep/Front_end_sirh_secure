@@ -160,8 +160,8 @@ export function calculateRow(index) {
 
   // 3. AUTOMATISATION DES RETENUES (Stratégie Étape 4)
   // On récupère les taux chargés depuis la table 'salaries_config'
-  const rateCNSS = payrollConstants["CNSS_EMPLOYEE_RATE"] || 0;
-  const rateIRPP = payrollConstants["IRPP_BASE_RATE"] || 0;
+  const rateCNSS = AppState.payrollConstants["CNSS_EMPLOYEE_RATE"] || 0;
+  const rateIRPP = AppState.payrollConstants["IRPP_BASE_RATE"] || 0;
   const totalTaxRate = rateCNSS + rateIRPP;
 
   const inputTax = document.getElementById(`tax-${index}`);
@@ -246,8 +246,8 @@ export async function generateAllPay() {
         primes: primeVal,
         retenues: taxVal,
         salaire_net: netValue,
-        taux_cnss: payrollConstants["CNSS_EMPLOYEE_RATE"] || 0,
-        taux_irpp: payrollConstants["IRPP_BASE_RATE"] || 0,
+        taux_cnss: AppState.payrollConstants["CNSS_EMPLOYEE_RATE"] || 0,
+        taux_irpp: AppState.payrollConstants["IRPP_BASE_RATE"] || 0,
       });
     }
   });
