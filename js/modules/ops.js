@@ -1260,6 +1260,28 @@ export async function fetchPrescripteursManagement() {
   }
 }
 
+
+
+
+
+// --- MODALE DE DÉTAIL POUR L'AUDIT (VOIR TOUT) ---
+export function showAuditDetails(nom, type, contenu) {
+    window.Swal.fire({
+        title: `<span class="text-xs font-black uppercase text-slate-400">${type} • ${nom}</span>`,
+        html: `
+            <div class="text-left bg-slate-50 p-6 rounded-2xl border border-slate-100 mt-4 max-h-[60vh] overflow-y-auto custom-scroll">
+                <div class="text-sm text-slate-700 leading-relaxed font-bold">
+                    ${contenu}
+                </div>
+            </div>
+        `,
+        confirmButtonText: 'Fermer',
+        confirmButtonColor: '#0f172a',
+        customClass: { popup: 'rounded-[2rem]' }
+    });
+}
+
+
 export async function openAddPrescripteurModal() {
   // On charge les lieux pour le menu déroulant
   let locOptions = '<option value="">-- Aucun / Cabinet Privé --</option>';
