@@ -32,16 +32,14 @@ export async function refreshAllData(force = false) {
     );
 
 // 2. TACHES LIÉES À LA LISTE DES EMPLOYÉS
-
-    if (perms.can_see_AppState?.employees || perms.can_see_employees) { 
+    if (perms.can_see_employees) { // Correction ici
       if (
         force ||
         AppState.employees.length === 0 ||
-        now - AppState.lastFetchTimes.employees > REFRESH_THRESHOLD 
+        now - AppState.lastFetchTimes.employees > REFRESH_THRESHOLD // Correction ici
       ) {
-        // IMPORTANT : On ajoute la promesse de fetchData
         tasks.push(window.fetchData(false, 1));
-        AppState.lastFetchTimes.employees = now; 
+        AppState.lastFetchTimes.employees = now; // Correction ici
       }
     }
 
