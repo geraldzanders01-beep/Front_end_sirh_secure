@@ -1,6 +1,7 @@
 import { AppState } from "../core/state.js";
 import { SIRH_CONFIG, NOTIF_SOUND, supabaseClient } from "../core/config.js";
 import { compressImage } from "../core/utils.js";
+import { secureFetch } from "../core/api.js"; 
 
 export async function fetchMessages() {
   const container = document.getElementById("chat-container");
@@ -147,7 +148,7 @@ export function initChatRealtime() {
 
   console.log("📡 Connexion au Chat Realtime...");
 
-  chatSubscription = supabaseClient
+  AppState.chatSubscription = supabaseClient
     .channel("public:messages")
     .on(
       "postgres_changes",
