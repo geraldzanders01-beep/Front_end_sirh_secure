@@ -31,12 +31,12 @@ export async function refreshAllData(force = false) {
       window.fetchFlashMessage().catch((e) => console.warn("Flash ignoré", e)),
     );
 
-    // 2. TACHES LIÉES À LA LISTE DES EMPLOYÉS (RH / Admin / Comptable)
-    if (perms.can_see_AppState.employees) {
+// 2. TACHES LIÉES À LA LISTE DES EMPLOYÉS
+    if (perms.can_see_employees) { // Correction: can_see_employees
       if (
         force ||
         AppState.employees.length === 0 ||
-        now - AppState.lastFetchTimes.AppState.employees > REFRESH_THRESHOLD
+        now - AppState.lastFetchTimes.employees > REFRESH_THRESHOLD // Correction: lastFetchTimes.employees
       ) {
         // IMPORTANT : On ajoute la promesse de fetchData
         tasks.push(window.fetchData(false, 1));
