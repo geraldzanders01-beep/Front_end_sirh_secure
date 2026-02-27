@@ -457,24 +457,25 @@ export async function handleClockInOut() {
 
     // Sécurisation de l'envoi : on n'envoie les rapports que si on est en CLOCK_OUT
     if (action === "CLOCK_OUT" && isMobile) {
-      fd.append("outcome", outcome || "VU");
-      fd.append("report", report || "");
-      if (prescripteur_id) fd.append("prescripteur_id", prescripteur_id);
-      if (contact_nom_libre) fd.append("contact_nom_libre", contact_nom_libre);
-      if (presentedProducts)
-        fd.append("presentedProducts", JSON.stringify(presentedProducts));
+      // On utilise les valeurs stockées dans AppState
+      fd.append("outcome", AppState.outcome || "VU");
+      fd.append("report", AppState.report || "");
+      
+      if (AppState.prescripteur_id) fd.append("prescripteur_id", AppState.prescripteur_id);
+      if (AppState.contact_nom_libre) fd.append("contact_nom_libre", AppState.contact_nom_libre);
+      if (AppState.presentedProducts) fd.append("presentedProducts", JSON.stringify(AppState.presentedProducts));
+      
       if (schedule_id) fd.append("schedule_id", schedule_id);
-      if (forced_location_id)
-        fd.append("forced_location_id", forced_location_id);
-
+      if (forced_location_id) fd.append("forced_location_id", forced_location_id);
+    
       if (AppState.formResult && AppState.formResult.proofFile) {
         Swal.update({ text: "Compression de la preuve..." });
         const compressed = await compressImage(AppState.formResult.proofFile);
         fd.append("proof_photo", compressed, "preuve_visite.jpg");
       }
-      if (isLastExit) fd.append("is_last_exit", "true");
+      if (AppState.isLastExit) fd.append("is_last_exit", "true");
     }
-
+    
     const response = await secureFetch(URL_CLOCK_ACTION, {
       method: "POST",
       body: fd,
@@ -1284,7 +1285,7 @@ export async function fetchPrescripteursManagement() {
 
     const prescripteurs = await presRes.json();
     const locations = await locRes.json();
-    window.allPrescripteurs = prescripteurs;
+    AppState.allPrescripteurs = prescripteurs;
 
     const locMap = {};
     locations.forEach((l) => (locMap[l.id] = l.name));
@@ -1457,7 +1458,7 @@ export async function openAddPrescripteurModal() {
 
 export async function openEditPrescripteurModal(id) {
   // 1. On retrouve les infos du médecin grâce à l'ID (depuis la mémoire locale)
-  const p = window.allPrescripteurs.find((item) => item.id === id);
+  const p = AppState.allPrescripteurs.find((item) => item.id === id);
   if (!p) return;
 
   // 2. On charge la liste des lieux pour le select
@@ -2542,7 +2543,7 @@ export async function openAttendancePicker() {
 }
 
 export function downloadReportCSV(period = "monthly") {
-  if (!AppState.currentReportData || currentReportData.length === 0) {
+  if (!AppState.currentReportData || AppState.currentReportData.length === 0) {
     return Swal.fire("Erreur", "Aucune donnée à exporter.", "warning");
   }
 
@@ -2561,7 +2562,7 @@ export function downloadReportCSV(period = "monthly") {
     ];
     csvContent = headers.join(";") + "\n";
 
-    currentReportData.forEach((row) => {
+    AppState.currentReportData.forEach((row) => { 
       const clean = (text) =>
         text ? String(text).replace(/;/g, ",").replace(/\n/g, " ") : "---";
 
@@ -2600,7 +2601,7 @@ export function downloadReportCSV(period = "monthly") {
     ];
     csvContent = headers.join(";") + "\n";
 
-    currentReportData.forEach((row) => {
+    AppState.currentReportData.forEach((row) => { 
       const clean = (text) =>
         text ? String(text).replace(/;/g, ",").replace(/\n/g, " ") : "---";
 
