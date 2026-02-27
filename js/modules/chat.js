@@ -144,7 +144,7 @@ export function cancelFile() {
 }
 
 export function initChatRealtime() {
-  if (chatSubscription) return; // On n'ouvre pas deux fois la connexion
+  if (AppState.chatSubscription) return; // On n'ouvre pas deux fois la connexion
 
   console.log("📡 Connexion au Chat Realtime...");
 
