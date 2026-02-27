@@ -118,8 +118,7 @@ export async function renderCharts() {
   // ----------------------------------------
 
 // --- 1. BLOC D'INTELLIGENCE VISUELLE (DÉBUT) ---
-const isSuperBoss =
-  AppState.currentUser.permissions?.can_see_employees === true; 
+const isSuperBoss = AppState.currentUser.permissions?.can_see_employees === true;
 
   // Mise à jour du titre principal du Dashboard
   const dashboardTitle = document.querySelector("#view-dash h2");
