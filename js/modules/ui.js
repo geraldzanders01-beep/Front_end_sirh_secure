@@ -41,7 +41,7 @@ export async function refreshAllData(force = false) {
       ) {
         // IMPORTANT : On ajoute la promesse de fetchData
         tasks.push(window.fetchData(false, 1));
-        AppState.lastFetchTimes.employees = now; // <--- CORRECTION ICI AUSSI
+        AppState.lastFetchTimes.employees = now; 
       }
     }
 
@@ -73,7 +73,7 @@ export async function refreshAllData(force = false) {
     // 7. GESTION MANAGERIALE (Validation des congés)
     if (
       AppState.currentUser.role !== "EMPLOYEE" &&
-      !perms.can_see_AppState.employees
+      !perms.can_see_employees
     ) {
       tasks.push(window.fetchLeaveRequests());
     }
@@ -157,17 +157,18 @@ export async function viewDocument(url, title) {
 }
 
 export function toggleAccordion(id) {
-  const content = document.getElementById(id);
-  const icon = document.getElementById("icon-" + id);
-  if (!content) return;
-  const isHidden = content.classList.contains("hidden");
-  if (isHidden) {
-    content.classList.remove("hidden");
-    if (icon) icon.style.transform = "rotate(180deg)";
-  } else {
-    content.classList.add("hidden");
-    if (icon) icon.style.transform = "rotate(0deg)";
-  }
+    const content = document.getElementById(id);
+    const icon = document.getElementById('icon-' + id);
+    if (!content) return;
+    
+    const isHidden = content.classList.contains('hidden');
+    if (isHidden) {
+        content.classList.remove('hidden');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+    } else {
+        content.classList.add('hidden');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+    }
 }
 
 export function switchView(v) {
