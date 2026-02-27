@@ -86,6 +86,7 @@ window.fetchContractTemplatesForSelection = HR.fetchContractTemplatesForSelectio
 window.populateManagerSelects = HR.populateManagerSelects;
 window.fetchMyActivityRecap = HR.fetchMyActivityRecap;
 window.resetCamera = HR.resetCamera;
+window.toggleMoreDocs = HR.toggleMoreDocs;
 
 // --- Congés & Absences (Leaves) ---
 window.openLeaveModal = Leaves.openLeaveModal;
