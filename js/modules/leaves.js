@@ -87,8 +87,7 @@ export async function fetchLeaveRequests() {
 
     AppState.allLeaves = rawLeaves.map((l) => {
       const clean = (v) => (Array.isArray(v) ? v[0] : v);
-      const rawNom = clean(l.AppState.employees_nom || l.nom || l["Employé"]);
-
+      const rawNom = clean(l.employees_nom || l.nom || l["Employé"]);
       return {
         id: l.record_id || l.id || "",
         nom: rawNom ? String(rawNom).trim() : null,
