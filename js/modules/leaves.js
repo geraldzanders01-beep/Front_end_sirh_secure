@@ -45,8 +45,8 @@ export async function submitLeaveRequest(e) {
   fd.append("agent", AppState.currentUser.nom);
 
   // Ajout du justificatif s'il a été pris en photo ou uploadé
-  if (docBlobs.leave_justif) {
-    fd.append("justificatif", docBlobs.leave_justif, "justificatif_conge.jpg");
+  if (AppState.docBlobs.leave_justif) {
+    fd.append("justificatif", AppState.docBlobs.leave_justif, "justificatif_conge.jpg"); 
   }
 
   Swal.fire({
@@ -64,7 +64,7 @@ export async function submitLeaveRequest(e) {
     if (response.ok) {
       document.getElementById("leave-modal").classList.add("hidden");
       e.target.reset();
-      docBlobs.leave_justif = null;
+      AppState.docBlobs.leave_justif = null;      
       document.getElementById("leave-doc-preview").innerHTML =
         '<i class="fa-solid fa-camera"></i>';
       Swal.fire("Succès", "Votre demande de congé a été envoyée.", "success");
@@ -409,7 +409,7 @@ export async function processLeave(recordId, decision, daysToDeduct = 0) {
           timer: 3000,
         });
         // 4. On actualise tout pour voir le nouveau solde
-        refreshAllData(true);
+        window.refreshAllData(true);
       } else {
         throw new Error("Erreur du serveur");
       }
