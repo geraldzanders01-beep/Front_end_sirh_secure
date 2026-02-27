@@ -11,6 +11,8 @@ import {
   URL_READ_CANDIDATES,
   URL_CANDIDATE_ACTION,
   ITEMS_PER_PAGE,
+  AIRTABLE_FORM_PUBLIC_LINK, 
+  AIRTABLE_FORM_EDIT_LINK 
 } from "../core/config.js";
 import { secureFetch } from "../core/api.js";
 import {
