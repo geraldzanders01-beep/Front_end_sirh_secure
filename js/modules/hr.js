@@ -204,14 +204,15 @@ export function renderData() {
   const d = document.getElementById("dashboard-body");
   if (!b || !d) return;
 
-  // 1. Détection de la permission "Maître" (RH/ADMIN)
-  const canManage =
-    AppState.currentUser.permissions?.can_see_employees === true;
+// 1. Détection de la permission "Maître" (RH/ADMIN)
+const canManage =
+  AppState.currentUser.permissions?.can_see_employees === true;
 
-  // 2. LOGIQUE ESTHÉTIQUE : On cache l'en-tête de la colonne si on n'est pas RH/ADMIN
-  const headerAction = document.querySelector(
-    'th[data-perm="can_see_employees"]',
-  );
+// 2. LOGIQUE ESTHÉTIQUE
+const headerAction = document.querySelector(
+  'th[data-perm="can_see_employees"]',
+);
+  
   if (headerAction) {
     headerAction.style.display = canManage ? "" : "none";
   }
