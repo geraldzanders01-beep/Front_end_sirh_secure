@@ -206,9 +206,14 @@ export function renderData() {
   const d = document.getElementById("dashboard-body");
   if (!b || !d) return;
 
-// 1. Détection de la permission "Maître" (RH/ADMIN)
-const canManage =
-  AppState.currentUser.permissions?.can_see_employees === true;
+    if (!AppState || !AppState.employees) {
+        console.warn("AppState.employees n'est pas encore disponible");
+        return;
+    }
+  
+    // 1. Détection de la permission "Maître" (RH/ADMIN)
+    const canManage = AppState.currentUser?.permissions?.can_see_employees === true;
+
 
 // 2. LOGIQUE ESTHÉTIQUE
 const headerAction = document.querySelector(
