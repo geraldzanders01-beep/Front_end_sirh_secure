@@ -1,2133 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidature | CORP-HR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .input-field { @apply w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all; }
+        .btn-primary { @apply w-full bg-blue-600 text-white py-5 rounded-2xl font-bold text-lg hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-[0.98] transition-all; }
+    </style>
+</head>
+<body class="py-10 px-4">
 
-    <!DOCTYPE html>
-    <html lang="fr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-        <!-- PWA CONFIGURATION -->
-        <link rel="manifest" href="manifest.json">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="theme-color" content="#0f172a">
-            <!-- Icône pour l'onglet du navigateur -->
-        <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/128/13594/13594876.png">
-        <!-- Icône pour iPhone/iPad (Apple) -->
-        <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/128/13594/13594876.png">
-
-        <title>SIRH Pro | Secure Access</title>
-    
-        <!-- Bibliothèques -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-         <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script src="https://unpkg.com/html5-qrcode"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-        <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-
-        <link href="style.css" rel="stylesheet">
-
-    </head>
-
-
-
-    <body class="text-slate-900 overflow-hidden h-screen w-full"> 
-
-
-    <!-- LOADER PREMIUM -->
-    <div id="initial-loader" class="fixed inset-0 bg-slate-900 z-[999] flex flex-col items-center justify-center transition-all duration-1000 ease-in-out">
-    <!-- Logo Container -->
-    <div class="relative mb-8">
-        <div class="absolute inset-0 bg-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
-        <div class="relative bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl flex items-center justify-center">
-            <i class="fa-solid fa-fingerprint text-5xl text-blue-500 animate-pulse"></i>
-        </div>
-    </div>
-    
-    <!-- Texte -->
-    <h2 class="text-white text-2xl font-black tracking-tight mb-2">SIRH <span class="text-blue-500">SECURE</span></h2>
-    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-8">CHARGEMENT...</p>
-
-    <!-- Barre de chargement améliorée -->
-    <div class="w-64 h-1 bg-slate-800 rounded-full overflow-hidden relative">
-        <!-- La barre interne avec animation de va-et-vient (indéterminée) -->
-        <div class="h-full bg-gradient-to-r from-blue-600 to-indigo-400 rounded-full absolute top-0" 
-             style="width: 40%; animation: bar-slide 1.8s infinite ease-in-out; box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);">
-        </div>
-    </div>
-</div>
-
-
-
-        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/80 z-40 hidden md:hidden transition-opacity backdrop-blur-sm"></div>
-
-        <!-- ECRAN DE CONNEXION -->
-<div id="login-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[100] transition-all duration-500 p-4 sm:p-6">
-
-    <!-- Carte Principale -->
-<div class="bg-white relative w-full max-w-[420px] p-5 sm:p-6 rounded-xl shadow-xl z-10 flex flex-col gap-6 border border-slate-100">
+    <div class="max-w-3xl mx-auto">
         
-        <!-- En-tête -->
-        <div class="flex flex-col items-center text-center">
-            <div class="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-blue-600 rounded-2xl sm:rounded-[1.5rem] shadow-xl shadow-blue-500/30 mb-4 text-white transition-transform hover:scale-105 duration-300">
-                <i class="fa-solid fa-fingerprint text-3xl sm:text-4xl"></i>
-            </div>
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">SIRH-SECURE</h1>
-            <p class="text-slate-500 mt-1.5 text-sm sm:text-base font-medium">Connectez-vous à votre espace</p>
-        </div>
-
-        <!-- Formulaire -->
-        <form onsubmit="handleLogin(event)" class="flex flex-col gap-5 mt-2">
-            
-            <!-- Champ Identifiant -->
-            <div class="relative">
-                <label for="login-user" class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Identifiant</label>
-                <!-- Group permet de changer la couleur de l'icône quand on clique sur l'input -->
-                <div class="relative group">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                    <input type="text" id="login-user" class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder-slate-400 text-sm" placeholder="exemple@email.com" required>
+        <!-- HEADER -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <i class="fa-solid fa-paper-plane text-xl"></i>
                 </div>
-            </div>
-
-            <!-- Champ Mot de passe -->
-            <div class="relative">
-                <!-- Astuce UX : Mettre le lien "oublié" sur la même ligne que le label -->
-                <div class="flex justify-between items-end mb-2 ml-1 mr-1">
-                    <label for="login-pass" class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest">Mot de passe</label>
-                    
-                    <!-- Remplacé par une balise <a> pour éviter le conflit avec ton CSS des boutons -->
-                    <a href="#" onclick="handleForgotPassword(); return false;" class="text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline transition-all">Oublié ?</a>
-                </div>
-                <div class="relative group">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
-                        <i class="fa-solid fa-lock"></i>
-                    </div>
-                    <input type="password" id="login-pass" class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder-slate-400 text-sm" placeholder="••••••••" required>
-                </div>
-            </div>
-
-            <!-- Bouton Submit -->
-            <button type="submit" id="btn-login" class="mt-4 w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 shadow-md transition-all active:scale-95 uppercase tracking-widest flex justify-center items-center gap-2">
-                <span>Se Connecter</span>
-                <i class="fa-solid fa-arrow-right"></i>
-            </button>
-        </form>
-    </div>
-</div>
-        <!-- APP LAYOUT -->
-        <div id="app-layout" class="hidden h-screen flex flex-col md:flex-row overflow-hidden relative">
-        <!-- Nouvelle version de la balise aside -->
-            <aside id="sidebar" class="w-72 bg-slate-900 text-slate-300 flex flex-col fixed md:sticky inset-y-0 left-0 z-50 transform transition-transform duration-300 border-r border-slate-800">                
-                <div class="p-5 flex-1 overflow-y-auto">
-                    <div class="flex items-center justify-between mb-10 text-white">
-    <div class="flex items-center gap-3">
-        <div class="p-1.5 rounded-xl shadow-lg flex items-center justify-center" style="background-color: var(--accent); min-width: 40px; height: 40px;">
-            <img src="" class="app-logo-display w-7 h-7 object-contain">
-        </div>
-        <span class="font-black text-lg tracking-tighter company-name-display">SIRH SECURE</span>
-    </div>
-
-                        <button onclick="toggleSidebar()" class="md:hidden text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
-                    </div>
-  
-
-
-
-
-
-                <nav class="space-y-4">
-                    <!-- SECTION 1 : PERSONNEL -->
-                    <div class="menu-group">
-                        <div class="flex justify-between items-center px-4 mb-2 cursor-pointer group" onclick="toggleWidget('m-perso')">
-                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Personnel</p>
-                            <i id="m-perso-icon" class="fa-solid fa-chevron-up text-[8px] text-slate-600 group-hover:text-blue-500 transition-colors"></i>
-                        </div>
-                        <div id="m-perso-content" class="space-y-1">
-                            <button onclick="switchView('my-profile')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-                                <i class="fa-solid fa-id-badge w-5"></i> <span class="font-semibold">Mon Profil</span>
-                            </button>
-                            <button onclick="switchView('help')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-                                <i class="fa-solid fa-circle-info w-5"></i> <span class="font-semibold">Infos & Aide</span>
-                            </button>
-
-                            <!-- Bouton Chat -->
-                        <button data-perm="can_use_chat" onclick="switchView('chat')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-                            <i class="fa-solid fa-comments w-5"></i> 
-                            <span class="font-semibold">Messagerie Équipe</span>
-                        </button>
-                        </div>
-                    </div>
-
-
-
-<!-- ========================================================== -->
-<!-- BLOC CORRIGÉ AVEC LES PERMISSIONS FINALES -->
-<!-- ========================================================== -->
-
-<!-- SECTION 2 : GESTION RH -->
-<div class="menu-group">
-    <div class="flex justify-between items-center px-4 mb-2 cursor-pointer group" onclick="toggleWidget('m-gestion')">
-        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Gestion RH</p>
-        <i id="m-gestion-icon" class="fa-solid fa-chevron-up text-[8px] text-slate-600 group-hover:text-blue-500 transition-colors"></i>
-    </div>
-    <div id="m-gestion-content" class="space-y-1">
-        
-        <!-- Serrure : Tableau de Bord -->
-        <button data-perm="can_see_dashboard" onclick="switchView('dash')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-chart-pie w-5"></i> <span class="font-semibold">Tableau de Bord</span>
-        </button>
-
-        <!-- Serrure : Diffuser une Annonce -->
-        <button data-perm="can_send_announcements" onclick="openFlashModal()" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-bullhorn w-5 text-orange-500"></i> 
-            <span class="font-semibold text-orange-400 group-hover:text-white">Diffuser Une Annonce</span>
-        </button>
-
-        <!-- Serrure : Collaborateurs -->
-        <button data-perm="can_view_team" onclick="switchView('employees')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-user-group w-5"></i> <span class="font-semibold">Collaborateurs</span>
-        </button>
-
-        <!-- Serrure : Nouveau Profil -->
-        <button data-perm="can_create_profiles" onclick="switchView('add-new')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-user-plus w-5"></i> <span class="font-semibold">Nouveau Profil</span>
-        </button>
-
-        <!-- Serrure : Recrutement -->
-        <button data-perm="can_see_recruitment" onclick="switchView('recruitment')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-briefcase w-5"></i> <span class="font-semibold">Recrutement</span>
-        </button>
-    </div>
-</div>
-
-
-
-
-
-<!-- SECTION : OPÉRATIONS TERRAIN -->
-<div class="menu-group" data-module="MOD_MOBILE_WORKFORCE" data-perm="can_see_mobile_module">
-    <div class="flex justify-between items-center px-4 mb-2 cursor-pointer group" onclick="toggleWidget('m-ops')">
-        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Opérations Terrain</p>
-        <i id="m-ops-icon" class="fa-solid fa-chevron-up text-[8px] text-slate-600 group-hover:text-blue-500 transition-colors"></i>
-    </div>
-    <div id="m-ops-content" class="space-y-1">
-        
-        <!-- Lieux & Sites : Seuls ceux qui gèrent voient ce bouton -->
-        <button data-perm="can_manage_mobile_locations" onclick="switchView('mobile-locations')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-map-location-dot w-5"></i> <span class="font-semibold">Lieux & Sites</span>
-        </button>
-
-        <!-- Répertoire Médical : Pour Délégués et Managers -->
-        <button data-perm="can_view_prescripteurs" onclick="switchView('prescripteurs-list')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-user-doctor w-5 text-purple-400"></i> 
-            <span class="font-semibold text-purple-300 group-hover:text-white">Répertoire Médical</span>
-        </button>
-        
-        <!-- Plannings : Garde can_manage_schedules qui existait déjà -->
-        <button data-perm="can_manage_schedules" onclick="switchView('mobile-planning')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-calendar-days w-5"></i> <span class="font-semibold">Plannings & Missions</span>
-        </button>
-
-        <button data-module="MOD_CATALOG" data-perm="can_see_catalog" onclick="switchView('catalog')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-box-archive w-5 text-emerald-400"></i> 
-            <span class="font-semibold">Catalogue Produits</span>
-        </button>
-
-        <button data-perm="can_view_reports" onclick="switchView('mobile-reports')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-clipboard-list w-5"></i> 
-            <span class="font-semibold">Rapports d'Activité</span>
-        </button>
-    </div>
-</div>
-                    
-<!-- SECTION 3 : FINANCE & SYSTÈME -->
-<div class="menu-group">
-    <div class="flex justify-between items-center px-4 mb-2 cursor-pointer group" onclick="toggleWidget('m-admin')">
-        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Finance & Système</p>
-        <i id="m-admin-icon" class="fa-solid fa-chevron-up text-[8px] text-slate-600 group-hover:text-blue-500 transition-colors"></i>
-    </div>
-    <div id="m-admin-content" class="space-y-1">
-        
-        <!-- Serrure : Paie -->
-        <button data-perm="can_see_payroll" onclick="switchView('accounting')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-calculator w-5 text-emerald-500"></i> 
-            <span class="font-semibold text-emerald-400 group-hover:text-white">Paie & Comptabilité</span>
-        </button>
-        
-        <!-- Serrure : Paramètres -->
-        <button data-perm="can_manage_config" onclick="switchView('settings')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-gears w-5 text-slate-400"></i> 
-            <span class="font-semibold text-slate-400 group-hover:text-white">Paramètres Sièges</span>
-        </button>
-
-        <button data-perm="can_manage_config" onclick="switchView('contract-templates')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-file-signature w-5 text-purple-400"></i> 
-            <span class="font-semibold text-purple-300 group-hover:text-white">Modèles Contrats</span>
-        </button>
-        
-        <!-- Serrure : Audit -->
-        <button data-perm="can_see_audit" onclick="switchView('logs')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-list-check w-5"></i> <span class="font-semibold">Audit Sécurité</span>
-        </button>
-
-        <button data-perm="can_manage_config" onclick="switchView('maintenance')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-server w-5 text-red-400"></i> 
-            <span class="font-semibold text-red-300 group-hover:text-white">Maintenance Système</span>
-        </button>
-    </div>
-</div>
-                    
-                </nav>
-
-
-
-                </div>
-                <div class="mt-auto p-6 border-t border-slate-800 bg-slate-900/50">
-                    <div class="flex items-center gap-4 p-3 bg-slate-800/50 rounded-2xl mb-4 border border-slate-700/30">
-                        <div id="avatar-display" class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold uppercase shadow-lg">?</div>
-                        <div class="overflow-hidden"><p id="name-display" class="text-sm font-bold text-white truncate">User</p><p id="role-display" class="text-[10px] uppercase font-black text-blue-400">Rôle</p></div>
-                    </div>
-                    <button id="install-button" class="hidden w-full flex items-center justify-center gap-2 p-3 mb-2 text-xs font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-xl transition-all uppercase tracking-tighter border border-emerald-500/30">
-                        <i class="fa-solid fa-download"></i> Installer l'App
-                    </button>
-                    <button onclick="handleLogout()" class="w-full flex items-center justify-center gap-2 p-3 text-xs font-bold text-red-400 hover:bg-red-500/10 rounded-xl transition-all uppercase tracking-tighter"><i class="fa-solid fa-power-off"></i> Déconnexion</button>           
-                </div>
-            </aside>
-
-            <main class="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-hidden w-full">
-
-                <header class="h-20 glass border-b border-slate-200 px-4 md:px-8 flex justify-between items-center shrink-0 z-10">
-
-
-                <div class="flex items-center flex-1 max-w-2xl gap-3">
-                    <button onclick="toggleSidebar()" class="p-2 text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">
-                        <i class="fa-solid fa-bars-staggered text-lg"></i>
-                    </button>                        
-                    <div id="global-search-container" class="relative w-full">
-                            <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                            <input type="text" id="search-input" onkeyup="filterTable()" placeholder="Rechercher..." class="w-full pl-12 pr-4 py-3 bg-slate-100 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all">
-                        </div>
-                    </div>
-                    <button onclick="toggleDarkMode()" class="p-2.5 bg-slate-100 dark-toggle-btn text-slate-600 rounded-xl hover:bg-slate-200 transition-all active:scale-95 mr-2">
-                    <i class="fa-solid fa-moon text-lg" id="dark-icon"></i>
-                    </button>
-                    <button onclick="startScanner()" class="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold ml-4 transition-all hover:scale-105 shadow-lg active:scale-95"><i class="fa-solid fa-qrcode mr-2"></i> SCANNER</button>
-                </header>
-
-    <div id="main-scroll-container" class="flex-1 overflow-y-auto p-3 md:p-5 scroll-smooth no-scrollbar">             
-                    
-
-                    <!-- CONTENEUR POUR PLUSIEURS ALERTES -->
-                        <div id="flash-container" class="space-y-3 mb-6"></div>
-
-
-<!-- VUE 1: DASHBOARD -->
-    <section id="view-dash" class="view-section active">  
-
-    
-    <!-- EN-TÊTE RESPONSIVE (CORRIGÉ) - GARDÉ TEL QUEL -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h2 class="text-2xl font-extrabold text-slate-800">Analyse de l'Effectif</h2>
-        
-<!-- BARRE D'ACTIONS DASHBOARD RESPONSIVE -->
-<div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-    
-    <!-- Bouton Actualiser : Carré sur mobile, avec texte sur PC -->
-    <button onclick="refreshAllData(true)" 
-        class="h-10 w-10 md:w-auto md:px-4 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-600 shadow-sm hover:bg-slate-50 transition-all active:scale-95" 
-        title="Actualiser les données">
-        <i class="fa-solid fa-rotate" id="refresh-icon"></i>
-        <span class="hidden md:inline ml-2 text-[10px] font-black uppercase tracking-widest">Actualiser</span>
-    </button>
-    
-    <!-- Bouton Exporter -->
-    <button data-perm="can_see_employees" onclick="exportToCSV()" 
-        class="flex-1 md:flex-none h-10 px-4 flex items-center justify-center bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-emerald-900/10 hover:bg-emerald-700 transition-all active:scale-95">
-        <i class="fa-solid fa-file-excel md:mr-2"></i>
-        <span class="hidden sm:inline">Exporter</span>
-    </button>
-
-    <!-- Bouton Rapport Présence -->
-    <button data-perm="can_see_dashboard" onclick="openAttendancePicker()" 
-        class="flex-1 md:flex-none h-10 px-4 flex items-center justify-center bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-indigo-900/10 hover:bg-indigo-700 transition-all active:scale-95">
-        <i class="fa-solid fa-clipboard-list md:mr-2"></i>
-        <span class="hidden sm:inline">Présences</span>
-        <span class="sm:hidden">Rapport</span>
-    </button>
-
-    <!-- La Date : Transformée en badge discret -->
-    <div id="current-date" class="w-full md:w-auto h-10 px-4 flex items-center justify-center bg-slate-100 text-slate-500 rounded-xl font-mono text-[10px] font-bold border border-slate-200 uppercase tracking-tighter">
-        --
-    </div>
-</div>
-    
-    </div>
-
-<div id="signals-area" class="mb-10 animate-fadeIn">
-        <!-- Le titre est très discret -->
-        <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-1">Analyse du jour</p>
-        
-        <!-- Conteneur des signaux -->
-        <div id="signals-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- JS va injecter les cartes ici -->
-        </div>
-    </div>
-
-    <!-- 1. BLOC : STATS CARDS -->
-    <div class="mb-8">
-        <div class="flex justify-between items-center mb-3 cursor-pointer group" onclick="toggleWidget('w-stats')">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Aperçu de l'Effectif</h3>
-            <i id="w-stats-icon" class="fa-solid fa-chevron-up text-slate-300 group-hover:text-blue-600 transition-all"></i>
-        </div>
-        <div id="w-stats-content" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div class="bg-white p-7 rounded-xl shadow-sm border border-slate-100"><p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Effectif Total</p><h3 id="stat-total" class="text-4xl font-black mt-2 text-slate-800">0</h3></div>
-            <div class="bg-white p-7 rounded-xl shadow-sm border border-slate-100"><p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Alertes Contrats</p><h3 id="stat-alert" class="text-4xl font-black mt-2 text-red-600">0</h3></div>
-            <div class="bg-white p-7 rounded-xl shadow-sm border border-slate-100"><p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Collaborateurs Actifs</p><h3 id="stat-active" class="text-4xl font-black mt-2 text-emerald-600">0</h3></div>
-        </div>
-    </div>
-
-    <!-- 2. BLOC : LIVE TRACKER WIDGET -->
-    <div class="mb-8">
-        <div class="flex justify-between items-center mb-3 cursor-pointer group" onclick="toggleWidget('w-live')">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pointage en Direct</h3>
-            <i id="w-live-icon" class="fa-solid fa-chevron-up text-slate-300 group-hover:text-blue-600 transition-all"></i>
-        </div>
-        <div id="w-live-content" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div class="bg-emerald-500 rounded-xl p-6 text-white shadow-lg shadow-emerald-200 relative overflow-hidden">
-                <div class="relative z-10">
-                    <p class="text-[10px] font-black uppercase opacity-80">En poste actuellement</p>
-                    <h3 id="live-presents-count" class="text-4xl font-black mt-1">0</h3>
-                    <div id="live-presents-list" class="flex -space-x-2 mt-4 overflow-hidden"></div>
-                </div>
-                <i class="fa-solid fa-house-user absolute -right-4 -bottom-4 text-6xl opacity-20"></i>
-            </div>
-            <div class="bg-blue-500 rounded-xl p-6 text-white shadow-lg shadow-blue-200 relative overflow-hidden">
-                <div class="relative z-10">
-                    <p class="text-[10px] font-black uppercase opacity-80">Journée terminée</p>
-                    <h3 id="live-partis-count" class="text-4xl font-black mt-1">0</h3>
-                    <div id="live-partis-list" class="flex -space-x-2 mt-4 overflow-hidden"></div>
-                </div>
-                <i class="fa-solid fa-car-side absolute -right-4 -bottom-4 text-6xl opacity-20"></i>
-            </div>
-            <div class="bg-slate-800 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-                <div class="relative z-10">
-                    <p class="text-[10px] font-black uppercase opacity-80">Absents / Non pointés</p>
-                    <h3 id="live-absents-count" class="text-4xl font-black mt-1">0</h3>
-                    <div id="live-absents-list" class="flex -space-x-2 mt-4 overflow-hidden"></div>
-                </div>
-                <i class="fa-solid fa-user-slash absolute -right-4 -bottom-4 text-6xl opacity-20"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. BLOC : ZONE GRAPHIQUES -->
-    <div class="mb-8">
-        <div class="flex justify-between items-center mb-3 cursor-pointer group" onclick="toggleWidget('w-charts')">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Analyses Graphiques</h3>
-            <i id="w-charts-icon" class="fa-solid fa-chevron-up text-slate-300 group-hover:text-blue-600 transition-all"></i>
-        </div>
-        <div id="w-charts-content" class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-10">
-            <div class="bg-white p-6 rounded-xl shadow-xl border border-slate-100">
-                <p class="font-bold text-slate-700 mb-4 uppercase text-xs tracking-widest">Répartition par Statut</p>
-                <canvas id="chartStatus" height="200"></canvas>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-xl border border-slate-100">
-                <p class="font-bold text-slate-700 mb-4 uppercase text-xs tracking-widest">Répartition par Département</p>
-                <canvas id="chartDept" height="200"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. BLOC : SECTION VALIDATION CONGÉS -->
-    <div class="mb-8 management-only">
-        <div class="flex justify-between items-center mb-3 cursor-pointer group" onclick="toggleWidget('w-leaves')">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gestion des Absences</h3>
-            <i id="w-leaves-icon" class="fa-solid fa-chevron-up text-slate-300 group-hover:text-blue-600 transition-all"></i>
-        </div>
-    <div id="w-leaves-content" data-perm="can_see_employees">
-            <div id="manager-leave-section" class="bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden mb-10">
-                <div class="px-8 py-6 border-b border-slate-100 font-extrabold text-slate-700 flex items-center gap-2">
-                    <i class="fa-solid fa-clipboard-check text-blue-500"></i> Demandes de congés à valider
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left whitespace-nowrap">
-                            <!-- On ajoute data-perm sur le header de la colonne Action -->
-                            <thead class="bg-slate-50/80 text-[10px] uppercase font-black text-slate-400">
-                                <tr>
-                                    <th class="px-8 py-4">Nom</th>
-                                    <th class="px-8 py-4">Poste</th>
-                                    <th class="px-8 py-4">Délai</th>
-                                    <th data-perm="can_see_employees" class="px-8 py-4 text-right">Action</th>
-                                </tr>
-                            </thead>
-                        <tbody id="leave-requests-body" class="divide-y divide-slate-50"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 5. BLOC : ALERT TABLE -->
-    <div class="mb-8">
-        <div class="flex justify-between items-center mb-3 cursor-pointer group" onclick="toggleWidget('w-alerts')">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Suivi des Contrats</h3>
-            <i id="w-alerts-icon" class="fa-solid fa-chevron-up text-slate-300 group-hover:text-blue-600 transition-all"></i>
-        </div>
-        <div id="w-alerts-content">
-            <div class="bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden">
-                <div class="px-8 py-6 border-b border-slate-100 font-extrabold text-slate-700 flex items-center gap-2">
-                    <i class="fa-solid fa-hourglass-half text-orange-500"></i> Alertes Fin de Contrat / Essai
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left whitespace-nowrap">
-                        <thead class="bg-slate-50/80 text-[10px] uppercase font-black text-slate-400">
-                            <tr><th class="px-8 py-4">Nom</th><th class="px-8 py-4">Poste</th><th class="px-8 py-4">Délai</th><th class="px-8 py-4 rh-only text-right">Action</th></tr>
-                        </thead>
-                        <tbody id="dashboard-body" class="divide-y divide-slate-50"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-
-                
-
-<!-- VUE 2: LISTE COLLABORATEURS -->
-    <section id="view-employees" class="view-section">
-        <!-- EN-TÊTE (HAUT) AVEC FILTRES -->
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-6 px-1 gap-4">
-            <div class="w-full">
-                <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">Liste des Collaborateurs</h2>
-                <p class="text-sm text-slate-500 font-medium mt-1">Gestion administrative et contractuelle</p>
-                
-                <!-- ZONE DE FILTRES INTELLIGENTS -->
-                <div class="flex flex-col gap-6 mb-8 mt-6 animate-fadeIn">
-                    
-                    <!-- Ligne 1 : Statuts et Activités -->
-                    <div class="flex flex-wrap items-center gap-3">
-                        <!-- Filtre Statut -->
-                        <div id="filter-group-status" class="flex p-1 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner">
-                            <button onclick="setEmployeeFilter('status', 'all')" data-value="all" class="filter-chip px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-blue-600 text-white shadow-sm transition-all">Tous</button>
-                            <button onclick="setEmployeeFilter('status', 'Actif')" data-value="Actif" class="filter-chip px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-all">Actifs</button>
-                            <button onclick="setEmployeeFilter('status', 'Congé')" data-value="Congé" class="filter-chip px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-all">Congés</button>
-                            <button onclick="setEmployeeFilter('status', 'Sortie')" data-value="Sortie" class="filter-chip px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-all">Sortis</button>
-                        </div>
-
-                        <div class="h-6 w-[1px] bg-slate-300 mx-2 hidden md:block"></div>
-
-                        <!-- Filtre Activité -->
-                        <div id="filter-group-type" class="flex gap-2">
-                            <button onclick="setEmployeeFilter('type', 'OFFICE')" data-value="OFFICE" class="filter-chip px-4 py-2 rounded-2xl border border-slate-200 bg-white text-[10px] font-black uppercase text-slate-500 hover:border-blue-400 hover:text-blue-600 transition-all flex items-center gap-2">
-                                <i class="fa-solid fa-building text-[12px]"></i> Bureau
-                            </button>
-                            <button onclick="setEmployeeFilter('type', 'MOBILE')" data-value="MOBILE" class="filter-chip px-4 py-2 rounded-2xl border border-slate-200 bg-white text-[10px] font-black uppercase text-slate-500 hover:border-blue-400 hover:text-blue-600 transition-all flex items-center gap-2">
-                                <i class="fa-solid fa-car-side text-[12px]"></i> Terrain
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Ligne 2 : Départements et Rôles -->
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
-                        <!-- Départements -->
-                        <div class="flex flex-wrap items-center gap-2 overflow-x-auto no-scrollbar pb-2">
-                            <span class="text-[9px] font-black text-slate-400 uppercase mr-2"><i class="fa-solid fa-filter mr-1"></i> Départements :</span>
-                            <div id="filter-group-dept" class="flex gap-2">
-                                <button onclick="setEmployeeFilter('dept', 'all')" data-value="all" class="filter-chip px-3 py-1.5 rounded-full border border-blue-600 bg-blue-50 text-blue-700 text-[9px] font-black uppercase transition-all">Tous</button>
-                                <button onclick="setEmployeeFilter('dept', 'IT & Tech')" data-value="IT & Tech" class="filter-chip px-3 py-1.5 rounded-full border border-slate-200 bg-white text-slate-500 text-[9px] font-black uppercase hover:border-blue-300 transition-all">IT</button>
-                                <button onclick="setEmployeeFilter('dept', 'Commercial')" data-value="Commercial" class="filter-chip px-3 py-1.5 rounded-full border border-slate-200 bg-white text-slate-500 text-[9px] font-black uppercase hover:border-blue-300 transition-all">Commercial</button>
-                                <button onclick="setEmployeeFilter('dept', 'Finance')" data-value="Finance" class="filter-chip px-3 py-1.5 rounded-full border border-slate-200 bg-white text-slate-500 text-[9px] font-black uppercase hover:border-blue-300 transition-all">Finance</button>
-                                <button onclick="setEmployeeFilter('dept', 'RH')" data-value="RH" class="filter-chip px-3 py-1.5 rounded-full border border-slate-200 bg-white text-slate-500 text-[9px] font-black uppercase hover:border-blue-300 transition-all">RH</button>
-                            </div>
-                        </div>
-
-                        <!-- NOUVEAU : Filtre Rôle -->
-                        <div class="shrink-0 flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm w-full md:w-auto">
-                            <i class="fa-solid fa-user-shield text-slate-400 text-xs"></i>
-                            <select id="filter-role-select" onchange="setEmployeeFilter('role', this.value)" class="text-xs font-bold text-slate-600 uppercase bg-transparent outline-none cursor-pointer w-full md:w-auto">
-                                <option value="all">Tous les Rôles</option>
-                                <!-- Rempli automatiquement par JS -->
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                
-            </div>
-        </div>
-
-
-        <!-- TABLEAU -->
-        <div class="bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden min-h-[500px] flex flex-col justify-between">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left whitespace-nowrap">
-                    <thead class="bg-slate-900 text-white text-[10px] uppercase font-bold">
-                        <tr>
-                            <th class="px-8 py-5">Identité</th>
-                            <th class="px-8 py-5">Poste</th>
-                            <th class="px-8 py-5">Statut</th>
-                            <th data-perm="can_see_employees" class="px-8 py-5 text-right">Dossier & Actions</th>                        
-                        </tr>
-                    </thead>
-                    <tbody id="full-body" class="divide-y divide-slate-100"></tbody>
-                </table>
-            </div>
-
-            <!-- PAGINATION BAS -->
-  <!-- Remplace l'ancien bloc de pagination (celui qui a le texte "AFFICHAGE PAR 10") par celui-ci -->
-<div id="employee-pagination-footer" class="border-t border-slate-100 bg-slate-50 p-4 flex justify-between items-center">
-    <!-- Ce contenu sera rempli dynamiquement par le JavaScript -->
-</div>
-                
-            </div>
-    </section>
-
-
-
-<!-- ========================================================== -->
-<!-- 2. NOUVEAU WIZARD D'ONBOARDING (REMPLACE TOUTE LA SECTION) -->
-<!-- ========================================================== -->
-<section id="view-add-new" class="view-section">
-    <div class="max-w-4xl mx-auto bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
-        
-        <!-- EN-TETE & BARRE DE PROGRESSION -->
-        <div class="bg-slate-900 px-10 py-8 text-white">
-            <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h2 class="text-2xl font-black uppercase tracking-tighter">Nouveau Profil</h2>
-                    <p id="wizard-subtitle" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Étape 1 : Identité & Photo</p>
-                </div>
-                <div class="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <i class="fa-solid fa-user-plus text-xl"></i>
+                    <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">Postuler</h1>
+                    <p class="text-sm text-slate-500 font-medium">Rejoignez CORP-HR en quelques clics</p>
                 </div>
             </div>
-            <div class="flex gap-2">
-                <div id="step-dot-1" class="h-1.5 flex-1 bg-blue-600 rounded-full transition-all duration-500"></div>
-                <div id="step-dot-2" class="h-1.5 flex-1 bg-white/10 rounded-full transition-all duration-500"></div>
-                <div id="step-dot-3" class="h-1.5 flex-1 bg-white/10 rounded-full transition-all duration-500"></div>
-            </div>
+            <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Secure Portal</span>
         </div>
 
-        <form id="form-onboarding" onsubmit="handleOnboarding(event)" novalidate class="p-8 md:p-12">
-            
-            <!-- ÉTAPE 1 : IDENTITÉ & PHOTO (Facultative) -->
-            <div id="step-1" class="wizard-step space-y-6 animate-fadeIn">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="md:col-span-2 space-y-4">
-                        <p class="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] mb-4">Informations Personnelles</p>
-                        <div class="grid grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Civilité</label>
-                                <select id="f-civilite" class="w-full p-4 bg-slate-50 border rounded-xl font-medium outline-none">
-                                    <option value="Monsieur">Monsieur</option>
-                                    <option value="Madame">Madame</option>
-                                </select>
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Nom Complet</label>
-                                <input type="text" id="f-nom" class="w-full p-4 bg-slate-50 border rounded-xl outline-none" placeholder="Ex: Damien HABIB" required>
-                            </div>
-                        </div>
-                        <input type="email" id="f-email" class="w-full p-4 bg-slate-50 border rounded-xl outline-none" placeholder="Email Pro" required>
-                        <div class="grid grid-cols-2 gap-4">
-                            <input type="tel" id="f-phone" class="w-full p-4 bg-slate-50 border rounded-xl outline-none" placeholder="Téléphone">
-                            <input type="date" id="f-dob" class="w-full p-4 bg-slate-50 border rounded-xl outline-none" title="Date de naissance">
-                        </div>
-                        <input type="text" id="f-address" class="w-full p-4 bg-slate-50 border rounded-xl outline-none" placeholder="Adresse de résidence">
-                    </div>
-                    
-                    <div class="flex flex-col items-center justify-start p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-                        <div class="w-32 h-32 bg-slate-200 rounded-full mb-4 overflow-hidden flex items-center justify-center border-4 border-white shadow-lg">
-                            <video id="video-stream" class="w-full h-full object-cover hidden" autoplay playsinline></video>
-                            <img id="captured-image" class="w-full h-full object-cover hidden">
-                            <i class="fa-solid fa-camera text-slate-400 text-3xl" id="photo-placeholder"></i>
-                        </div>
-                        <div id="initial-controls" class="flex flex-col w-full gap-2 mt-auto">
-                            <button type="button" onclick="startCameraFeed()" class="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">Activer Caméra</button>
-                            <button type="button" onclick="document.getElementById('file-upload').click()" class="text-[10px] font-bold text-slate-500 uppercase bg-white border py-2.5 rounded-lg shadow-sm">Uploader</button>
-                        </div>
-                        <canvas id="camera-canvas" class="hidden"></canvas>
-                        <input type="file" id="file-upload" accept="image/*" class="hidden" onchange="handleFileUpload(event)">
-                        <button type="button" id="btn-capture" onclick="takeSnapshot()" class="hidden bg-blue-600 text-white py-2.5 rounded-lg w-full mt-2 font-bold text-xs">Capturer</button>
-                        <button type="button" id="btn-retake" onclick="resetCamera()" class="hidden bg-slate-400 text-white py-2.5 rounded-lg w-full mt-2 font-bold text-xs">Refaire</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ÉTAPE 2 : POSTE & CONTRAT -->
-            <div id="step-2" class="wizard-step hidden space-y-6 animate-fadeIn">
-                <p class="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] mb-4">Affectation & Conditions</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <select id="f-dept" class="w-full p-4 bg-slate-50 border rounded-xl font-medium"><option value="">Chargement...</option></select>
-                    <input type="text" id="f-poste" class="w-full p-4 bg-slate-50 border rounded-xl outline-none" placeholder="Poste occupé" required>
-                    <select id="f-type" onchange="toggleContractFieldsVisibility()" class="w-full p-4 bg-indigo-50 border border-indigo-100 rounded-xl font-bold text-indigo-700">
-                        <option value="OFFICE">🏢 Bureau (Fixe)</option>
-                        <option value="FIXED">🏠 Agent Site (Fixe)</option>
-                        <option value="MOBILE">🚗 Délégué (Nomade)</option>
-                    </select>
-                    <select id="f-role" class="w-full p-4 bg-blue-50 border border-blue-200 rounded-xl font-bold text-blue-700"></select>
-                </div>
-
-                <div class="bg-green-50 p-6 rounded-[2rem] border-2 border-dashed border-green-200 space-y-6">
-                    <label class="text-[10px] font-black text-green-700 uppercase ml-1">Modèle de contrat PDF</label>
-                    <select id="f-contract-template-selector" class="w-full p-3 bg-white border border-green-200 rounded-xl text-sm font-bold text-slate-700 outline-none"></select>
-                    
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <input type="date" id="f-date" class="w-full p-3 bg-white border border-green-100 rounded-xl text-sm outline-none" required>
-                        <select id="f-limit" class="w-full p-3 bg-white border border-green-100 rounded-xl text-sm outline-none">
-                            <option value="365">CDI (1 an+)</option>
-                            <option value="180">CDD (6 mois)</option>
-                            <option value="90">Essai (3 mois)</option>
-                        </select>
-                        <input type="number" id="f-salaire-fixe" class="w-full p-3 bg-white border border-green-100 rounded-xl text-sm font-black text-blue-600 outline-none" placeholder="Salaire Base (CFA)">
-                    </div>
-                    
-                    <div data-employee-type="MOBILE" class="field-group-contract grid grid-cols-2 gap-4 pt-2 border-t border-green-100 hidden">
-                        <input type="number" id="f-indemnite-transport" class="w-full p-3 bg-white border border-green-200 rounded-xl text-sm outline-none" placeholder="Transport">
-                        <input type="number" id="f-indemnite-logement" class="w-full p-3 bg-white border border-green-200 rounded-xl text-sm outline-none" placeholder="Logement">
-                    </div>
-                </div>
-            </div>
-
-            <!-- ÉTAPE 3 : DOCUMENTS & MANAGEMENT -->
-            <div id="step-3" class="wizard-step hidden space-y-6 animate-fadeIn">
-                <p class="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] mb-4">Dossier KYC & Hiérarchie</p>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-center cursor-pointer" onclick="openDocCamera('id_card')">
-                        <i id="icon-id_card" class="fa-solid fa-id-card text-slate-300 text-xl mb-2"></i>
-                        <img id="preview-id_card" class="hidden h-10 w-full object-cover rounded">
-                        <p class="text-[9px] font-black uppercase text-slate-400">ID CARD</p>
-                    </div>
-                    <div class="p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-center cursor-pointer" onclick="openDocCamera('cv')">
-                        <i id="icon-cv" class="fa-solid fa-file-pdf text-slate-300 text-xl mb-2"></i>
-                        <img id="preview-cv" class="hidden h-10 w-full object-cover rounded">
-                        <p class="text-[9px] font-black uppercase text-slate-400">CV</p>
-                    </div>
-                    <div class="p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-center cursor-pointer" onclick="openDocCamera('diploma')">
-                        <i id="icon-diploma" class="fa-solid fa-graduation-cap text-slate-300 text-xl mb-2"></i>
-                        <img id="preview-diploma" class="hidden h-10 w-full object-cover rounded">
-                        <p class="text-[9px] font-black uppercase text-slate-400">DIPLÔME</p>
-                    </div>
-                    <div class="p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-center cursor-pointer" onclick="openDocCamera('attestation')">
-                        <i id="icon-attestation" class="fa-solid fa-file-invoice text-slate-300 text-xl mb-2"></i>
-                        <img id="preview-attestation" class="hidden h-10 w-full object-cover rounded">
-                        <p class="text-[9px] font-black uppercase text-slate-400">AUTRE</p>
-                    </div>
-                </div>
-
-                <div class="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 space-y-4">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Management</p>
-                    <select id="f-manager" class="w-full p-4 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none text-sm font-bold">
-                        <option value="">-- Responsable N+1 --</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- BOUTONS NAVIGATION -->
-            <div class="mt-12 pt-8 border-t border-slate-100 flex justify-between items-center">
-                <button type="button" id="btn-prev" onclick="moveStep(-1)" class="invisible text-slate-400 font-bold uppercase text-[10px] tracking-widest hover:text-slate-800 transition-all">
-                    <i class="fa-solid fa-arrow-left mr-2"></i> Précédent
-                </button>
-                <button type="button" id="btn-next" onclick="moveStep(1)" class="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all">
-                    Suivant <i class="fa-solid fa-arrow-right ml-2"></i>
-                </button>
-                <button type="submit" id="btn-submit-wizard" class="hidden bg-slate-900 text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all">
-                    VALIDER & CRÉER
-                </button>
-            </div>
-        </form>
-    </div>
-</section>                  
-
-
-
-      <!-- RECHERCHE : id="view-catalog" -->
-<section id="view-catalog" class="view-section">
-    <!-- On ajoute data-module pour pouvoir désactiver le catalogue selon l'entreprise -->
-    <div data-module="MOD_CATALOG" class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 px-1">
-        <div>
-            <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Catalogue Produits</h2>
-            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Référentiel Médicaments & Matériels</p>
-        </div>
-        
-        <div class="flex flex-1 max-w-md w-full gap-2">
-            <!-- BARRE DE RECHERCHE PRODUITS -->
-            <div class="relative flex-1">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                <input type="text" id="search-product-input" onkeyup="filterProductsLocally()" 
-                       placeholder="Rechercher un produit..." 
-                       class="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all">
-            </div>
-
-            <!-- BOUTON AJOUT (Correction du onclick vers openSaveProductModal) -->
-            <button data-perm="can_manage_config" onclick="openSaveProductModal()" class="bg-blue-600 text-white h-[46px] px-6 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-900/20 active:scale-95 transition-all shrink-0">
-                <i class="fa-solid fa-plus mr-2"></i> Ajouter
-            </button>
-        </div>
-    </div>
-
-    <!-- Grille des produits (Gérée par JS) -->
-    <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-    </div>
-</section>
-
-        
-      <!-- VUE 7: RECRUTEMENT / ATS -->
-                    <section id="view-recruitment" class="view-section">
-                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                            <div>
-                                <h2 class="text-2xl font-extrabold text-slate-800">Candidatures (Airtable)</h2>
-                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Portail de recrutement et gestion</p>
-                            </div>
-                            
-                            <div class="flex items-center gap-2">
-                                <!-- Bouton Partager -->
-                                <button onclick="copyFormLink()" class="flex items-center gap-2 p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md text-sm font-bold active:scale-95">
-                                    <i class="fa-solid fa-share-nodes"></i> <span class="hidden sm:inline">Partager le lien</span>
-                                </button>
-                                
-                                <!-- Bouton Modifier -->
-                                <button onclick="openFormEditor()" class="flex items-center gap-2 p-2.5 bg-slate-800 text-white rounded-xl hover:bg-slate-900 transition-all shadow-md text-sm font-bold active:scale-95">
-                                    <i class="fa-solid fa-pen-to-square"></i> <span class="hidden sm:inline">Modifier</span>
-                                </button>
-
-                                <!-- Votre bouton Actualiser original -->
-                                <button onclick="fetchCandidates()" class="p-2.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all text-slate-600 shadow-sm font-bold text-sm active:scale-95">
-                                    <i class="fa-solid fa-rotate"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden">
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left whitespace-nowrap">
-                                    <thead class="bg-slate-900 text-white text-[10px] uppercase font-bold">
-                                        <tr>
-                                            <th class="px-6 py-5">Candidat</th>
-                                            <th class="px-6 py-5">Poste visé</th>
-                                            <th class="px-6 py-5 text-center">Statut Actuel</th>
-                                            <th class="px-6 py-5 text-right">Dossier & Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="candidates-body" class="divide-y divide-slate-100">
-                                        <!-- Rempli par JS -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </section>
-
-
-
-<section id="view-accounting" class="view-section">
-<!-- 1. EN-TÊTE COMPTABILITÉ PREMIUM & RESPONSIVE -->
-<div class="flex flex-col gap-6 mb-8 px-1">
-    <!-- LIGNE 1 : TITRE -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-            <h2 class="text-2xl md:text-3xl font-black text-slate-800 tracking-tighter">Comptabilité</h2>
-            <p class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Calcul & Édition des salaires</p>
-        </div>
-
-        <!-- BOUTONS EXPORT/IMPORT -->
-        <div class="flex gap-2 w-full md:w-auto">
-            <button onclick="exportPayrollTemplate()" class="flex-1 md:flex-none justify-center bg-white border border-slate-200 text-slate-600 px-4 py-3 rounded-xl font-bold text-[10px] uppercase hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm active:scale-95">
-                <i class="fa-solid fa-file-export"></i> Modèle Excel
-            </button>
-            <button onclick="triggerPayrollImport()" class="flex-1 md:flex-none justify-center bg-emerald-50 border border-emerald-100 text-emerald-600 px-4 py-3 rounded-xl font-bold text-[10px] uppercase hover:bg-emerald-100 transition-all flex items-center gap-2 shadow-sm active:scale-95">
-                <i class="fa-solid fa-file-import"></i> Importer Primes
-            </button>
-        </div>
-    </div>
-
-    <!-- LIGNE 2 : CENTRE DE COMMANDE (MOIS & PUBLICATION) -->
-    <div class="bg-slate-900 rounded-[1.5rem] p-4 md:p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
-        <!-- Effet visuel en fond -->
-        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-600 rounded-full blur-[60px] opacity-20 pointer-events-none"></div>
-        
-        <!-- Sélection Période -->
-        <div class="flex items-center gap-4 w-full md:w-auto">
-            <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-blue-400 shrink-0">
-                <i class="fa-solid fa-calendar-check text-xl"></i>
-            </div>
-            <div class="flex-1">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Période de Paie</p>
-                <div class="flex items-center gap-2 mt-0.5">
-                    <select id="pay-month" class="bg-transparent border-none p-0 font-black text-sm md:text-base outline-none cursor-pointer hover:text-blue-400 transition-colors">
-                        <option class="text-slate-800">Janvier</option><option class="text-slate-800">Février</option><option class="text-slate-800">Mars</option><option class="text-slate-800">Avril</option><option class="text-slate-800">Mai</option><option class="text-slate-800">Juin</option><option class="text-slate-800">Juillet</option><option class="text-slate-800">Août</option><option class="text-slate-800">Septembre</option><option class="text-slate-800">Octobre</option><option class="text-slate-800">Novembre</option><option class="text-slate-800">Décembre</option>
-                    </select>
-                    <input type="number" id="pay-year" value="2026" class="bg-transparent border-none p-0 w-16 font-black text-sm md:text-base outline-none cursor-pointer hover:text-blue-400 transition-colors">
-                </div>
-            </div>
-        </div>
-
-        <!-- Bouton Publier (Le bouton principal) -->
-        <button onclick="generateAllPay()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-xl font-black text-[11px] uppercase tracking-[0.15em] shadow-lg shadow-blue-900/20 active:scale-95 transition-all flex items-center justify-center gap-3">
-            <i class="fa-solid fa-check-double"></i>
-            PUBLIER LES BULLETINS
-        </button>
-    </div>
-</div>
-    
-
-    <!-- 3. TABLEAU DES SALAIRES --><!-- BARRE DE FILTRES COMPTABILITÉ RESPONSIVE -->
-<div class="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 mb-6 shadow-sm">
-    
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-        
-        <!-- 1. Recherche -->
-        <div class="sm:col-span-2 lg:col-span-1">
-            <label class="text-[8px] font-black text-slate-400 uppercase ml-2 mb-1 block">Recherche</label>
-            <div class="relative">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="search-accounting" onkeyup="filterAccountingTableLocally()" placeholder="Chercher un collaborateur..." class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-xs focus:ring-2 focus:ring-blue-500 transition-all">
-            </div>
-        </div>
-
-        <!-- 2. Filtre Activité -->
-        <div>
-            <label class="text-[8px] font-black text-slate-400 uppercase ml-2 mb-1 block">Activité</label>
-            <select id="filter-accounting-type" onchange="loadAccountingView()" class="w-full p-2.5 bg-slate-50 border-none rounded-xl text-xs font-bold outline-none cursor-pointer">
-                <option value="all">Toutes les activités</option>
-                <option value="OFFICE">🏢 Bureau</option>
-                <option value="MOBILE">🚗 Terrain</option>
-                <option value="FIXED">🏠 Site Fixe</option>
-            </select>
-        </div>
-
-        <!-- 3. Filtre Département -->
-        <div>
-            <label class="text-[8px] font-black text-slate-400 uppercase ml-2 mb-1 block">Département</label>
-            <select id="filter-accounting-dept" onchange="loadAccountingView()" class="w-full p-2.5 bg-slate-50 border-none rounded-xl text-xs font-bold outline-none cursor-pointer">
-                <option value="all">Tous les départements</option>
-            </select>
-        </div>
-
-        <!-- 4. Filtre Rôle (NOUVEAU) -->
-        <div>
-            <label class="text-[8px] font-black text-slate-400 uppercase ml-2 mb-1 block">Rôle Système</label>
-            <select id="filter-accounting-role" onchange="loadAccountingView()" class="w-full p-2.5 bg-slate-50 border-none rounded-xl text-xs font-bold outline-none cursor-pointer">
-                <option value="all">Tous les rôles</option>
-                <!-- Rempli par JS -->
-            </select>
-        </div>
-
-        <!-- 5. Filtre Statut + Bouton Reset -->
-        <div class="flex items-end gap-2">
-            <div class="flex-1">
-                <label class="text-[8px] font-black text-slate-400 uppercase ml-2 mb-1 block">Statut RH</label>
-                <select id="filter-accounting-status" onchange="loadAccountingView()" class="w-full p-2.5 bg-slate-50 border-none rounded-xl text-xs font-bold outline-none cursor-pointer">
-                    <option value="Actif">🟢 Actifs</option>
-                    <option value="Congé">🟡 En Congé</option>
-                    <option value="all">⚪ Tous (Incl. Sortis)</option>
-                </select>
-            </div>
-            
-            <button onclick="resetAccountingFilters()" class="bg-slate-100 text-slate-400 p-2.5 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all shadow-sm shrink-0" title="Réinitialiser les filtres">
-                <i class="fa-solid fa-filter-circle-xmark text-lg"></i>
-            </button>
-        </div>
-    </div>
-</div>
-    
-    <div class="bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
-    <div class="overflow-x-auto w-full">
-        <table class="w-full text-left border-collapse">
-                <!-- Dans ton index.html, vérifie le THEAD de la comptabilité -->
-                <thead class="sticky top-0 z-10">
-                    <tr class="bg-slate-900 text-white text-[10px] uppercase font-black">
-                        <th class="px-6 py-6">Collaborateur</th>
-                        <th class="px-4 py-6 text-center">Base (CFA)</th>
-                        <th class="px-4 py-6 text-center">Indemnités (Fixe)</th> <!-- AJOUTE CET EN-TÊTE -->
-                        <th class="px-4 py-6 text-center">Primes (+)</th>
-                        <th class="px-4 py-6 text-center">Retenues (-)</th>
-                        <th class="px-6 py-6 text-right">NET À PAYER</th>
-                    </tr>
-                </thead>
-                <tbody id="accounting-table-body" class="divide-y divide-slate-100">
-                    <!-- Rempli par JS -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-</section>
-
-                    <!-- VUE 4: LOGS -->
-                    <section id="view-logs" class="view-section">
-                        <div class="bg-white rounded-xl shadow-xl border overflow-hidden">
-                            <div class="p-5 border-b font-black text-slate-800 flex justify-between items-center uppercase text-sm">Journal d'Audit Système <button onclick="fetchLogs()" class="text-blue-600"><i class="fa-solid fa-rotate"></i></button></div>
-                            <div class="overflow-x-auto"><table class="w-full text-left whitespace-nowrap"><thead class="bg-slate-900 text-white text-[10px] uppercase"><tr><th class="p-5">Date</th><th class="p-5">Agent</th><th class="p-5">Action</th><th class="p-5">Détails</th></tr></thead><tbody id="logs-body"></tbody></table></div>
-                        </div>
-                    </section>
-
-
-
-                <!-- VUE : MAINTENANCE SYSTÈME -->
-<section id="view-maintenance" class="view-section">
-    <div class="flex justify-between items-center mb-8">
-        <div>
-            <h2 class="text-2xl font-black text-slate-800 tracking-tight">Maintenance & Archivage</h2>
-            <p class="text-sm text-slate-500 font-bold uppercase tracking-widest">Gestion de la santé de l'application</p>
-        </div>
-        <div class="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-black border border-emerald-100 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> SYSTÈME OPÉRATIONNEL
-        </div>
-    </div>
-
-    <!-- CARTE D'ARCHIVAGE AUTOMATIQUE -->
-    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden relative">
-        <!-- Bandeau décoratif -->
-        <div class="h-2 bg-gradient-to-r from-slate-700 to-slate-900"></div>
-        
-        <div class="p-5 md:p-12">
-            <div class="flex flex-col md:flex-row gap-5 items-start">
+        <!-- FORMULAIRE -->
+        <form id="applyForm" onsubmit="handleApply(event)" class="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl overflow-hidden">
+            <div class="p-8 md:p-12 space-y-10">
                 
-                <!-- Icône et Description -->
-                <div class="flex-1">
-                    <div class="w-16 h-16 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-sm">
-                        <i class="fa-solid fa-database"></i>
-                    </div>
-                    <h3 class="text-xl font-black text-slate-800 mb-2">Nettoyage et Archivage des Données</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed mb-6">
-                        Cette procédure permet de maintenir la rapidité de l'application sur le long terme. 
-                        Elle déplace les données "froides" vers le stockage d'archive et libère de l'espace disque.
-                    </p>
-                    
-                    <!-- Liste des actions -->
-                    <div class="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-3">
-                        <div class="flex items-center gap-3">
-                            <i class="fa-solid fa-check text-emerald-500"></i>
-                            <span class="text-xs font-bold text-slate-600">Archive les Logs de sécurité de plus d'un an.</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <i class="fa-solid fa-check text-emerald-500"></i>
-                            <span class="text-xs font-bold text-slate-600">Supprime les photos de visite > 12 mois (Gain stockage).</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <i class="fa-solid fa-check text-emerald-500"></i>
-                            <span class="text-xs font-bold text-slate-600">Archive les dossiers employés "Sortis" depuis > 6 mois.</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Zone d'Action -->
-                <div class="w-full md:w-1/3 bg-slate-50 rounded-xl p-6 border border-slate-200 text-center">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Action Administrateur</p>
-                    <button onclick="runArchivingJob()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-3">
-                        <i class="fa-solid fa-recycle"></i> Lancer le Nettoyage
-                    </button>
-                    <p class="text-[9px] text-slate-400 mt-4 italic">Action recommandée 1 fois par trimestre.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-                    <!-- VUE : MESSAGERIE D'ÉQUIPE -->
-<section id="view-chat" class="view-section h-full flex flex-col">
-    <!-- En-tête -->
-    <div class="flex justify-between items-center mb-4 shrink-0 px-1">
-        <div>
-            <h2 class="text-2xl font-black text-slate-800 tracking-tight">Discussion Générale</h2>
-            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Espace d'échange collaboratif</p>
-        </div>
-        <button onclick="fetchMessages()" class="p-3 bg-white border border-slate-200 rounded-xl hover:text-blue-600 transition-all shadow-sm active:scale-95">
-            <i class="fa-solid fa-rotate"></i>
-        </button>
-    </div>
-
-    <!-- Zone des messages (Scrollable) -->
-    <div id="chat-container" class="flex-1 bg-white rounded-xl shadow-inner border border-slate-200 p-6 overflow-y-auto custom-scroll space-y-6 mb-4 relative" style="height: 60vh; background-image: radial-gradient(#f1f5f9 1px, transparent 1px); background-size: 20px 20px;">
-        <!-- Les messages s'afficheront ici -->
-        <div class="flex flex-col items-center justify-center h-full text-slate-300 gap-3">
-            <i class="fa-regular fa-comments text-4xl"></i>
-            <p class="text-xs font-bold uppercase">Chargement des discussions...</p>
-        </div>
-    </div>
-
-
-        <!-- ZONE D'APERÇU AVANT ENVOI -->
-        <div id="chat-preview-container" class="hidden px-6 py-3 bg-blue-50 border-t border-blue-100 flex items-center gap-4 animate-fadeIn">
-            <div class="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-white shadow-md">
-                <img id="chat-img-preview" class="w-full h-full object-cover">
-                <button type="button" onclick="cancelFile()" class="absolute top-0 right-0 bg-red-500 text-white p-1 hover:bg-red-600">
-                    <i class="fa-solid fa-xmark text-[10px]"></i>
-                </button>
-            </div>
-            <div class="flex-1 overflow-hidden">
-                <p id="chat-file-name" class="text-xs font-bold text-blue-700 truncate"></p>
-                <p class="text-[9px] text-blue-400 uppercase font-black">Fichier prêt à l'envoi</p>
-            </div>
-        </div>
-    
-
-    <!-- Barre de saisie (Fixe en bas) -->
-    <form onsubmit="sendMessage(event)" class="bg-white p-3 rounded-xl border border-slate-200 shadow-xl flex items-end gap-2 shrink-0">
-        
-        <!-- Bouton Pièce Jointe -->
-        <label for="chat-file" class="p-4 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full cursor-pointer transition-all relative">
-            <i class="fa-solid fa-paperclip text-lg"></i>
-            <input type="file" id="chat-file" class="hidden" onchange="document.getElementById('file-indicator').classList.remove('hidden')">
-            <div id="file-indicator" class="hidden absolute top-3 left-3 w-2 h-2 bg-blue-600 rounded-full border border-white"></div>
-        </label>
-        
-        <!-- Champ Texte -->
-        <textarea id="chat-input" rows="1" class="flex-1 bg-slate-50 border-0 rounded-2xl p-4 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all resize-none font-medium text-slate-700 custom-scroll" placeholder="Écrivez votre message..." style="min-height: 54px; max-height: 120px;"></textarea>
-        
-        <!-- Bouton Envoyer -->
-        <button type="submit" id="btn-send-chat" class="bg-blue-600 text-white w-14 h-14 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center justify-center active:scale-95">
-            <i class="fa-solid fa-paper-plane text-lg"></i>
-        </button>
-    </form>
-</section>
-
-                    <!-- VUE 5: MON PROFIL (STRUCTURE CORRIGÉE PLEINE LARGEUR) -->
-    <section id="view-my-profile" class="view-section">
-        <div class="max-w-6xl mx-auto">
-            <h2 class="text-2xl font-extrabold text-slate-800 mb-8">Mon Espace Personnel</h2>
-
-            <!-- WIDGET POINTAGE & ACTION -->
-            <div class="bg-slate-900 rounded-xl p-6 mb-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full blur-[80px] opacity-20 pointer-events-none"></div>
-                
-                <div class="z-10 mb-6 md:mb-0 text-center md:text-left">
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">État Actuel</p>
-                    <div class="flex items-center gap-3 justify-center md:justify-start">
-                        <div id="clock-status-dot" class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div>
-                        <h3 id="clock-status-text" class="text-2xl font-black">NON POINTÉ</h3>
-                    </div>
-                    <p id="clock-last-action" class="text-xs text-slate-500 mt-1 font-mono">Dernière action : Aucune</p>
-                </div>
-
-                <div class="flex gap-4 z-10 w-full md:w-auto">
-                    <button data-perm="can_clock" onclick="handleClockInOut()" id="btn-clock" class="flex-1 md:flex-none bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-2xl font-black uppercase transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-fingerprint"></i> <span>ENTRÉE</span>
-                    </button>
-                    <button data-perm="can_request_leave" onclick="openLeaveModal()" class="flex-1 md:flex-none bg-slate-800 hover:bg-slate-700 text-white px-6 py-4 rounded-2xl font-bold uppercase transition-all border border-slate-700 active:scale-95 text-xs">
-                        <i class="fa-solid fa-plane-departure mr-2"></i> Demander un Congé
-                    </button>
-                    <button data-module="MOD_MOBILE_WORKFORCE" data-perm="can_submit_daily_report" onclick="openDailyReportModal()" class="flex-1 md:flex-none bg-orange-500 hover:bg-orange-400 text-white px-6 py-4 rounded-2xl font-bold uppercase transition-all shadow-lg active:scale-95 text-xs">
-                        <i class="fa-solid fa-flag-checkered mr-2"></i> Rapport de Fin de Journée
-                    </button>
-                </div>
-            </div>
-
-
-                        <!-- NOUVEAU WIDGET SOLDE CONGÉS -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 mb-8 flex justify-between items-center">
-                <div>
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Solde Congés Restant</p>
-                    <h3 id="leave-balance-display" class="text-4xl font-black mt-2 text-indigo-600">--</h3>
-                </div>
-                <div class="p-3 bg-indigo-100 text-indigo-600 rounded-xl"><i class="fa-solid fa-calendar-check text-3xl"></i></div>
-            </div>
-            <!-- FIN NOUVEAU WIDGET SOLDE CONGÉS -->
-
-            <!-- WIDGET POINTAGE & ACTION (Qui est déjà là) -->
-            <div class="bg-slate-900 rounded-xl p-6 mb-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
-                <!-- ... le reste du code du pointage ... -->
-            </div>
-
-            <!-- ZONE HAUTE : PHOTO (Gauche) + FORMULAIRE (Droite) -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-                
-                <!-- COLONNE GAUCHE : PHOTO & IDENTITÉ -->
+                <!-- SECTION 1 : INFOS PERSO -->
                 <div class="space-y-6">
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 text-center relative overflow-hidden h-full">
-                        <div class="absolute top-0 left-0 w-full h-24 bg-blue-600/10"></div>
-                        <div class="relative">
-                            <div class="w-28 h-28 bg-white p-1 rounded-full mx-auto mb-4 shadow-lg overflow-hidden relative group">
-                                <span id="emp-avatar" class="w-full h-full flex items-center justify-center text-3xl font-bold text-slate-300 bg-slate-50">?</span>
-                                <img id="emp-photo-real" class="w-full h-full object-cover hidden">
-                                <div onclick="triggerPhotoUpload()" class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"><i class="fa-solid fa-camera text-white"></i></div>
-                            </div>
-                            <h3 id="emp-name" class="font-bold text-xl text-slate-800">...</h3>
-                            <p id="emp-job" class="text-sm text-blue-600 font-bold mb-4 uppercase">...</p>
-                            <div class="bg-slate-50 rounded-2xl p-4 text-xs space-y-2 text-left border border-slate-100">
-                                <div class="flex justify-between font-bold uppercase tracking-tighter"><span>Début :</span> <span id="emp-start-date" class="text-slate-800">--/--/----</span></div>
-                                <div class="flex justify-between font-bold uppercase tracking-tighter"><span>Fin :</span> <span id="emp-end-date" class="text-slate-800">--/--/----</span></div>
-                            </div>
-                            <button onclick="downloadMyBadge()" class="w-full bg-slate-900 text-white py-3.5 rounded-xl text-sm font-black mt-6 shadow-xl active:scale-95 transition-all"><i class="fa-solid fa-id-card mr-2"></i> MON BADGE D'ACCÈS</button>
+                    <h2 class="text-xs font-black uppercase text-blue-600 tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-user-circle"></i> Informations Personnelles
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="space-y-2">
+                            <label class="text-[11px] font-bold text-slate-500 ml-1">NOM ET PRÉNOM</label>
+                            <input type="text" name="nom_complet" placeholder="Ex: Jean Dupont" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 transition-all">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[11px] font-bold text-slate-500 ml-1">E-MAIL</label>
+                            <input type="email" name="email" placeholder="nom@exemple.com" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 transition-all">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[11px] font-bold text-slate-500 ml-1">TÉLÉPHONE</label>
+                            <input type="tel" name="telephone" placeholder="+229 ..." required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 transition-all">
+                        </div>
+                        <div id="field-dob" class="space-y-2">
+                            <label class="text-[11px] font-bold text-slate-500 ml-1">DATE DE NAISSANCE</label>
+                            <input type="date" name="date_naissance" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 transition-all">
                         </div>
                     </div>
                 </div>
 
-                <!-- COLONNE DROITE : FORMULAIRE -->
-                <div class="md:col-span-2 space-y-6">
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 h-full">
-                        <div class="flex justify-between items-center mb-8"><h3 class="font-bold text-lg text-slate-800">Coordonnées</h3><button data-perm="can_edit_own_profile" onclick="toggleEditMode()" class="text-blue-600 text-sm font-bold bg-blue-50 px-4 py-1.5 rounded-lg active:scale-95 transition-all">Modifier</button></div>
-                        <form id="form-self-update" class="space-y-5">
-                            <input type="file" id="emp-upload-photo" class="hidden" accept="image/*" onchange="previewPhoto(event)">
-                            <div class="grid grid-cols-2 gap-6">
-                                <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Date de Naissance</label><input type="date" id="emp-dob" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none" disabled></div>
-                                <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Téléphone</label><input type="tel" id="emp-phone" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none" disabled></div>
-                            </div>
-                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Email Personnel</label><input type="email" id="emp-email" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none" disabled></div>
-                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Adresse Résidentielle</label><textarea id="emp-address" rows="3" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl resize-none outline-none" disabled></textarea></div>
-                            <div id="save-btn-container" class="hidden pt-6 flex justify-end gap-3"><button type="button" onclick="toggleEditMode()" class="px-6 py-3 font-bold text-slate-400 text-sm">Annuler</button><button type="button" onclick="saveMyProfile()" class="bg-blue-600 text-white px-10 py-3 rounded-xl font-black shadow-lg uppercase text-xs">Sauvegarder</button></div>
-                        </form>
+                <!-- SECTION 2 : POSTE -->
+                <div class="space-y-6">
+                    <h2 class="text-xs font-black uppercase text-blue-600 tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-briefcase"></i> Votre Candidature
+                    </h2>
+                    <div class="space-y-2">
+                        <label class="text-[11px] font-bold text-slate-500 ml-1">POSTE VISÉ</label>
+                        <select name="poste_vise" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none appearance-none font-semibold text-slate-700 cursor-pointer focus:border-blue-500">
+                            <option>DEVELOPPEUR FULLSTACK</option>
+                            <option>AGENT DE SÉCURITÉ</option>
+                            <option>RESPONSABLE RH</option>
+                            <option>COMPTABLE</option>
+                        </select>
                     </div>
                 </div>
-            </div>
 
-
-
-
-
-            
-
-                <!-- BLOC SUIVI DEMANDES CONGÉS (Employé) -->
-    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 mb-8">
-        <h3 class="font-black text-xs uppercase text-slate-400 mb-6 flex items-center gap-2 tracking-widest">
-            <i class="fa-solid fa-hourglass-half text-blue-500 text-lg"></i> Mes Demandes de Congés
-        </h3>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left whitespace-nowrap">
-                <thead class="bg-slate-50/80 text-[10px] uppercase font-black text-slate-400">
-                    <tr>
-                        <th class="px-6 py-3">Période</th>
-                        <th class="px-6 py-3">Type</th>
-                        <th class="px-6 py-3">Motif</th>
-                        <th class="px-6 py-3 text-right">Statut</th>
-                    </tr>
-                </thead>
-                <tbody id="my-leave-requests-body">
-                    <!-- Rempli par le JS -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <!-- FIN BLOC SUIVI DEMANDES CONGÉS -->
-
-
-<!-- RECAPITULATIF POUR DELEGUES UNIQUEMENT (Ajout de l'ID ici) -->
-<div id="mobile-recap-section" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 hidden">
-    <!-- RECAP VISITES DU JOUR -->
-    <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
-        <h4 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest"><i class="fa-solid fa-location-dot mr-2"></i> Mes Visites du Jour</h4>
-        <div id="my-today-visits" class="space-y-2 max-h-48 overflow-y-auto custom-scroll"></div>
-    </div>
-
-    <!-- RECAP BILANS DU MOIS -->
-    <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
-        <h4 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest"><i class="fa-solid fa-clipboard-check mr-2"></i> Mes Bilans Mensuels</h4>
-        <div id="my-month-dailies" class="space-y-2 max-h-48 overflow-y-auto custom-scroll"></div>
-    </div>
-</div>
-
-            
-
-            <!-- ZONE BASSE : DOCUMENTS & PAIE (PLEINE LARGEUR MAINTENANT) -->
-            <div class="space-y-8">
-                
-                <!-- BLOC DOCUMENTS -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
-                    <h3 class="font-black text-xs uppercase text-slate-400 mb-6 flex items-center gap-2 tracking-widest">
-                        <i class="fa-solid fa-folder-open text-yellow-500 text-lg"></i> Mes Documents Administratifs
-                    </h3>
-                    <!-- Le conteneur ID doc-container sera rempli par le JS en mode grille -->
-                    <div id="doc-container" class="w-full"></div>
-                </div>
-
-
-
-            <!-- Bloc Rapports avec Scroll -->
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 mb-8">
-                <div class="flex justify-between items-center mb-4"> <!-- mb réduit -->
-                    <h3 class="font-black text-xs uppercase text-slate-400 flex items-center gap-2 tracking-widest">
-                        <i class="fa-solid fa-clock-rotate-left text-indigo-500 text-lg"></i> Mes Rapports d'Activité
-                    </h3>
-                    <button onclick="fetchAttendanceReport('PERSONAL')" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-all">
-                        <i class="fa-solid fa-rotate mr-1"></i> Actualiser
-                    </button>
-                </div>
-                
-                <!-- ICI : On ajoute max-h-[300px] et custom-scroll -->
-                <div id="personal-report-container" class="space-y-3 max-h-[300px] custom-scroll pr-2">
-                    <p class="text-[10px] text-slate-400 italic">Cliquez sur actualiser pour voir vos rapports.</p>
-                </div>
-            </div>
-
-
-
-                                        <!-- Bloc Paie avec Scroll -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-black text-xs uppercase text-slate-400 flex items-center gap-2 tracking-widest">
-                            <i class="fa-solid fa-file-invoice-dollar text-emerald-500 text-lg"></i> Mes Bulletins de Paie
-                        </h3>
-                        <span class="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-1 rounded">
-                            Total : <span id="count-payroll">0</span>
-                        </span>
-                    </div>
-
-                    <!-- ICI : Scroll vertical + Grille responsive -->
-                    <div class="max-h-[350px] custom-scroll pr-2">
-                        <div id="payroll-container" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            <div class="col-span-full text-center py-4 text-slate-400 italic text-xs">Recherche des bulletins...</div>
+                <!-- SECTION 3 : FICHIERS -->
+                <div class="space-y-6">
+                    <h2 class="text-xs font-black uppercase text-blue-600 tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-paperclip"></i> Documents justificatifs (Max 5Mo)
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="relative group">
+                            <input type="file" name="cv" id="cv" class="hidden" onchange="validateFile(this)" required>
+                            <label for="cv" class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:bg-blue-50 transition-all h-full text-center">
+                                <i class="fa-solid fa-file-pdf text-slate-300 text-xl mb-2"></i>
+                                <span class="text-[10px] font-bold text-slate-500">CV (Obligatoire)</span>
+                                <span id="label-cv" class="text-[9px] text-blue-600 font-bold mt-1 truncate w-full px-2"></span>
+                            </label>
+                        </div>
+                        <div id="field-dip" class="relative group">
+                            <input type="file" name="diploma" id="diploma" class="hidden" onchange="validateFile(this)">
+                            <label for="diploma" class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition-all h-full text-center">
+                                <i class="fa-solid fa-graduation-cap text-slate-300 text-xl mb-2"></i>
+                                <span class="text-[10px] font-bold text-slate-500">Diplômes / Attestations</span>
+                                <span id="label-diploma" class="text-[9px] text-slate-600 font-bold mt-1 truncate w-full px-2"></span>
+                            </label>
+                        </div>
+                        <div id="field-lm" class="relative group">
+                            <input type="file" name="lm" id="lm" class="hidden" onchange="validateFile(this)">
+                            <label for="lm" class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition-all h-full text-center">
+                                <i class="fa-solid fa-envelope-open-text text-slate-300 text-xl mb-2"></i>
+                                <span class="text-[10px] font-bold text-slate-500">Lettre de Motivation</span>
+                                <span id="label-lm" class="text-[9px] text-blue-600 font-bold mt-1 truncate w-full px-2"></span>
+                            </label>
+                        </div>
+                        <div id="field-id" class="relative group">
+                            <input type="file" name="id_card" id="id_card" class="hidden" onchange="validateFile(this)">
+                            <label for="id_card" class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition-all h-full text-center">
+                                <i class="fa-solid fa-id-card text-slate-300 text-xl mb-2"></i>
+                                <span class="text-[10px] font-bold text-slate-500">Pièce Identité</span>
+                                <span id="label-id_card" class="text-[9px] text-blue-600 font-bold mt-1 truncate w-full px-2"></span>
+                            </label>
                         </div>
                     </div>
                 </div>
 
-
-
-            </div>
-        </div>
-    </section>
-
-
-
-
-                    <!-- VUE 6: AIDE & INFOS -->
-    <section id="view-help" class="view-section">
-        <div class="max-w-6xl mx-auto">
-            <h2 class="text-2xl font-extrabold text-slate-800 mb-8">Centre d'Information</h2>
-
-            <!-- ZONE 1 : FLASH INFO / ANNONCE GÉNÉRALE -->
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-5 text-white shadow-xl mb-10 relative overflow-hidden">
-                <div class="relative z-10">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/30">Note de service</span>
-                        <span class="text-xs font-medium opacity-80"><i class="fa-regular fa-clock mr-1"></i> Mis à jour le 18/01/2026</span>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-2">Bienvenue sur le nouveau portail SIRH !</h3>
-                    <p class="text-blue-100 text-sm leading-relaxed max-w-2xl">
-                        Cette application est désormais votre outil unique pour la gestion de vos présences et de vos congés.
-                        Pensez à bien <strong>activer la géolocalisation</strong> sur votre téléphone pour valider vos pointages.
-                        Pour toute question technique, référez-vous aux guides ci-dessous.
-                    </p>
-                </div>
-                <!-- Déco fond -->
-                <i class="fa-solid fa-bullhorn absolute -right-6 -bottom-6 text-9xl opacity-10 rotate-[-20deg]"></i>
-            </div>
-
-            <!-- ZONE 2 : GUIDES D'UTILISATION (FAQ) -->
-            <h3 class="font-black text-slate-700 uppercase text-sm tracking-widest mb-6">Guides Rapides</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                
-                <!-- Carte 1 : Pointage -->
-                <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
-                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl mb-4">
-                        <i class="fa-solid fa-fingerprint"></i>
-                    </div>
-                    <h4 class="font-bold text-slate-800 mb-2">Comment pointer ?</h4>
-                    <p class="text-sm text-slate-500 leading-relaxed mb-4">
-                        Le pointage est obligatoire à l'arrivée et au départ.
-                        <br>1. Allez sur "Mon Profil".
-                        <br>2. Cliquez sur le gros bouton <strong>ENTRÉE</strong>.
-                        <br>3. Autorisez la localisation si demandé.
-                        <br><em>Note : Le bouton devient ROUGE quand vous êtes en poste.</em>
-                    </p>
-                </div>
-
-                <!-- Carte 2 : Congés -->
-                <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
-                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl mb-4">
-                        <i class="fa-solid fa-plane-departure"></i>
-                    </div>
-                    <h4 class="font-bold text-slate-800 mb-2">Demander un congé</h4>
-                    <p class="text-sm text-slate-500 leading-relaxed mb-4">
-                        Les demandes doivent être faites 48h à l'avance.
-                        <br>1. Sur "Mon Profil", cliquez sur "Demander Congé".
-                        <br>2. Remplissez les dates et le motif.
-                        <br>3. <strong>Joignez un justificatif</strong> (PDF ou Photo) si c'est une maladie.
-                        <br>Vous recevrez la réponse de votre manager ici même.
-                    </p>
-                </div>
-
-                <!-- Carte 3 : Documents -->
-                <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
-                    <div class="w-12 h-12 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center text-xl mb-4">
-                        <i class="fa-solid fa-folder-open"></i>
-                    </div>
-                    <h4 class="font-bold text-slate-800 mb-2">Mes Documents</h4>
-                    <p class="text-sm text-slate-500 leading-relaxed mb-4">
-                        Votre contrat signé et vos pièces d'identité sont stockés dans la section "Mes Documents".
-                        Vous pouvez cliquer sur l'icône <i class="fa-solid fa-file-arrow-up text-xs"></i> pour mettre à jour une pièce périmée (ex: nouveau passeport).
-                    </p>
-                </div>
-
-                <!-- Carte 4 : Support -->
-                <div class="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-sm text-white">
-                    <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-xl mb-4">
-                        <i class="fa-solid fa-headset"></i>
-                    </div>
-                    <h4 class="font-bold text-white mb-2">Besoin d'aide ?</h4>
-                    <p class="text-sm text-slate-400 leading-relaxed mb-4">
-                        Si vous rencontrez un bug ou si vous avez perdu vos accès, contactez le service IT ou RH.
-                    </p>
-                    <div class="bg-white/10 p-3 rounded-xl flex items-center gap-3">
-                        <i class="fa-solid fa-envelope text-blue-400"></i>
-                        <span class="font-mono text-xs">support-sirh@entreprise.com</span>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </section>
-
-
-
-
-
-
-<section id="view-settings" class="view-section">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-            <h2 class="text-2xl font-black text-slate-800">Configuration des Bureaux</h2>
-            <p class="text-sm text-slate-500 font-bold uppercase tracking-widest">Gestion des zones de pointage autorisées</p>
-        </div>
-        
-        <div class="flex flex-wrap gap-2 w-full md:w-auto">
-            <button data-perm="can_manage_config" onclick="downloadZonesTemplate()" class="flex-1 md:flex-none justify-center bg-white border border-slate-200 text-slate-600 px-4 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 active:scale-95 transition-all text-xs">
-                <i class="fa-solid fa-file-csv mr-2"></i> Modèle CSV
-            </button>
-            
-            <button data-perm="can_manage_config" onclick="exportZones()" class="flex-1 md:flex-none justify-center bg-white border border-slate-200 text-slate-600 px-4 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 active:scale-95 transition-all text-xs">
-                <i class="fa-solid fa-download mr-2"></i> Exporter
-            </button>
-        
-            <button data-perm="can_manage_config" onclick="triggerZonesCSVImport()" class="flex-1 md:flex-none justify-center bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center gap-2 text-xs">
-                <i class="fa-solid fa-upload"></i> Importer
-            </button>
-            
-            <button onclick="openAddZoneModal()" class="flex-1 md:flex-none justify-center bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all text-xs">
-                <i class="fa-solid fa-plus mr-2"></i> Ajouter
-            </button>
-        
-            <input type="file" id="csv-zones-input" class="hidden" accept=".csv" onchange="handleZonesCSVFile(event)">
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="zones-container">
-        <!-- Rempli par JS -->
-    </div>
-</section>
-
-
-        <!-- AJOUTER CETTE SECTION DANS ton index.html (entre deux sections existantes) -->
-<section id="view-contract-templates" class="view-section">
-    <div class="flex justify-between items-center mb-8">
-        <div>
-            <h2 class="text-2xl font-black text-slate-800 tracking-tight">Modèles de Contrats</h2>
-            <p class="text-sm text-slate-500 font-bold uppercase tracking-widest">Gestion des formats juridiques par rôle</p>
-        </div>
-        <button data-perm="can_manage_config" onclick="openAddTemplateModal()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center gap-2">
-            <i class="fa-solid fa-upload"></i> Uploader un Modèle
-        </button>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left whitespace-nowrap">
-                <thead class="bg-slate-900 text-white text-[10px] uppercase font-bold">
-                    <tr>
-                        <th class="px-6 py-5">Rôle Cible</th>
-                        <th class="px-6 py-5">Libellé du Modèle</th>
-                        <th class="px-6 py-5">Fichier Stocké</th>
-                        <th class="px-6 py-5 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="templates-body" class="divide-y divide-slate-100">
-                    <!-- Rempli par JS -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-</section>
-
-<!-- DANS VUE : LIEUX & SITES -->
-<section id="view-mobile-locations" class="view-section">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-            <h2 class="text-2xl font-black text-slate-800">Lieux & Sites</h2>
-            <p class="text-sm text-slate-500 font-bold uppercase tracking-widest">Base de données des points de passage</p>
-        </div>
-        
-        <!-- DANS LA SECTION id="view-mobile-locations" -->
-        <div class="flex flex-wrap gap-2 w-full md:w-auto">
-            
-            <!-- 1. LE NOUVEAU BLOC : BOUTONS GRILLE / LISTE -->
-            <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner mr-2 shrink-0">
-                <button onclick="changeViewMode('locations', 'grid')" data-mode="grid" class="view-toggle-locations px-3 py-1.5 rounded-lg text-xs transition-all" title="Vue Grille">
-                    <i class="fa-solid fa-border-all"></i>
-                </button>
-                <button onclick="changeViewMode('locations', 'list')" data-mode="list" class="view-toggle-locations px-3 py-1.5 rounded-lg text-xs transition-all" title="Vue Liste">
-                    <i class="fa-solid fa-table-list"></i>
+                <button type="submit" id="btnSubmit" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-bold text-lg hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all flex items-center justify-center gap-3">
+                    Soumettre ma candidature <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </div>
-            <!-- FIN DU NOUVEAU BLOC -->
-        
-            <!-- Les anciens boutons restent à la suite -->
-            <button data-perm="can_manage_mobile_locations" onclick="downloadLocationsTemplate()" class="flex-1 md:flex-none justify-center bg-white border border-slate-200 text-slate-600 px-4 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 active:scale-95 transition-all text-xs">
-                <i class="fa-solid fa-file-csv mr-2"></i> Modèle CSV
+        </form>
+
+        <!-- FOOTER & CONFIG DISCRET -->
+        <div class="mt-8 flex justify-between items-center px-4">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">© 2026 CORP-HR Group</p>
+            <!-- BOUTON ADMIN -->
+            <button id="btn-admin-settings" onclick="document.getElementById('configPanel').classList.remove('hidden')" class="text-slate-300 hover:text-slate-600 transition-colors">
+                <i class="fa-solid fa-gear text-lg"></i>
             </button>
-            
-            <button data-perm="can_manage_mobile_locations" onclick="exportLocations()" class="flex-1 md:flex-none justify-center bg-white border border-slate-200 text-slate-600 px-4 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 active:scale-95 transition-all text-xs">
-                <i class="fa-solid fa-download mr-2"></i> Exporter
-            </button>
-        
-            <button data-perm="can_manage_mobile_locations" onclick="triggerCSVImport()" class="flex-1 md:flex-none justify-center bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center gap-2 text-xs">
-                <i class="fa-solid fa-upload"></i> Importer
-            </button>
-            
-            <button data-perm="can_manage_mobile_locations" onclick="openAddLocationModal()" class="flex-1 md:flex-none justify-center bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center gap-2 text-xs">
-                <i class="fa-solid fa-plus"></i> Nouveau
-            </button>
-        
-            <input type="file" id="csv-file-input" class="hidden" accept=".csv" onchange="handleCSVFile(event)">
         </div>
     </div>
 
-    <!-- Grille des lieux -->
-    <div id="locations-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Rempli par JS -->
-        <div class="col-span-full text-center py-10 text-slate-400 italic">Chargement des lieux...</div>
-    </div>
-</section>
-
-<!-- VUE : MON AGENDA -->
-<section id="view-mobile-planning" class="view-section">
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h2 class="text-2xl font-black text-slate-800">Mon Agenda</h2>
-            <p class="text-sm text-slate-500 font-bold uppercase tracking-widest">Planning des missions</p>
-        </div>
-        <!-- On garde can_manage_schedules : Assure-toi que cette case est bien COCHÉE (TRUE) 
-             pour les Délégués dans Supabase afin qu'ils puissent planifier leur propre journée -->
-        <button data-perm="can_manage_schedules" onclick="openAddScheduleModal()" class="bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center gap-2 text-xs uppercase tracking-widest">
-            <i class="fa-solid fa-plus"></i> Mission
-        </button>
-    </div>
-
-    <!-- C'EST ICI QUE LA TIMELINE VA S'AFFICHER -->
-    <div id="planning-timeline-container" class="max-w-3xl mx-auto pb-20">
-        <div class="text-center py-10 text-slate-400 italic">Chargement de l'agenda...</div>
-    </div>
-</section>
-
-
-
-
-        
-        
-        <section id="view-mobile-reports" class="view-section">
-            <!-- 1. BARRE DE FILTRES PRO -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border mb-6 flex flex-wrap gap-4 items-end">
-                <div class="flex-1 min-w-[200px]">
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Rechercher un délégué</label>
-                    <input type="text" id="filter-report-name" 
-                           onkeyup="handleReportSearch()" 
-                           placeholder="Rechercher un délégué..." 
-                           class="w-full p-3 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div class="w-48">
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Période d'affichage</label>
-                    <select id="filter-report-date" onchange="fetchMobileReports()" class="w-full p-3 bg-slate-50 border-none rounded-2xl text-sm font-bold">
-                        <option value="today">Aujourd'hui</option>
-                        <option value="month" selected>Mois en cours</option>
-                    </select>
-                </div>
-                <!-- Bouton de raccourci vers la synthèse -->
-                <button data-perm="can_view_reports" onclick="changeReportTab('audit')" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-xs shadow-lg hover:scale-105 transition-all">
-                    <i class="fa-solid fa-magnifying-glass-chart mr-2"></i> VOIR L'AUDIT
-                </button>
-            </div>
-        
-            <!-- 2. ZONE DE STATISTIQUES (3 CARTES PREMIUM INTÉGRÉES) -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <!-- Carte 1 : Visites -->
-                <div class="bg-slate-900 p-6 rounded-xl text-white shadow-xl relative overflow-hidden">
-                    <div class="relative z-10">
-                        <p id="stat-report-label" class="text-[10px] font-black uppercase opacity-60 tracking-widest">Visites Identifiées</p>
-                        <h3 id="stat-visites-total" class="text-4xl font-black mt-1">0</h3>
-                    </div>
-                    <i class="fa-solid fa-location-dot absolute -right-4 -bottom-4 text-6xl opacity-10"></i>
-                </div>
-                
-                <!-- Carte 2 : Produits (NOUVEAU) -->
-                <div class="bg-blue-600 p-6 rounded-xl text-white shadow-xl relative overflow-hidden">
-                    <div class="relative z-10">
-                        <p class="text-[10px] font-black uppercase opacity-80 tracking-widest">Produits Présentés</p>
-                        <h3 id="stat-produits-total" class="text-4xl font-black mt-1">0</h3>
-                    </div>
-                    <i class="fa-solid fa-pills absolute -right-4 -bottom-4 text-6xl opacity-20"></i>
-                </div>
-        
-                <!-- Carte 3 : Agents (NOUVEAU) -->
-                <div class="bg-emerald-500 p-6 rounded-xl text-white shadow-xl relative overflow-hidden">
-                    <div class="relative z-10">
-                        <p class="text-[10px] font-black uppercase opacity-80 tracking-widest">Agents sur le terrain</p>
-                        <h3 id="stat-agents-actifs" class="text-4xl font-black mt-1">0</h3>
-                    </div>
-                    <i class="fa-solid fa-users absolute -right-4 -bottom-4 text-6xl opacity-20"></i>
-                </div>
-            </div>
-        
-            <!-- 3. NAVIGATION PAR ONGLETS (VISITES / BILANS / SYNTHÈSE) -->
-            <div class="flex flex-wrap gap-6 mb-6 border-b border-slate-200">
-                <button onclick="changeReportTab('visits')" id="tab-visits" class="report-tab-btn pb-4 text-sm font-bold text-blue-600 border-b-2 border-blue-600 transition-all">
-                    Visites de Sites (Cachets)
-                </button>
-                <button onclick="changeReportTab('daily')" id="tab-daily" class="report-tab-btn pb-4 text-sm font-bold text-slate-400 border-b-2 border-transparent transition-all">
-                    Bilans Journaliers (Cahiers)
-                </button>
-                <button onclick="changeReportTab('audit')" id="tab-audit" class="report-tab-btn pb-4 text-sm font-bold text-slate-400 border-b-2 border-transparent transition-all">
-                    📊 Synthèse d'Audit
-                </button>
-            </div>
-        
-            <!-- 4. SÉLECTEUR DE VUE (LISTE VS GALERIE) -->
-            <div id="view-switcher-area" class="flex justify-end gap-2 mb-4">
-                <button onclick="setReportView('list')" id="btn-view-list" class="p-2 bg-blue-100 text-blue-600 rounded-lg shadow-sm border border-blue-200 transition-all">
-                    <i class="fa-solid fa-list"></i>
-                </button>
-                <button onclick="setReportView('grid')" id="btn-view-grid" class="p-2 bg-slate-100 text-slate-400 rounded-lg shadow-sm border border-slate-200 transition-all">
-                    <i class="fa-solid fa-grip"></i>
-                </button>
-            </div>
-        
-            <!-- 5. CONTENEUR UNIQUE POUR L'INJECTION DES DONNÉES -->
-            <div id="reports-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Ce conteneur sera rempli dynamiquement par fetchMobileReports() ou fetchGlobalAudit() -->
-            </div>
-        </section>
-
-
-        <section id="view-prescripteurs-list" class="view-section">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-            <h2 class="text-2xl font-black text-slate-800 tracking-tight">Répertoire Médical</h2>
-            <p class="text-sm text-slate-500 font-bold uppercase tracking-widest">Base officielle des prescripteurs</p>
-        </div>
-        
-        <!-- DANS LA SECTION id="view-prescripteurs-list" -->
-        <div class="flex flex-wrap gap-2 w-full md:w-auto items-center">
-            
-            <!-- La barre de recherche (On ne la touche pas) -->
-            <div class="relative flex-1 md:w-64">
-                <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                <input type="text" id="search-prescripteur-input" onkeyup="filterPrescripteursLocally()" 
-                       placeholder="Filtrer..." 
-                       class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
-            </div>
-        
-            <!-- 1. LE NOUVEAU BLOC : BOUTONS GRILLE / LISTE -->
-            <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner mr-2 shrink-0">
-                <button onclick="changeViewMode('prescripteurs', 'grid')" data-mode="grid" class="view-toggle-prescripteurs px-3 py-1.5 rounded-lg text-xs transition-all" title="Vue Grille">
-                    <i class="fa-solid fa-border-all"></i>
-                </button>
-                <button onclick="changeViewMode('prescripteurs', 'list')" data-mode="list" class="view-toggle-prescripteurs px-3 py-1.5 rounded-lg text-xs transition-all" title="Vue Liste">
-                    <i class="fa-solid fa-table-list"></i>
-                </button>
-            </div>
-            <!-- FIN DU NOUVEAU BLOC -->
-        
-            <!-- Les anciens boutons d'import/export -->
-            <button data-perm="can_manage_prescripteurs" onclick="downloadPrescripteursTemplate()" class="p-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all shadow-sm" title="Modèle CSV">
-                <i class="fa-solid fa-file-csv"></i>
-            </button>
-            <button data-perm="can_manage_prescripteurs" onclick="exportPrescripteurs()" class="p-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all shadow-sm" title="Exporter">
-                <i class="fa-solid fa-download"></i>
-            </button>
-            <button data-perm="can_manage_prescripteurs" onclick="document.getElementById('csv-prescripteurs-input').click()" class="p-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-sm" title="Importer">
-                <i class="fa-solid fa-upload"></i>
-            </button>
-            
-            <button data-perm="can_manage_prescripteurs" onclick="openAddPrescripteurModal()" class="flex-1 md:flex-none justify-center bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center gap-2 text-xs uppercase tracking-widest">
-                <i class="fa-solid fa-plus"></i> Nouveau
-            </button>
-        
-            <input type="file" id="csv-prescripteurs-input" class="hidden" accept=".csv" onchange="handlePrescripteursCSV(event)">
-        </div>
-        
-    </div>
-
-    <!-- Grille des Médecins -->
-    <div id="prescripteurs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Rempli par JS -->
-        <div class="col-span-full text-center py-10 text-slate-400 italic">Chargement...</div>
-    </div>
-</section>
-
-        
-                </div>
-            </main>
-        </div>
-
-        <!-- MODAL DOSSIER COMPLET (VERSION PREMIUM UX) -->
-<div id="folder-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center z-[200] p-4 transition-all duration-300">
-    
-    <!-- Conteneur principal avec arrondi XL (40px) -->
-<div class="bg-white w-full max-w-5xl rounded-2xl shadow-2xl overflow-y-auto md:overflow-hidden flex flex-col md:flex-row h-[90vh] md:h-auto max-h-[95vh] border border-white/20 animate-fadeIn">        
-        <!-- COLONNE GAUCHE : IDENTITÉ (Design Immersif) -->
-        <div class="md:w-1/3 bg-slate-900 p-5 text-white flex flex-col items-center text-center shrink-0">
-            <!-- Photo avec bordure et ombre portée -->
-            <div class="w-32 h-32 rounded-2xl bg-slate-800 mb-6 overflow-hidden border-2 border-slate-700 shadow-2xl">
-                <img id="folder-photo" class="w-full h-full object-cover">
-            </div>
-            
-            <h3 id="folder-name" class="text-2xl font-black mb-1 uppercase tracking-tight leading-tight">...</h3>
-            <p id="folder-id" class="text-blue-500 font-mono text-[10px] mb-8 uppercase tracking-widest bg-blue-500/10 px-3 py-1 rounded-full">...</p>
-            
-            <!-- Blocs d'informations stylisés -->
-            <div class="w-full space-y-3 text-left">
-                <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
-                    <p class="text-[9px] text-slate-500 font-black uppercase tracking-tighter mb-1">Poste Actuel</p>
-                    <p id="folder-poste" class="text-sm font-bold text-slate-200">...</p>
-                    <p id="folder-dept" class="text-[11px] text-blue-400 font-medium">...</p>
-                </div>
-                
-                <div class="bg-blue-600/10 p-4 rounded-2xl border border-blue-500/20">
-                    <p class="text-[9px] text-blue-300 font-black uppercase tracking-tighter mb-1">Validité Contrat</p>
-                    <p class="text-xs font-bold text-white"><span id="folder-start">--</span> ➔ <span id="folder-end">--</span></p>
-                </div>
-            </div>
-            
-            <!-- Bouton de fermeture intégré -->
-            <button onclick="closeFolderModal()" class="mt-8 w-full py-4 rounded-2xl bg-white/10 hover:bg-red-500/20 hover:text-red-400 transition-all font-black text-[10px] uppercase tracking-widest active:scale-95">
-                FERMER LE DOSSIER
-            </button>
-        </div>
-
-        <!-- COLONNE DROITE : ARCHIVES & CONTACTS (Aéré & Lisible) -->
-        <div class="flex-1 p-5 md:p-12 md:overflow-y-auto bg-slate-50 custom-scroll min-h-[400px]">
-            
-            <!-- Titre Section 1 -->
-            <div class="flex items-center gap-4 mb-8">
-                <div class="h-[1px] flex-1 bg-slate-200"></div>
-                <h4 class="text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Archives Numériques</h4>
-                <div class="h-[1px] flex-1 bg-slate-200"></div>
-            </div>
-            
-            <!-- Grille des documents (Gérée par ton JS) -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12" id="folder-docs-grid"></div>
-            
-            <!-- Titre Section 2 -->
-            <div class="flex items-center gap-4 mb-6">
-                <div class="h-[1px] flex-1 bg-slate-200"></div>
-                <h4 class="text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Contacts & Coordonnées</h4>
-                <div class="h-[1px] flex-1 bg-slate-200"></div>
-            </div>
-            
-            <!-- Cartes de coordonnées -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm transition-all hover:shadow-md">
-                    <p class="text-[9px] text-slate-400 font-black uppercase mb-1">Email Personnel</p>
-                    <p id="folder-email" class="font-bold text-slate-800 text-sm italic truncate">...</p>
-                </div>
-                
-                <div class="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm transition-all hover:shadow-md">
-                    <p class="text-[9px] text-slate-400 font-black uppercase mb-1">Téléphone Direct</p>
-                    <p id="folder-phone" class="font-bold text-slate-800 text-sm">...</p>
-                </div>
-                
-                <div class="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm transition-all hover:shadow-md md:col-span-2">
-                    <p class="text-[9px] text-slate-400 font-black uppercase mb-1">Adresse de Résidence</p>
-                    <p id="folder-address" class="font-bold text-slate-800 text-sm">...</p>
-                </div>
-            </div>
-        </div>
-        
-    </div>
-</div>
-
-
-
-                <!-- MODAL ADMINISTRATION (VERSION PREMIUM UX) -->
-            <div id="edit-modal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-[200] p-4 backdrop-blur-md transition-all duration-300">
-                
-                <!-- Boite principale avec arrondi XL et ombre profonde -->
-                <div class="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[90vh] border border-white/20 animate-fadeIn">
-                    
-                    <!-- En-tête de la modale -->
-                    <div class="flex justify-between items-center mb-10">
-                        <div>
-                            <h3 class="font-black text-2xl uppercase text-slate-800 tracking-tighter">Administration</h3>
-                            <p class="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">Mise à jour du collaborateur</p>
-                        </div>
-                        <button onclick="closeEditModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90">
-                            <i class="fa-solid fa-xmark text-lg"></i>
-                        </button>
-                    </div>
-                    
-                    <input type="hidden" id="edit-id-hidden">
-                    
-                    <form onsubmit="submitUpdate(event)" class="space-y-8">
-                        
-                        <!-- 1. BLOC : STATUT & ACCÈS -->
-                        <div id="edit-block-status" class="space-y-4">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Statut & Habilitations</p>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
-                                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1 ml-2">État Civil</label>
-                                    <select id="edit-statut" class="w-full p-3 bg-transparent font-bold text-slate-700 outline-none cursor-pointer">
-                                        <option value="Actif">🟢 Actif</option>
-                                        <option value="Congé">🟡 En Congé</option>
-                                        <option value="Sortie">🔴 Sortie Définitive</option>
-                                    </select>
-                                </div>
-                                <div class="bg-blue-50/50 p-1.5 rounded-2xl border border-blue-100">
-                                    <label class="block text-[9px] font-black text-blue-400 uppercase mb-1 ml-2">Rôle Système</label>
-                                    <select id="edit-role" class="w-full p-3 bg-transparent font-black text-blue-700 outline-none cursor-pointer">
-                                        <!-- Rempli par JS -->
-                                    </select>
-                                </div>
-                            </div>
-        
-                            <div class="bg-indigo-50/50 p-1.5 rounded-2xl border border-indigo-100">
-                                <label class="block text-[9px] font-black text-indigo-400 uppercase mb-1 ml-2">Type d'Activité (Règle GPS)</label>
-                                <select id="edit-type" class="w-full p-3 bg-transparent font-black text-indigo-700 outline-none cursor-pointer">
-                                    <option value="OFFICE">🏢 Bureau (Fixe)</option>
-                                    <option value="FIXED">🏠 Agent Site (Fixe)</option>
-                                    <option value="MOBILE">🚗 Délégué (Nomade)</option>
-                                </select>
-                            </div>
-        
-                            <div class="bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
-                                <label class="block text-[9px] font-black text-slate-400 uppercase mb-1 ml-2">Département / Service</label>
-                                <select id="edit-dept" class="w-full p-3 bg-transparent font-bold text-slate-700 outline-none cursor-pointer">
-                                    <!-- Rempli par JS -->
-                                </select>
-                            </div>
-                        </div>
-        
-                        <!-- 2. BLOC : GESTION CONTRAT (Design Orange soft) -->
-                       <div id="edit-block-contract" class="p-6 bg-orange-50/50 rounded-xl border border-orange-100 space-y-4">
-            <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest flex items-center gap-2">
-                <i class="fa-solid fa-file-contract"></i> Cycle de vie du Contrat
-            </p>
-        
-            <!-- Ligne 1 : Type et Date (Inchangée) -->
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Durée / Type</label>
-                    <select id="edit-type-contrat" class="w-full p-3 bg-white border border-orange-100 rounded-xl text-xs font-bold text-slate-700 shadow-sm outline-none focus:ring-2 focus:ring-orange-200">
-                        <option value="365">CDI (1 an)</option>
-                        <option value="180">CDD (6 mois)</option>
-                        <option value="90">Essai (3 mois)</option>
-                        <option value="30">Stage</option>
-                        <option value="0">Freelance / Prestation</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Date d'effet</label>
-                    <input type="date" id="edit-start-date" class="w-full p-3 bg-white border border-orange-100 rounded-xl text-xs font-bold text-slate-700 shadow-sm outline-none">
-                </div>
-            </div>
-        
-            <!-- NOUVELLE LIGNE : SALAIRE ET INDEMNITÉS (Ajoutée) -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-orange-100/50">
-                <div>
-                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Salaire Base (CFA)</label>
-                    <input type="number" id="edit-salaire-fixe" class="w-full p-3 bg-white border border-orange-100 rounded-xl text-xs font-bold text-blue-600 shadow-sm outline-none" placeholder="0">
-                </div>
-                <div>
-                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Indem. Transport</label>
-                    <input type="number" id="edit-indemnite-transport" class="w-full p-3 bg-white border border-orange-100 rounded-xl text-xs font-bold text-slate-700 shadow-sm outline-none" placeholder="0">
-                </div>
-                <div>
-                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Indem. Logement</label>
-                    <input type="number" id="edit-indemnite-logement" class="w-full p-3 bg-white border border-orange-100 rounded-xl text-xs font-bold text-slate-700 shadow-sm outline-none" placeholder="0">
-                </div>
-            </div>
-        
-            <!-- Checkbox d'initialisation (Inchangée) -->
-            <div class="mt-3 flex items-start gap-3 bg-white/60 p-3 rounded-xl border border-orange-100">
-                <input type="checkbox" id="edit-init-check" class="mt-1 w-5 h-5 text-orange-600 rounded-lg border-orange-200 focus:ring-orange-500 cursor-pointer">
-                <label for="edit-init-check" class="text-[10px] text-orange-800 leading-tight font-medium">
-                    <b>Forcer l'initialisation :</b> Réinitialise le contrat à la date choisie (Embauche ou Renouvellement).
+    <!-- PANEL CONFIGURATION (MODAL) -->
+    <div id="configPanel" class="fixed inset-0 bg-slate-900/80 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-[2rem] p-10 max-w-sm w-full shadow-2xl">
+            <h2 class="font-black text-xl mb-6 text-slate-800 tracking-tight text-center">Lien de Partage</h2>
+            <div class="space-y-4 mb-8">
+                <label class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl cursor-pointer border border-slate-100">
+                    <span class="text-sm font-bold text-slate-600">Masquer Naissance</span>
+                    <input type="checkbox" id="check-dob" class="w-5 h-5 accent-blue-600">
+                </label>
+                <label class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl cursor-pointer border border-slate-100">
+                    <span class="text-sm font-bold text-slate-600">Masquer Lettre Motiv</span>
+                    <input type="checkbox" id="check-lm" class="w-5 h-5 accent-blue-600">
+                </label>
+                <label class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl cursor-pointer border border-slate-100">
+                    <span class="text-sm font-bold text-slate-600">Masquer Diplômes</span>
+                    <input type="checkbox" id="check-dip" class="w-5 h-5 accent-blue-600">
+                </label>
+                <label class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl cursor-pointer border border-slate-100">
+                    <span class="text-sm font-bold text-slate-600">Masquer Pièce ID</span>
+                    <input type="checkbox" id="check-id" class="w-5 h-5 accent-blue-600">
                 </label>
             </div>
-        </div>
-
-                <!-- 3. BLOC : HIÉRARCHIE (Design Indigo soft) -->
-                <div id="edit-block-hierarchy" class="p-6 bg-indigo-50/50 rounded-xl border border-indigo-100 space-y-4">
-                    <p class="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2">
-                        <i class="fa-solid fa-sitemap"></i> Management & Hiérarchie
-                    </p>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Responsable Direct (N+1)</label>
-                            <select id="edit-manager" class="w-full p-3 bg-white border border-indigo-100 rounded-xl text-xs font-bold text-slate-700 shadow-sm outline-none">
-                                <option value="">-- Aucun / Autonome --</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Périmètre Géré (Scope)</label>
-                            <input type="text" id="edit-scope" class="w-full p-3 bg-white border border-indigo-100 rounded-xl text-xs font-bold text-slate-700 shadow-sm outline-none" placeholder="Ex: IT, Finance, Cotonou...">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Bouton d'action massif -->
-                <button type="submit" class="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-blue-600 hover:shadow-blue-500/20 transition-all active:scale-95">
-                    Enregistrer les modifications
-                </button>
-            </form>
+            <button onclick="copyConfiguredLink()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg mb-3">Générer & Copier le lien</button>
+            <button onclick="document.getElementById('configPanel').classList.add('hidden')" class="w-full text-slate-400 font-bold text-xs uppercase text-center mt-2">Annuler</button>
         </div>
     </div>
 
-         <!-- MODAL SIGNATURE NUMÉRIQUE (VERSION PREMIUM UX) -->
-<div id="contract-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center z-[200] p-4 transition-all duration-300">
-    
-    <!-- Boite principale avec arrondi XL et alignement centré pour la confiance -->
-    <div class="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl animate-fadeIn border border-white/20 text-center">
-        
-        <!-- Icône de réassurance -->
-        <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-6 shadow-sm">
-            <i class="fa-solid fa-file-signature"></i>
-        </div>
-        
-        <h3 class="font-black text-2xl uppercase text-slate-800 tracking-tighter mb-2">Signature Numérique</h3>
-        <p class="text-slate-400 text-xs font-medium mb-8 leading-relaxed px-4">Utilisez votre doigt ou votre souris pour signer. Cette action vaut acceptation du contrat.</p>
-        
-        <input type="hidden" id="contract-id-hidden">
-        
-        <!-- Cadre de signature stylisé -->
-        <div class="bg-slate-50 p-2 rounded-xl border-2 border-dashed border-slate-200 mb-8 relative overflow-hidden">
-            <canvas id="signature-pad" class="w-full h-48 bg-white rounded-[1.5rem] border border-slate-100 cursor-crosshair shadow-inner"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const API_URL = "https://sirh-secure-backend.onrender.com/api/ingest-candidate";
+
+        // 1. SECURITÉ : MASQUER L'ADMIN SI LE LIEN EST PARTAGÉ
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
             
-            <!-- Bouton effacer repositionné de façon discrète -->
-            <button type="button" onclick="clearSignature()" class="absolute bottom-4 right-4 bg-slate-100/80 backdrop-blur text-slate-400 px-3 py-1 rounded-lg text-[9px] font-black uppercase hover:bg-red-50 hover:text-red-500 transition-all active:scale-90">
-                <i class="fa-solid fa-eraser mr-1"></i> Effacer
-            </button>
+            // Si le paramètre 'shared' est présent, on détruit littéralement le bouton Admin
+            if (params.has('shared')) {
+                const adminBtn = document.getElementById('btn-admin-settings');
+                if(adminBtn) adminBtn.remove(); // On ne fait pas juste le masquer, on le retire du code
+            }
+
+            // Application des masques
+            if (params.get('hdob') === '1') document.getElementById('field-dob').classList.add('hidden');
+            if (params.get('hlm') === '1') document.getElementById('field-lm').classList.add('hidden');
+            if (params.get('hdip') === '1') document.getElementById('field-dip').classList.add('hidden');
+            if (params.get('hid') === '1') document.getElementById('field-id').classList.add('hidden');
+        };
+
+        // 2. GÉNÉRATION DU LIEN AVEC PARAMETRE 'SHARED' OBLIGATOIRE
+        function copyConfiguredLink() {
+            const hDob = document.getElementById('check-dob').checked ? '1' : '0';
+            const hLm = document.getElementById('check-lm').checked ? '1' : '0';
+            const hDip = document.getElementById('check-dip').checked ? '1' : '0';
+            const hId = document.getElementById('check-id').checked ? '1' : '0';
             
-            <div class="absolute bottom-4 left-6 pointer-events-none">
-                <p class="text-[8px] font-black text-slate-300 uppercase tracking-widest">Zone de validation</p>
-            </div>
-        </div>
-
-        <!-- Actions -->
-        <div class="flex gap-3">
-            <button onclick="closeContractModal()" class="flex-1 py-4 rounded-2xl text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95">
-                Annuler
-            </button>
-            <button onclick="submitSignedContract()" class="flex-[2] bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.15em] shadow-xl hover:bg-blue-600 transition-all active:scale-95">
-                Valider & Signer
-            </button>
-        </div>
-        
-        <p class="mt-6 text-[8px] text-slate-300 font-medium uppercase tracking-widest">Protocole de signature électronique sécurisé</p>
-    </div>
-</div>
-
-
-<div id="leave-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center z-[200] p-4 transition-all duration-300">
-<div class="bg-white w-full max-w-lg md:max-w-4xl rounded-[2rem] shadow-2xl flex flex-col max-h-[95vh] overflow-hidden border border-white/20 animate-fadeIn">
-        <!-- En-tête Pro -->
-        <div class="bg-slate-900 p-5 text-white flex justify-between items-center shrink-0">
-            <div>
-                <h3 class="text-xl font-black uppercase tracking-tight">Demande d'Absence</h3>
-                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Formulaire de congé & maladie</p>
-            </div>
-            <button onclick="document.getElementById('leave-modal').classList.add('hidden')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
-        </div>
-
-    <form onsubmit="submitLeaveRequest(event)" class="p-6 md:p-8 overflow-y-auto custom-scroll">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
-                <!-- COLONNE GAUCHE : TYPE & DATES -->
-                <div class="space-y-6">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-3">1. Nature de l'absence</label>
-                        <div class="grid grid-cols-3 gap-2">
-                            <label class="cursor-pointer group">
-                                <input type="radio" name="leave_type" value="Congé Payé" class="peer sr-only" checked>
-                                <div class="p-3 border-2 border-slate-100 rounded-2xl text-center transition-all peer-checked:border-blue-600 peer-checked:bg-blue-50">
-                                    <span class="block text-xl">🏖️</span>
-                                    <span class="text-[9px] font-black uppercase text-slate-500">Congé</span>
-                                </div>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="radio" name="leave_type" value="Maladie" class="peer sr-only">
-                                <div class="p-3 border-2 border-slate-100 rounded-2xl text-center transition-all peer-checked:border-red-600 peer-checked:bg-red-50">
-                                    <span class="block text-xl">💊</span>
-                                    <span class="text-[9px] font-black uppercase text-slate-500">Maladie</span>
-                                </div>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="radio" name="leave_type" value="Autre" class="peer sr-only">
-                                <div class="p-3 border-2 border-slate-100 rounded-2xl text-center transition-all peer-checked:border-purple-600 peer-checked:bg-purple-50">
-                                    <span class="block text-xl">🏠</span>
-                                    <span class="text-[9px] font-black uppercase text-slate-500">Autres</span>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Date de début</label>
-                            <input type="date" id="leave-start" class="w-full bg-transparent font-bold text-slate-700 outline-none">
-                        </div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Date de fin</label>
-                            <input type="date" id="leave-end" class="w-full bg-transparent font-bold text-slate-700 outline-none">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- COLONNE DROITE : MOTIF & FICHIER -->
-                <div class="space-y-6">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">2. Motif & Justification</label>
-                        <textarea id="leave-reason" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-sm h-[100px] resize-none focus:bg-white focus:ring-2 focus:ring-blue-100" placeholder="Précisez la raison de votre absence..."></textarea>
-                    </div>
-
-                    <div class="p-4 bg-blue-50/50 rounded-2xl border-2 border-dashed border-blue-200">
-                        <div class="flex items-center gap-4">
-                            <div id="leave-doc-preview" class="w-12 h-12 bg-white rounded-xl flex items-center justify-center border text-blue-300 shadow-sm shrink-0">
-                                <i class="fa-solid fa-camera"></i>
-                            </div>
-                            <div class="flex-1 flex gap-2">
-                                <button type="button" onclick="openDocCamera('leave_justif')" class="flex-1 bg-white text-slate-600 text-[9px] font-black py-2.5 rounded-xl border border-slate-200 uppercase hover:bg-slate-50">Photo</button>
-                                <button type="button" onclick="document.getElementById('f-leave_justif').click()" class="flex-1 bg-blue-600 text-white text-[9px] font-black py-2.5 rounded-xl uppercase shadow-lg shadow-blue-200 active:scale-95">Fichier</button>
-                            </div>
-                        </div>
-                        <input type="file" id="f-leave_justif" class="hidden" onchange="previewDocFile(event, 'leave_justif')">
-                    </div>
-                </div>
-            </div>
-
-            <!-- BOUTONS ACTIONS -->
-            <div class="flex flex-col-reverse md:flex-row gap-4 mt-10">
-                <button type="button" onclick="document.getElementById('leave-modal').classList.add('hidden')" class="px-8 py-4 rounded-xl font-bold text-slate-400 uppercase text-xs hover:bg-slate-100 transition-all">Annuler</button>
-                <button type="submit" class="flex-1 bg-slate-900 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-blue-600 transition-all">Envoyer ma demande</button>
-            </div>
-        </form>
-    </div>
-</div>
-        
-     <!-- MODAL ENVOI FLASH (VERSION PREMIUM UX) -->
-    <div id="flash-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center z-[200] p-4 transition-all duration-300">
-        
-        <!-- Boite principale avec arrondi XL -->
-        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl animate-fadeIn border border-white/20">
+            const baseUrl = window.location.origin + window.location.pathname;
             
-            <!-- En-tête -->
-            <div class="flex justify-between items-center mb-8">
-                <div>
-                    <h3 class="font-black text-2xl uppercase text-slate-800 tracking-tighter">Annonce</h3>
-                    <p class="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">Diffusion immédiate</p>
-                </div>
-                <button onclick="document.getElementById('flash-modal').classList.add('hidden')" class="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-100 text-slate-400 hover:text-red-500 transition-all active:scale-90">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <form onsubmit="submitFlashMessage(event)" class="space-y-6">
-                
-                <!-- 1. PARAMÈTRES (Sévérité & Temps) -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-slate-50 p-2 rounded-2xl border border-slate-100">
-                        <label class="block text-[9px] font-black text-slate-400 uppercase mb-1 ml-2">Sévérité</label>
-                        <select id="flash-input-type" class="w-full bg-transparent p-1 font-bold text-xs text-slate-700 outline-none cursor-pointer">
-                            <option value="Info">ℹ️ Information</option>
-                            <option value="Urgent">🚨 Urgence</option>
-                            <option value="Maintenance">⚠️ Travaux</option>
-                        </select>
-                    </div>
-                    <div class="bg-blue-50/50 p-2 rounded-2xl border border-blue-100">
-                        <label class="block text-[9px] font-black text-blue-400 uppercase mb-1 ml-2">Visibilité</label>
-                        <select id="flash-input-duration" class="w-full bg-transparent p-1 font-bold text-xs text-blue-700 outline-none cursor-pointer">
-                            <option value="15">15 minutes</option>
-                            <option value="30">30 minutes</option>
-                            <option value="60" selected>1 heure</option>
-                            <option value="120">2 heures</option>
-                            <option value="240">4 heures</option>
-                            <option value="720">12 heures</option>
-                            <option value="1440">1 jour (24h)</option>
-                            <option value="10080">1 semaine</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- 2. MESSAGE -->
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Contenu du message</label>
-                    <textarea id="flash-input-msg" rows="4" class="w-full p-5 bg-slate-50 border border-slate-200 rounded-[1.5rem] outline-none font-medium text-sm leading-relaxed transition-all focus:bg-white focus:ring-2 focus:ring-orange-100" placeholder="Écrivez votre annonce aux collaborateurs..." required></textarea>
-                </div>
-
-                <!-- Bouton Publier -->
-                <button type="submit" class="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-orange-500 transition-all active:scale-95">
-                    PUBLIER L'ANNONCE
-                </button>
-            </form>
-        </div>
-    </div>
-
-<script type="module" src="js/main.js"></script>
-
-    </body>
-
-    </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            // On ajoute TOUJOURS shared=1 pour désactiver le bouton admin chez le candidat
+            const finalUrl = `${baseUrl}?shared=1&hdob=${hDob}&hlm=${hLm}&hdip=${hDip}&hid=${hId}`;
+            
+            navigator.clipboard.writeText(finalUrl).then(() => {
+                Swal.fire({ 
+                    icon: 'success', 
+                    title: 'Lien Candidat prêt !', 
+                    text: 'Le bouton réglages est désormais désactivé pour ce lien.', 
+                    confirmButtonColor: '#2563eb' 
+                });
+                document.getElementById('configPanel').classList.add('hidden');
+            });
+        }
+
+        function validateFile(input) {
+            const file = input.files[0];
+            if (file && file.size > 5 * 1024 * 1024) {
+                Swal.fire({ icon: 'warning', title: 'Fichier trop lourd', text: 'Limite de 5 Mo.' });
+                input.value = ""; updateLabel(input); return;
+            }
+            updateLabel(input);
+        }
+
+        function updateLabel(input) {
+            const label = document.getElementById('label-' + input.id);
+            if (input.files.length > 0) {
+                label.innerText = input.files[0].name;
+                input.parentElement.querySelector('label').classList.add('border-blue-500', 'bg-blue-50');
+            } else {
+                label.innerText = "";
+                input.parentElement.querySelector('label').classList.remove('border-blue-500', 'bg-blue-50');
+            }
+        }
+
+        async function handleApply(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Transmission...';
+
+            try {
+                const response = await fetch(API_URL, { method: 'POST', body: new FormData(e.target) });
+                if (response.ok) {
+                    Swal.fire({ icon: 'success', title: 'Candidature reçue', confirmButtonColor: '#2563eb' });
+                    e.target.reset();
+                    document.querySelectorAll('[id^="label-"]').forEach(el => el.innerText = "");
+                    document.querySelectorAll('label').forEach(el => el.classList.remove('border-blue-500', 'bg-blue-50'));
+                } else { throw new Error(); }
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Erreur technique' });
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Soumettre ma candidature <i class="fa-solid fa-arrow-right"></i>';
+            }
+        }
+    </script>
+</body>
+</html>
 
 
