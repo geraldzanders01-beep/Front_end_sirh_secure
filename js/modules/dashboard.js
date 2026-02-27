@@ -155,11 +155,13 @@ const isSuperBoss =
       document.getElementById("stat-active").innerText = stats.actifs;
 
     // 2. Rendu Chart.js (Statut) - Ce graphique fonctionne
-    if (chartStatusInstance) chartStatusInstance.destroy();
+    if (AppState.chartStatusInstance) { 
+            AppState.chartStatusInstance.destroy(); 
+    }    
     const ctxStatus = document.getElementById("chartStatus")?.getContext("2d");
     if (ctxStatus) {
       // Vérifie si le contexte est disponible
-      chartStatusInstance = new Chart(ctxStatus, {
+        AppState.chartStatusInstance = new Chart(ctxStatus, {
         type: "doughnut",
         data: {
           labels: ["Actif", "Congé", "Sortie"],
@@ -181,9 +183,11 @@ const isSuperBoss =
       console.warn("Impossible d'obtenir le contexte du graphique de statut.");
     }
 
-    // --- 3. RENDU CHART.JS (DÉPARTEMENT) - CORRIGÉ POUR ROBUSTESSE ---
-    if (chartDeptInstance) chartDeptInstance.destroy();
-    const ctxDept = document.getElementById("chartDept")?.getContext("2d"); // Utilise optional chaining (?)
+        // --- 3. RENDU CHART.JS (DÉPARTEMENT) ---
+        if (AppState.chartDeptInstance) { 
+            AppState.chartDeptInstance.destroy(); 
+        }    
+        const ctxDept = document.getElementById("chartDept")?.getContext("2d");
 
     // Ajout de logs de débogage pour voir les données
     console.log("➡️ Données Département (stats.depts) :", stats.depts);
@@ -191,7 +195,7 @@ const isSuperBoss =
 
     // On ne crée le graphique que si le contexte est valide ET qu'il y a des données
     if (ctxDept && Object.keys(stats.depts).length > 0) {
-      chartDeptInstance = new Chart(ctxDept, {
+     AppState.chartDeptInstance = new Chart(ctxDept, {
         type: "bar",
         data: {
           labels: Object.keys(stats.depts),
