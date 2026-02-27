@@ -86,8 +86,9 @@ export async function fetchLeaveRequests() {
     const rawLeaves = await r.json();
 
     AppState.allLeaves = rawLeaves.map((l) => {
+      if (!l) return null; 
       const clean = (v) => (Array.isArray(v) ? v[0] : v);
-      const rawNom = clean(l.employees_nom || l.nom || l["Employé"]);
+      const rawNom = clean(l.employees_nom || l.nom || l["Employé"] || "Inconnu");
       return {
         id: l.record_id || l.id || "",
         nom: rawNom ? String(rawNom).trim() : null,
@@ -106,7 +107,8 @@ export async function fetchLeaveRequests() {
         doc: clean(l.justificatif_link || l.Justificatif || l.doc || null),
         solde: l.solde_actuel || 0,
       };
-    });
+    }).filter(item => item !== null); // ✅ On enlève les lignes vides
+
 
     // ============================================================
     // PARTIE 1 : TABLEAU DE VALIDATION (POUR MANAGER / ADMIN / RH)
