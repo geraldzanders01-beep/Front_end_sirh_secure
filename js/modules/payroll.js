@@ -449,10 +449,8 @@ export async function fetchPayrollData() {
 
     payrolls.forEach((p) => {
       // On récupère le nom et le poste depuis l'objet lié
-      const nomEmp = p.AppState.employees
-        ? p.AppState.employees.nom
-        : AppState.currentUser.nom;
-      const posteEmp = p.AppState.employees ? p.AppState.employees.poste : "--";
+    const nomEmp = p.employees ? p.employees.nom : AppState.currentUser.nom;
+    const posteEmp = p.employees ? p.employees.poste : "--";
 
       // Attention aux minuscules/majuscules venant de Supabase
       const montant = p.salaire_net
