@@ -145,7 +145,9 @@ window.openAttendancePicker = Ops.openAttendancePicker;
 window.fetchAttendanceReport = Ops.fetchAttendanceReport;
 window.renderPersonalReport = Ops.renderPersonalReport;
 window.downloadReportCSV = Ops.downloadReportCSV;
-window.fetchMobileSchedules = Ops.fetchMobileSchedules; 
+window.fetchMobileSchedules = Ops.fetchMobileSchedules;
+window.updateClockUI = Ops.updateClockUI;
+
 
 
 // --- Communication (Chat) ---
