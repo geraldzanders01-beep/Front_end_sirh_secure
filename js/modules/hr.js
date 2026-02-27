@@ -1218,8 +1218,6 @@ export async function handleOnboarding(e) {
     fd.append("photo", compressed, "photo_profil.jpg");
   }
 
-  const fd = new FormData();
-
   try {
   
     const getVal = (id) => {
