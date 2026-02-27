@@ -172,6 +172,55 @@ export async function fetchProducts() {
   }
 }
 
+
+
+/**
+ * Supprime un produit du catalogue
+ */
+export async function deleteProduct(id) {
+  // 1. Demande de confirmation sécurisée
+  const confirm = await Swal.fire({
+    title: "Supprimer ce produit ?",
+    text: "Le produit sera retiré du catalogue définitivement.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#ef4444", // Rouge
+    cancelButtonColor: "#64748b",
+    confirmButtonText: "Oui, supprimer",
+    cancelButtonText: "Annuler",
+  });
+
+  if (confirm.isConfirmed) {
+    Swal.fire({
+      title: "Suppression en cours...",
+      didOpen: () => Swal.showLoading(),
+    });
+
+    try {
+      // 2. Appel à l'API backend
+      const r = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/delete-product`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+            id: id,
+            agent: AppState.currentUser.nom 
+        }),
+      });
+
+      if (r.ok) {
+        Swal.fire("Supprimé !", "Le produit a été retiré du catalogue.", "success");
+        // 3. Rafraîchir la grille des produits immédiatement
+        fetchProducts(); 
+      } else {
+        throw new Error("Erreur lors de la suppression sur le serveur.");
+      }
+    } catch (e) {
+      console.error(e);
+      Swal.fire("Erreur", e.message, "error");
+    }
+  }
+}
+
 export async function openSaveProductModal(existingId = null) {
   // 1. Si on est en mode édition, on récupère les données du produit
   const p = existingId
