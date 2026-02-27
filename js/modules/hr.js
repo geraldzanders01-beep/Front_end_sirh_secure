@@ -841,28 +841,28 @@ export async function saveMyProfile() {
       searchNom.includes(normalize(e.nom)),
   );
 
-  // Si on trouve l'employé dans la liste, on prend son Matricule (myData.id)
-  // Sinon on garde l'ID de secours
-  const idToSend = myData && myData.id ? myData.id : AppState.currentUser.id;
+  // On utilise directement l'ID de la session actuelle, c'est le plus sûr
+  const idToSend = AppState.currentUser.id;
 
-  // Log pour vérifier dans ta console (F12) avant l'envoi
   console.log("Tentative d'envoi pour l'ID :", idToSend);
 
   const fd = new FormData();
-  fd.append("id", idToSend); // Envoie le Matricule au lieu du Record ID
+  fd.append("id", idToSend); 
   fd.append("email", document.getElementById("emp-email").value);
   fd.append("phone", document.getElementById("emp-phone").value);
   fd.append("address", document.getElementById("emp-address").value);
   fd.append("dob", document.getElementById("emp-dob").value);
   fd.append("agent", AppState.currentUser.nom);
-  fd.append("agent_role", AppState.currentUser.role); // ✅ AJOUTER CETTE LIGNE
-  fd.append("doc_type", "text_update");
+  fd.append("agent_role", AppState.currentUser.role); 
+  fd.append("doc_type", "text_update"); 
 
-  const pI = document.getElementById("emp-upload-photo");
-  if (pI.files[0]) {
-    fd.append("new_photo", pI.files[0]);
+  const photoInput = document.getElementById("emp-upload-photo");
+  if (photoInput && photoInput.files[0]) {
+    fd.append("new_photo", photoInput.files[0]);
+  } else if (AppState.capturedBlob) {
+    fd.append("new_photo", AppState.capturedBlob, "photo_profil.jpg");
   }
-
+  // --- FIN DU REMPLACEMENT ---
   try {
     const response = await secureFetch(URL_EMPLOYEE_UPDATE, {
       method: "POST",
