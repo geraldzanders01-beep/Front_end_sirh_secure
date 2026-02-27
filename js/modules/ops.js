@@ -1264,8 +1264,12 @@ export async function fetchPrescripteursManagement() {
 
 
 
-
-// --- MODALE DE DÉTAIL POUR L'AUDIT (VOIR TOUT) ---
+/**
+ * Affiche une modale de détail pour l'audit (Lieux, Produits, etc.)
+ * @param {string} nom - Nom du collaborateur
+ * @param {string} type - Type d'information (ex: "PRODUITS")
+ * @param {string} contenu - Contenu HTML ou texte à afficher
+ */
 export function showAuditDetails(nom, type, contenu) {
     window.Swal.fire({
         title: `<span class="text-xs font-black uppercase text-slate-400">${type} • ${nom}</span>`,
@@ -1287,15 +1291,14 @@ export function showAuditDetails(nom, type, contenu) {
 
 
 
-
-
-
-
-// 2. RENDU DE LA TABLE D'AUDIT (AVEC CLICS)
+/**
+ * Génère le tableau d'audit d'activité terrain
+ * @param {Array} data - Liste des données d'audit
+ */
 export function renderAuditTable(data) {
     const container = document.getElementById('reports-list-container');
     if (!container) return;
-    
+
     let html = `
     <div class="col-span-full bg-white rounded-[2.5rem] shadow-xl border overflow-hidden animate-fadeIn mb-10">
         <div class="p-6 border-b flex justify-between items-center bg-slate-50">
@@ -1316,8 +1319,10 @@ export function renderAuditTable(data) {
                 <tbody class="divide-y divide-slate-100">`;
     
     data.forEach(row => {
-        const lieuList = row.detail_lieux ? row.detail_lieux.split(',').join('<br> • ') : "Aucun lieu";
-        const safeNom = row.nom.replace(/'/g, "\\'");
+        // --- SÉCURISATION DES DONNÉES POUR LE ONCLICK ---
+        const safeNom = row.nom.replace(/'/g, "&#39;");
+        const safeLieux = row.detail_lieux ? row.detail_lieux.replace(/'/g, "&#39;").split(',').join('<br> • ') : "Aucun lieu";
+        const safeProds = row.detail_produits ? row.detail_produits.replace(/'/g, "&#39;").split(',').join('<br> • ') : "Aucun produit";
 
         html += `
             <tr class="hover:bg-blue-50/50 transition-all">
@@ -1329,14 +1334,14 @@ export function renderAuditTable(data) {
                     <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-black text-xs shadow-sm">${row.total_visites}</span>
                 </td>
                 <td class="px-6 py-4 text-center">
-                    <button onclick="window.showAuditDetails('${safeNom}', 'PRODUITS', '${row.total_produits} produits au total')" 
+                    <button onclick="window.showAuditDetails('${safeNom}', 'PRODUITS PRÉSENTÉS', '• ${safeProds}')" 
                             class="bg-indigo-50 text-indigo-600 border border-indigo-200 px-3 py-1 rounded-full font-black text-xs hover:bg-indigo-600 hover:text-white transition-all">
                         ${row.total_produits}
                     </button>
                 </td>
                 <td class="px-6 py-4">
                     <div class="text-[10px] text-slate-600 max-w-[200px] truncate cursor-pointer hover:text-blue-600 font-bold" 
-                         onclick="window.showAuditDetails('${safeNom}', 'LIEUX VISITES', '${lieuList.replace(/'/g, "\\'")}')">
+                         onclick="window.showAuditDetails('${safeNom}', 'LIEUX VISITES', '• ${safeLieux}')">
                         <i class="fa-solid fa-eye mr-1 opacity-50"></i> ${row.detail_lieux}
                     </div>
                 </td>
@@ -1349,6 +1354,8 @@ export function renderAuditTable(data) {
     html += `</tbody></table></div></div>`;
     container.innerHTML = html;
 }
+
+
 
 
 
@@ -1540,6 +1547,7 @@ export function filterPrescripteursLocally() {
 
 
 
+
 /**
  * Charge et affiche les rapports (Visites ou Bilans) avec calcul des statistiques
  * @param {number} page - Numéro de la page à charger
@@ -1551,27 +1559,19 @@ export async function fetchMobileReports(page = 1) {
     const counterAgents = document.getElementById('stat-agents-actifs');
     const labelEl = document.getElementById('stat-report-label');
     
-    // Récupération des filtres
     const nameFilter = document.getElementById('filter-report-name')?.value.toLowerCase() || "";
     const periodFilter = document.getElementById('filter-report-date')?.value || "month";
 
     if (!container) return;
     
-    // Détermination des droits (Chef vs Employé)
     const isChef = AppState.currentUser.role !== 'EMPLOYEE';
+    AppState.reportPage = page; // Mise à jour dans le State
     
-    // Mise à jour de l'état de pagination
-    AppState.reportPage = page;
-    
-    // Affichage du loader
-    container.innerHTML = `
-        <div class="col-span-full text-center p-10">
-            <i class="fa-solid fa-circle-notch fa-spin text-blue-500 text-2xl"></i>
-            <p class="text-[10px] font-black text-slate-400 uppercase mt-2">Chargement des données...</p>
-        </div>`;
+    container.innerHTML = '<div class="col-span-full text-center p-10"><i class="fa-solid fa-circle-notch fa-spin text-blue-500 text-2xl"></i></div>';
 
     try {
         const limit = 20;
+        // On utilise AppState.currentReportTab
         const endpoint = AppState.currentReportTab === 'visits' ? 'read-visit-reports' : 'read-daily-reports';
         const url = `${SIRH_CONFIG.apiBaseUrl}/${endpoint}?page=${page}&limit=${limit}&name=${encodeURIComponent(nameFilter)}&period=${periodFilter}`;
         
@@ -1579,26 +1579,20 @@ export async function fetchMobileReports(page = 1) {
         const result = await r.json();
 
         const data = result.data || result; 
-        AppState.reportTotalPages = result.meta?.last_page || 1;
+        AppState.reportTotalPages = result.meta?.last_page || 1; // Mise à jour dans le State
 
-        // --- 1. CALCUL DES STATISTIQUES GLOBALES POUR LES CARTES ---
+        // --- 1. CALCUL DES STATISTIQUES GLOBALES ---
         let totalVisitesCount = result.meta?.total || data.length;
         let totalProductsCount = 0;
         let uniqueAgents = new Set();
 
         data.forEach(item => {
-            // Compte des agents uniques (par ID)
             const empId = item.employee_id || (item.employees && item.employees.id);
             if(empId) uniqueAgents.add(empId);
 
-            // Compte cumulé des produits
             if (AppState.currentReportTab === 'visits') {
                 let pList = [];
-                try { 
-                    pList = typeof item.presented_products === 'string' 
-                        ? JSON.parse(item.presented_products) 
-                        : (item.presented_products || []); 
-                } catch(e){ pList = []; }
+                try { pList = typeof item.presented_products === 'string' ? JSON.parse(item.presented_products) : (item.presented_products || []); } catch(e){}
                 totalProductsCount += pList.length;
             } else {
                 if (item.products_stats) {
@@ -1607,29 +1601,20 @@ export async function fetchMobileReports(page = 1) {
             }
         });
 
-        // Mise à jour des compteurs visuels en haut de page
         if(counterVisites) counterVisites.innerText = totalVisitesCount;
         if(counterProduits) counterProduits.innerText = totalProductsCount;
         if(counterAgents) counterAgents.innerText = uniqueAgents.size;
 
-        // Mise à jour du libellé de la carte principale
-        if(labelEl) {
-            labelEl.innerText = AppState.currentReportTab === 'visits' ? "VISITES IDENTIFIÉES" : "BILANS JOURNALIERS";
-        }
+        if(labelEl) labelEl.innerText = AppState.currentReportTab === 'visits' ? "VISITES IDENTIFIÉES" : "BILANS JOURNALIERS";
 
         container.innerHTML = '';
         if (!data || data.length === 0) {
-            container.innerHTML = `
-                <div class="col-span-full text-center text-slate-400 py-20 bg-white rounded-[2rem] border border-dashed border-slate-200">
-                    <i class="fa-solid fa-folder-open text-3xl mb-3 opacity-20"></i>
-                    <p class="uppercase font-black text-[10px] tracking-widest">Aucune donnée trouvée pour cette période</p>
-                </div>`;
+            container.innerHTML = '<div class="col-span-full text-center text-slate-400 py-10 uppercase font-black text-[10px] tracking-widest">Aucune donnée trouvée</div>';
             return;
         }
 
         let html = '';
 
-        // --- 2. RENDU DU MODE "VISITES" (GROUPÉ PAR AGENT) ---
         if (AppState.currentReportTab === 'visits') {
             const grouped = {};
             data.forEach(v => {
@@ -1649,7 +1634,7 @@ export async function fetchMobileReports(page = 1) {
                                 <span class="font-black text-white text-sm uppercase tracking-widest">${name}</span>
                             </div>
                             <div class="flex items-center gap-4">
-                                <span class="bg-white/10 text-white px-3 py-1 rounded-full text-[10px] font-bold">${visits.length} VISITES</span>
+                                <span class="bg-white/10 text-white px-3 py-1 rounded-full text-[10px] font-bold">${visits.length} VISITES ICI</span>
                                 <i id="icon-${accordionId}" class="fa-solid fa-chevron-down text-white/50 transition-transform duration-300"></i>
                             </div>
                         </div>
@@ -1671,8 +1656,8 @@ export async function fetchMobileReports(page = 1) {
                     let durationText = "---";
                     if (v.duration) durationText = v.duration >= 60 ? `${Math.floor(v.duration / 60)}h ${v.duration % 60}m` : `${v.duration} min`;
 
-                    // Utilisation de la fonction utilitaire pour les produits
-                    let prodsHtml = window.formatProductTags ? window.formatProductTags(v.presented_products) : '';
+                    // Utilisation de la fonction importée
+                    let prodsHtml = formatProductTags(v.presented_products);
 
                     let outcomeBadge = "";
                     if(v.outcome === 'COMMANDE') outcomeBadge = '<span class="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-black text-[9px] uppercase border border-emerald-200">💰 Commande</span>';
@@ -1722,8 +1707,6 @@ export async function fetchMobileReports(page = 1) {
             }
             html += `</div>`;
         } 
-        
-        // --- 3. RENDU DU MODE "BILANS JOURNALIERS" (ACCORDÉONS) ---
         else {
             const groupedDaily = {};
             data.forEach(rep => {
@@ -1742,7 +1725,7 @@ export async function fetchMobileReports(page = 1) {
                         <div onclick="window.toggleAccordion('${accordionId}')" class="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-slate-50 transition-colors">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm">${name.charAt(0)}</div>
-                                <div><h4 class="font-black text-slate-800 text-sm uppercase tracking-tighter">${name}</h4><p class="text-[10px] text-slate-400 font-bold uppercase">${reports.length} bilans envoyés</p></div>
+                                <div><h4 class="font-black text-slate-800 text-sm uppercase tracking-tighter">${name}</h4><p class="text-[10px] text-slate-400 font-bold uppercase">${reports.length} bilans</p></div>
                             </div>
                             <div class="flex items-center gap-3">
                                 ${hasStockAlert ? `<span class="bg-orange-100 text-orange-600 px-2 py-1 rounded-lg text-[9px] font-black animate-pulse">ALERTE STOCK</span>` : ''}
@@ -1759,8 +1742,18 @@ export async function fetchMobileReports(page = 1) {
                     const mins = rep.total_work_minutes % 60;
                     const timeDisplay = hours > 0 ? `${hours}h ${mins}min` : `${mins} min`;
                             
-                    // Utilisation de la fonction utilitaire pour les produits
-                    let statsHtml = window.formatProductTags ? window.formatProductTags(rep.products_stats) : '';
+                    let statsHtml = "";
+                    if (rep.products_stats && Object.keys(rep.products_stats).length > 0) {
+                        statsHtml = `<div class="flex flex-wrap gap-1 mt-2">`;
+                        for (let [prodName, count] of Object.entries(rep.products_stats)) {
+                            let cleanName = prodName;
+                            if (typeof prodName === 'string' && prodName.startsWith('{')) {
+                                try { cleanName = JSON.parse(prodName).name || JSON.parse(prodName).NAME || "Produit"; } catch(e){}
+                            }
+                            statsHtml += `<span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[8px] font-black border border-indigo-100 uppercase">${cleanName} <span class="text-indigo-400">x${count}</span></span>`;
+                        }
+                        statsHtml += `</div>`;
+                    }
 
                     html += `
                         <tr id="row-daily-${rep.id}" class="hover:bg-white transition-colors group relative">
@@ -1772,11 +1765,11 @@ export async function fetchMobileReports(page = 1) {
                                 ${statsHtml}
                             </td>
                             <td class="px-6 py-4 w-2/4 align-top">
-                                <div class="text-xs text-slate-600 italic line-clamp-1 cursor-pointer transition-all" onclick="window.toggleTextFixed(this)">${rep.summary || "Aucun détail fourni."}</div>
+                                <div class="text-xs text-slate-600 italic line-clamp-1 cursor-pointer transition-all" onclick="window.toggleTextFixed(this)">${rep.summary || "..."}</div>
                             </td>
                             <td class="px-6 py-4 w-1/4 align-top text-right">
                                 <div class="flex items-center justify-end gap-3">
-                                    ${rep.photo_url ? `<button onclick="window.viewDocument('${rep.photo_url}', 'Cahier')" class="text-blue-500 hover:scale-110 transition-transform"><i class="fa-solid fa-file-image text-lg"></i></button>` : ''}
+                                    ${rep.photo_url ? `<button onclick="window.viewDocument('${rep.photo_url}', 'Cahier')" class="text-blue-500"><i class="fa-solid fa-file-image text-lg"></i></button>` : ''}
                                     ${isChef ? `<button onclick="window.deleteDailyReport('${rep.id}')" class="text-slate-300 hover:text-red-500 transition-all"><i class="fa-solid fa-check-double text-lg"></i></button>` : ''}
                                 </div>
                             </td>
@@ -1787,7 +1780,6 @@ export async function fetchMobileReports(page = 1) {
             html += `</div>`;
         }
 
-        // --- 4. PAGINATION ---
         const paginationHtml = `
             <div class="col-span-full flex justify-between items-center mt-6 px-4">
                 <button onclick="window.fetchMobileReports(${AppState.reportPage - 1})" ${AppState.reportPage <= 1 ? 'disabled' : ''} class="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase text-slate-600 disabled:opacity-30 shadow-sm transition-all hover:bg-slate-50"><i class="fa-solid fa-chevron-left mr-2"></i> Précédent</button>
@@ -1799,13 +1791,12 @@ export async function fetchMobileReports(page = 1) {
 
     } catch (e) {
         console.error("Erreur rapports:", e);
-        container.innerHTML = `
-            <div class="col-span-full text-center text-red-500 py-10 bg-red-50 rounded-[2rem] border border-red-100">
-                <i class="fa-solid fa-triangle-exclamation text-2xl mb-2"></i>
-                <p class="font-bold uppercase text-[10px]">Erreur de chargement des données</p>
-            </div>`;
+        container.innerHTML = '<div class="col-span-full text-center text-red-500 py-10 font-bold uppercase text-[10px]">Erreur de chargement</div>';
     }
 }
+
+
+
 
 export function changeReportTab(tab) {
   AppState.currentReportTab = tab;
