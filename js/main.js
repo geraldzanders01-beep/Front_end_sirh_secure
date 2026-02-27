@@ -82,8 +82,7 @@ window.toggleBulkActions = HR.toggleBulkActions;
 window.exportToCSV = HR.exportToCSV;
 window.fetchAndPopulateDepartments = HR.fetchAndPopulateDepartments;
 window.syncAllRoleSelects = HR.syncAllRoleSelects;
-window.fetchContractTemplatesForSelection =
-  HR.fetchContractTemplatesForSelection;
+window.fetchContractTemplatesForSelection = HR.fetchContractTemplatesForSelection;
 window.populateManagerSelects = HR.populateManagerSelects;
 window.fetchMyActivityRecap = HR.fetchMyActivityRecap;
 
@@ -103,7 +102,7 @@ window.handlePayrollImport = Payroll.handlePayrollImport;
 window.resetAccountingFilters = Payroll.resetAccountingFilters;
 window.filterAccountingTableLocally = Payroll.filterAccountingTableLocally;
 
-// --- Dash
+// --- Dash ---
 window.updateManagementSignals = Dash.updateManagementSignals;
 window.renderCharts = Dash.renderCharts;
 window.fetchLiveAttendance = Dash.fetchLiveAttendance;
@@ -189,6 +188,7 @@ window.closeEditor = () => {
   const editor = document.getElementById("editor-modal");
   if (editor) editor.classList.add("hidden");
 };
+
 // ==============================================================
 // 3. LOGIQUE D'INITIALISATION DE L'APPLICATION
 // ==============================================================
