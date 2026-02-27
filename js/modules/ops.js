@@ -1283,6 +1283,75 @@ export function showAuditDetails(nom, type, contenu) {
 }
 
 
+
+
+
+
+
+
+
+
+// 2. RENDU DE LA TABLE D'AUDIT (AVEC CLICS)
+export function renderAuditTable(data) {
+    const container = document.getElementById('reports-list-container');
+    if (!container) return;
+    
+    let html = `
+    <div class="col-span-full bg-white rounded-[2.5rem] shadow-xl border overflow-hidden animate-fadeIn mb-10">
+        <div class="p-6 border-b flex justify-between items-center bg-slate-50">
+            <h3 class="font-black text-slate-800 uppercase text-sm">Audit d'Activité (Terrain)</h3>
+            <button onclick="window.exportAuditToExcel()" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-lg active:scale-95">EXPORTER EXCEL</button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-900 text-white text-[10px] uppercase font-bold">
+                    <tr>
+                        <th class="px-6 py-5">Collaborateur</th>
+                        <th class="px-6 py-5 text-center">Visites</th>
+                        <th class="px-6 py-5 text-center">Produits</th>
+                        <th class="px-6 py-5">Lieux visités</th>
+                        <th class="px-6 py-5 text-right">Dernière Obs.</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">`;
+    
+    data.forEach(row => {
+        const lieuList = row.detail_lieux ? row.detail_lieux.split(',').join('<br> • ') : "Aucun lieu";
+        const safeNom = row.nom.replace(/'/g, "\\'");
+
+        html += `
+            <tr class="hover:bg-blue-50/50 transition-all">
+                <td class="px-6 py-4">
+                    <div class="font-bold text-slate-800 uppercase text-xs">${row.nom}</div>
+                    <div class="text-[9px] text-slate-400 font-mono">${row.matricule}</div>
+                </td>
+                <td class="px-6 py-4 text-center">
+                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-black text-xs shadow-sm">${row.total_visites}</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                    <button onclick="window.showAuditDetails('${safeNom}', 'PRODUITS', '${row.total_produits} produits au total')" 
+                            class="bg-indigo-50 text-indigo-600 border border-indigo-200 px-3 py-1 rounded-full font-black text-xs hover:bg-indigo-600 hover:text-white transition-all">
+                        ${row.total_produits}
+                    </button>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="text-[10px] text-slate-600 max-w-[200px] truncate cursor-pointer hover:text-blue-600 font-bold" 
+                         onclick="window.showAuditDetails('${safeNom}', 'LIEUX VISITES', '${lieuList.replace(/'/g, "\\'")}')">
+                        <i class="fa-solid fa-eye mr-1 opacity-50"></i> ${row.detail_lieux}
+                    </div>
+                </td>
+                <td class="px-6 py-4 text-[10px] text-slate-500 italic text-right">
+                    <div class="max-w-[150px] truncate" title="${row.dernier_rapport}">${row.dernier_rapport}</div>
+                </td>
+            </tr>`;
+    });
+    
+    html += `</tbody></table></div></div>`;
+    container.innerHTML = html;
+}
+
+
+
 export async function openAddPrescripteurModal() {
   // On charge les lieux pour le menu déroulant
   let locOptions = '<option value="">-- Aucun / Cabinet Privé --</option>';
@@ -1467,67 +1536,112 @@ export function filterPrescripteursLocally() {
   });
 }
 
+
+
+
+
+/**
+ * Charge et affiche les rapports (Visites ou Bilans) avec calcul des statistiques
+ * @param {number} page - Numéro de la page à charger
+ */
 export async function fetchMobileReports(page = 1) {
-  const container = document.getElementById("reports-list-container");
-  const counterEl = document.getElementById("stat-visites-total");
-  const labelEl = document.getElementById("stat-report-label");
-  const nameFilter =
-    document.getElementById("filter-report-name")?.value.toLowerCase() || "";
-  const periodFilter =
-    document.getElementById("filter-report-date")?.value || "month";
+    const container = document.getElementById('reports-list-container');
+    const counterVisites = document.getElementById('stat-visites-total');
+    const counterProduits = document.getElementById('stat-produits-total');
+    const counterAgents = document.getElementById('stat-agents-actifs');
+    const labelEl = document.getElementById('stat-report-label');
+    
+    // Récupération des filtres
+    const nameFilter = document.getElementById('filter-report-name')?.value.toLowerCase() || "";
+    const periodFilter = document.getElementById('filter-report-date')?.value || "month";
 
-  if (!container) return;
+    if (!container) return;
+    
+    // Détermination des droits (Chef vs Employé)
+    const isChef = AppState.currentUser.role !== 'EMPLOYEE';
+    
+    // Mise à jour de l'état de pagination
+    AppState.reportPage = page;
+    
+    // Affichage du loader
+    container.innerHTML = `
+        <div class="col-span-full text-center p-10">
+            <i class="fa-solid fa-circle-notch fa-spin text-blue-500 text-2xl"></i>
+            <p class="text-[10px] font-black text-slate-400 uppercase mt-2">Chargement des données...</p>
+        </div>`;
 
-  // Détection du rôle pour afficher ou non le bouton "Archiver"
-  const isChef = AppState.currentUser.role !== "EMPLOYEE";
+    try {
+        const limit = 20;
+        const endpoint = AppState.currentReportTab === 'visits' ? 'read-visit-reports' : 'read-daily-reports';
+        const url = `${SIRH_CONFIG.apiBaseUrl}/${endpoint}?page=${page}&limit=${limit}&name=${encodeURIComponent(nameFilter)}&period=${periodFilter}`;
+        
+        const r = await secureFetch(url);
+        const result = await r.json();
 
-  AppState.reportPage = page;
-  container.innerHTML =
-    '<div class="col-span-full text-center p-10"><i class="fa-solid fa-circle-notch fa-spin text-blue-500 text-2xl"></i></div>';
+        const data = result.data || result; 
+        AppState.reportTotalPages = result.meta?.last_page || 1;
 
-  try {
-    const limit = 20;
-    const endpoint =
-      AppState.currentReportTab === "visits"
-        ? "read-visit-reports"
-        : "read-daily-reports";
-    const url = `${SIRH_CONFIG.apiBaseUrl}/${endpoint}?page=${page}&limit=${limit}&name=${encodeURIComponent(nameFilter)}&period=${periodFilter}`;
+        // --- 1. CALCUL DES STATISTIQUES GLOBALES POUR LES CARTES ---
+        let totalVisitesCount = result.meta?.total || data.length;
+        let totalProductsCount = 0;
+        let uniqueAgents = new Set();
 
-    const r = await secureFetch(url);
-    const result = await r.json();
+        data.forEach(item => {
+            // Compte des agents uniques (par ID)
+            const empId = item.employee_id || (item.employees && item.employees.id);
+            if(empId) uniqueAgents.add(empId);
 
-    const data = result.data || result;
-    const totalCount = result.meta?.total || data.length;
-    AppState.reportTotalPages = result.meta?.last_page || 1;
+            // Compte cumulé des produits
+            if (AppState.currentReportTab === 'visits') {
+                let pList = [];
+                try { 
+                    pList = typeof item.presented_products === 'string' 
+                        ? JSON.parse(item.presented_products) 
+                        : (item.presented_products || []); 
+                } catch(e){ pList = []; }
+                totalProductsCount += pList.length;
+            } else {
+                if (item.products_stats) {
+                    Object.values(item.products_stats).forEach(qty => totalProductsCount += (parseInt(qty) || 0));
+                }
+            }
+        });
 
-    if (labelEl)
-      labelEl.innerText =
-        AppState.currentReportTab === "visits"
-          ? "TOTAL VISITES (MOIS)"
-          : "TOTAL BILANS JOURNALIERS";
-    if (counterEl) counterEl.innerText = totalCount;
+        // Mise à jour des compteurs visuels en haut de page
+        if(counterVisites) counterVisites.innerText = totalVisitesCount;
+        if(counterProduits) counterProduits.innerText = totalProductsCount;
+        if(counterAgents) counterAgents.innerText = uniqueAgents.size;
 
-    container.innerHTML = "";
-    if (!data || data.length === 0) {
-      container.innerHTML =
-        '<div class="col-span-full text-center text-slate-400 py-10 uppercase font-black text-[10px] tracking-widest">Aucune donnée trouvée</div>';
-      return;
-    }
+        // Mise à jour du libellé de la carte principale
+        if(labelEl) {
+            labelEl.innerText = AppState.currentReportTab === 'visits' ? "VISITES IDENTIFIÉES" : "BILANS JOURNALIERS";
+        }
 
-    let html = "";
+        container.innerHTML = '';
+        if (!data || data.length === 0) {
+            container.innerHTML = `
+                <div class="col-span-full text-center text-slate-400 py-20 bg-white rounded-[2rem] border border-dashed border-slate-200">
+                    <i class="fa-solid fa-folder-open text-3xl mb-3 opacity-20"></i>
+                    <p class="uppercase font-black text-[10px] tracking-widest">Aucune donnée trouvée pour cette période</p>
+                </div>`;
+            return;
+        }
 
-    if (AppState.currentReportTab === "visits") {
-      const grouped = {};
-      data.forEach((v) => {
-        const name = v.nom_agent || "Inconnu";
-        if (!grouped[name]) grouped[name] = [];
-        grouped[name].push(v);
-      });
+        let html = '';
 
-      html = `<div class="col-span-full space-y-4">`;
-      for (const [name, visits] of Object.entries(grouped)) {
-        const accordionId = `acc-vis-${name.replace(/\s+/g, "-")}`;
-        html += `
+        // --- 2. RENDU DU MODE "VISITES" (GROUPÉ PAR AGENT) ---
+        if (AppState.currentReportTab === 'visits') {
+            const grouped = {};
+            data.forEach(v => {
+                const name = v.nom_agent || "Inconnu";
+                if (!grouped[name]) grouped[name] = [];
+                grouped[name].push(v);
+            });
+
+            html = `<div class="col-span-full space-y-4">`;
+            for (const [name, visits] of Object.entries(grouped)) {
+                const accordionId = `acc-vis-${name.replace(/\s+/g, '-')}`;
+                html += `
                     <div class="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-visible animate-fadeIn">
                         <div onclick="window.toggleAccordion('${accordionId}')" class="bg-slate-900 px-6 py-4 flex justify-between items-center cursor-pointer hover:bg-slate-800 transition-all">
                             <div class="flex items-center gap-3">
@@ -1535,52 +1649,39 @@ export async function fetchMobileReports(page = 1) {
                                 <span class="font-black text-white text-sm uppercase tracking-widest">${name}</span>
                             </div>
                             <div class="flex items-center gap-4">
-                                <span class="bg-white/10 text-white px-3 py-1 rounded-full text-[10px] font-bold">${visits.length} VISITES ICI</span>
+                                <span class="bg-white/10 text-white px-3 py-1 rounded-full text-[10px] font-bold">${visits.length} VISITES</span>
                                 <i id="icon-${accordionId}" class="fa-solid fa-chevron-down text-white/50 transition-transform duration-300"></i>
                             </div>
                         </div>
-                           <div id="${accordionId}" class="hidden bg-slate-50/50">
-                                <div class="table-container"> <!-- AJOUT DU WRAPPER ICI -->
-                                    <table class="w-full text-left border-collapse min-w-[800px]"> <!-- min-w pour empêcher la déformation -->
-                                        <thead class="bg-slate-100 border-b">
-                                            <tr class="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                                <th class="p-4">👤 Contact & Lieu</th>
-                                                <th class="p-4">📦 Détails de la visite</th>
-                                                <th class="p-4 text-center">📸 Preuve</th>
-                                                <th class="p-4 text-right">📝 Notes</th>
-                                                ${isChef ? '<th class="p-4 text-center">Action</th>' : ""}
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-100">`;
+                        <div id="${accordionId}" class="hidden bg-slate-50/50">
+                            <div class="table-container">
+                                <table class="w-full text-left border-collapse min-w-[800px]">
+                                    <thead class="bg-slate-100 border-b">
+                                        <tr class="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                            <th class="p-4">👤 Contact & Lieu</th>
+                                            <th class="p-4">📦 Détails de la visite</th>
+                                            <th class="p-4 text-center">📸 Preuve</th>
+                                            <th class="p-4 text-right">📝 Notes</th>
+                                            ${isChef ? '<th class="p-4 text-center">Action</th>' : ''}
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">`;
+               
+                visits.forEach(v => {
+                    let durationText = "---";
+                    if (v.duration) durationText = v.duration >= 60 ? `${Math.floor(v.duration / 60)}h ${v.duration % 60}m` : `${v.duration} min`;
 
-        visits.forEach((v) => {
-          let durationText = "---";
-          if (v.duration)
-            durationText =
-              v.duration >= 60
-                ? `${Math.floor(v.duration / 60)}h ${v.duration % 60}m`
-                : `${v.duration} min`;
+                    // Utilisation de la fonction utilitaire pour les produits
+                    let prodsHtml = window.formatProductTags ? window.formatProductTags(v.presented_products) : '';
 
-         const prodsHtml = formatProductTags(v.presented_products);
+                    let outcomeBadge = "";
+                    if(v.outcome === 'COMMANDE') outcomeBadge = '<span class="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-black text-[9px] uppercase border border-emerald-200">💰 Commande</span>';
+                    else if(v.outcome === 'ABSENT') outcomeBadge = '<span class="text-red-700 bg-red-100 px-2 py-0.5 rounded font-black text-[9px] uppercase border border-red-200">❌ Absent</span>';
+                    else if(v.outcome === 'VU') outcomeBadge = '<span class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded font-black text-[9px] uppercase border border-blue-200">✅ Vu</span>';
+                    else outcomeBadge = `<span class="text-slate-600 bg-slate-200 px-2 py-0.5 rounded font-black text-[9px] uppercase">👍 ${v.outcome || 'RAS'}</span>`;
 
-          // GESTION DU RÉSULTAT VISUEL
-          let outcomeBadge = "";
-          if (v.outcome === "COMMANDE")
-            outcomeBadge =
-              '<span class="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-black text-[9px] uppercase border border-emerald-200">💰 Commande</span>';
-          else if (v.outcome === "ABSENT")
-            outcomeBadge =
-              '<span class="text-red-700 bg-red-100 px-2 py-0.5 rounded font-black text-[9px] uppercase border border-red-200">❌ Absent</span>';
-          else if (v.outcome === "VU")
-            outcomeBadge =
-              '<span class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded font-black text-[9px] uppercase border border-blue-200">✅ Vu</span>';
-          else
-            outcomeBadge = `<span class="text-slate-600 bg-slate-200 px-2 py-0.5 rounded font-black text-[9px] uppercase">👍 ${v.outcome || "RAS"}</span>`;
-
-          html += `
+                    html += `
                     <tr id="row-vis-${v.id}" class="hover:bg-blue-50/30 transition-colors group">
-                        
-                        <!-- COLONNE 1 : CONTACT ET LIEU -->
                         <td class="p-4 align-top">
                             <div class="flex items-start gap-3">
                                 <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0 border border-slate-200 shadow-sm group-hover:bg-blue-500 group-hover:text-white transition-colors">
@@ -1593,135 +1694,117 @@ export async function fetchMobileReports(page = 1) {
                                 </div>
                             </div>
                         </td>
-
-                        <!-- COLONNE 2 : RÉSULTAT ET PRODUITS -->
                         <td class="p-4 align-top">
                             <div class="flex items-center gap-2 mb-1">
                                 ${outcomeBadge}
-                                <span class="text-[9px] font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded"><i class="fa-regular fa-clock mr-1"></i>${v.check_in ? new Date(v.check_in).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--:--"} (${durationText})</span>
+                                <span class="text-[9px] font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded"><i class="fa-regular fa-clock mr-1"></i>${v.check_in ? new Date(v.check_in).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--'} (${durationText})</span>
                             </div>
                             ${prodsHtml}
                         </td>
-
-                        <!-- COLONNE 3 : PREUVE -->
                         <td class="p-4 text-center align-top">
-                            ${v.proof_url ? `<button onclick="window.viewDocument('${v.proof_url}', 'Preuve Cachet')" class="text-emerald-500 hover:scale-125 transition-transform bg-emerald-50 p-2 rounded-lg"><i class="fa-solid fa-camera-retro text-lg"></i></button>` : '<div class="p-2 text-slate-200"><i class="fa-solid fa-ban"></i></div>'}
+                            ${v.proof_url ? `<button onclick="window.viewDocument('${v.proof_url}', 'Preuve')" class="text-emerald-500 hover:scale-125 transition-transform bg-emerald-50 p-2 rounded-lg"><i class="fa-solid fa-camera-retro text-lg"></i></button>` : '<div class="p-2 text-slate-200"><i class="fa-solid fa-ban"></i></div>'}
                         </td>
-
-                        <!-- COLONNE 4 : NOTES -->
                         <td class="p-4 text-right align-top relative">
                             <div class="text-[11px] text-slate-600 italic line-clamp-2 cursor-pointer hover:text-blue-600 transition-colors" 
                                  onclick="window.toggleTextFixed(this)" title="Cliquez pour lire en entier" data-fixed="false">
-                                "${v.notes || "Aucun commentaire"}"
+                                "${v.notes || 'Aucun commentaire'}"
                             </div>
                         </td>
-
-                        <!-- COLONNE 5 : ACTION (Si Chef) -->
-                        ${
-                          isChef
-                            ? `
+                        ${isChef ? `
                         <td class="p-4 text-center align-top">
                             <button onclick="window.deleteVisitReport('${v.id}')" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Marquer comme traité">
                                 <i class="fa-solid fa-check-double text-lg"></i>
                             </button>
-                        </td>`
-                            : ""
-                        }
+                        </td>` : ''}
                     </tr>`;
-        });
+                });
+                html += `</tbody></table></div></div></div>`;
+            }
+            html += `</div>`;
+        } 
+        
+        // --- 3. RENDU DU MODE "BILANS JOURNALIERS" (ACCORDÉONS) ---
+        else {
+            const groupedDaily = {};
+            data.forEach(rep => {
+                const name = rep.employees?.nom || "Agent Inconnu";
+                if (!groupedDaily[name]) groupedDaily[name] = [];
+                groupedDaily[name].push(rep);
+            });
 
-        html += `</tbody></table></div></div>`;
-      }
-      html += `</div>`;
-    } else {
-      const groupedDaily = {};
-      data.forEach((rep) => {
-        const name = rep.AppState.employees?.nom || "Agent Inconnu";
-        if (!groupedDaily[name]) groupedDaily[name] = [];
-        groupedDaily[name].push(rep);
-      });
+            html = `<div class="col-span-full space-y-3">`;
+            for (const [name, reports] of Object.entries(groupedDaily)) {
+                const accordionId = `acc-day-${name.replace(/\s+/g, '-')}`;
+                const hasStockAlert = reports.some(rp => rp.needs_restock);
 
-      html = `<div class="col-span-full space-y-3">`;
-      for (const [name, reports] of Object.entries(groupedDaily)) {
-        const accordionId = `acc-day-${name.replace(/\s+/g, "-")}`;
-        const hasStockAlert = reports.some((rp) => rp.needs_restock);
-
-        html += `
+                html += `
                     <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-visible animate-fadeIn">
                         <div onclick="window.toggleAccordion('${accordionId}')" class="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-slate-50 transition-colors">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm">${name.charAt(0)}</div>
-                                <div><h4 class="font-black text-slate-800 text-sm uppercase tracking-tighter">${name}</h4><p class="text-[10px] text-slate-400 font-bold uppercase">${reports.length} bilans</p></div>
+                                <div><h4 class="font-black text-slate-800 text-sm uppercase tracking-tighter">${name}</h4><p class="text-[10px] text-slate-400 font-bold uppercase">${reports.length} bilans envoyés</p></div>
                             </div>
                             <div class="flex items-center gap-3">
-                                ${hasStockAlert ? `<span class="bg-orange-100 text-orange-600 px-2 py-1 rounded-lg text-[9px] font-black animate-pulse">ALERTE STOCK</span>` : ""}
+                                ${hasStockAlert ? `<span class="bg-orange-100 text-orange-600 px-2 py-1 rounded-lg text-[9px] font-black animate-pulse">ALERTE STOCK</span>` : ''}
                                 <i id="icon-${accordionId}" class="fa-solid fa-chevron-down text-slate-300 transition-transform duration-300"></i>
                             </div>
                         </div>
-                            <div id="${accordionId}" class="hidden border-t border-slate-100 bg-slate-50/50">
-                                <div class="table-container"> <!-- AJOUT DU WRAPPER ICI -->
-                                    <table class="w-full text-left min-w-[700px]"> <!-- min-w pour forcer le scroll propre -->
-                                        <tbody class="divide-y divide-slate-100">`;
+                        <div id="${accordionId}" class="hidden border-t border-slate-100 bg-slate-50/50">
+                            <div class="table-container">
+                                <table class="w-full text-left min-w-[700px]">
+                                    <tbody class="divide-y divide-slate-100">`;
+                
+                reports.forEach(rep => {
+                    const hours = Math.floor(rep.total_work_minutes / 60);
+                    const mins = rep.total_work_minutes % 60;
+                    const timeDisplay = hours > 0 ? `${hours}h ${mins}min` : `${mins} min`;
+                            
+                    // Utilisation de la fonction utilitaire pour les produits
+                    let statsHtml = window.formatProductTags ? window.formatProductTags(rep.products_stats) : '';
 
-        reports.forEach((rep) => {
-          const hours = Math.floor(rep.total_work_minutes / 60);
-          const mins = rep.total_work_minutes % 60;
-          const timeDisplay =
-            hours > 0 ? `${hours}h ${mins}min` : `${mins} min`;
-            const statsHtml = formatProductTags(rep.products_stats);
-
-          html += `
+                    html += `
                         <tr id="row-daily-${rep.id}" class="hover:bg-white transition-colors group relative">
                             <td class="px-6 py-4 w-1/4 align-top">
-                                <div class="text-[10px] font-black text-indigo-500 uppercase">
-                                    ${new Date(rep.report_date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
-                                </div>
+                                <div class="text-[10px] font-black text-indigo-500 uppercase">${new Date(rep.report_date).toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'})}</div>
                                 <div class="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-blue-600 text-white rounded-lg shadow-sm">
-                                    <i class="fa-solid fa-clock text-[9px]"></i>
-                                    <span class="text-[10px] font-black uppercase">${timeDisplay}</span>
+                                    <i class="fa-solid fa-clock text-[9px]"></i><span class="text-[10px] font-black uppercase">${timeDisplay}</span>
                                 </div>
                                 ${statsHtml}
-                                <div class="mt-2 text-left">${rep.needs_restock ? '<span class="text-orange-500 text-[10px] font-bold"><i class="fa-solid fa-box-open"></i> REAPPRO</span>' : '<span class="text-emerald-400 text-[10px]">OK</span>'}</div>
                             </td>
-                            <td class="px-6 py-4 w-2/4 align-top relative">
-                                <div class="text-xs text-slate-600 italic line-clamp-1 cursor-pointer transition-all duration-300"
-                                     onmouseenter="peakText(this)" onmouseleave="unpeakText(this)" onclick="window.toggleTextFixed(this)" data-fixed="false">
-                                    ${rep.summary || "Aucun texte."}
-                                </div>
+                            <td class="px-6 py-4 w-2/4 align-top">
+                                <div class="text-xs text-slate-600 italic line-clamp-1 cursor-pointer transition-all" onclick="window.toggleTextFixed(this)">${rep.summary || "Aucun détail fourni."}</div>
                             </td>
                             <td class="px-6 py-4 w-1/4 align-top text-right">
                                 <div class="flex items-center justify-end gap-3">
-                                    ${rep.photo_url ? `<button onclick="window.viewDocument('${rep.photo_url}', 'Cahier')" class="text-blue-500 hover:scale-125 transition-transform"><i class="fa-solid fa-file-image text-lg"></i></button>` : '<i class="fa-solid fa-ban text-slate-200"></i>'}
-                                    ${
-                                      isChef
-                                        ? `
-                                    <button onclick="window.deleteDailyReport('${rep.id}')" class="text-slate-300 hover:text-red-500 transition-all" title="Marquer comme traité">
-                                        <i class="fa-solid fa-check-double text-lg"></i>
-                                    </button>`
-                                        : ""
-                                    }
+                                    ${rep.photo_url ? `<button onclick="window.viewDocument('${rep.photo_url}', 'Cahier')" class="text-blue-500 hover:scale-110 transition-transform"><i class="fa-solid fa-file-image text-lg"></i></button>` : ''}
+                                    ${isChef ? `<button onclick="window.deleteDailyReport('${rep.id}')" class="text-slate-300 hover:text-red-500 transition-all"><i class="fa-solid fa-check-double text-lg"></i></button>` : ''}
                                 </div>
                             </td>
                         </tr>`;
-        });
-        html += `</tbody></table></div></div>`;
-      }
-      html += `</div>`;
-    }
+                });
+                html += `</tbody></table></div></div></div>`;
+            }
+            html += `</div>`;
+        }
 
-    const paginationHtml = `
+        // --- 4. PAGINATION ---
+        const paginationHtml = `
             <div class="col-span-full flex justify-between items-center mt-6 px-4">
-                <button onclick="window.fetchMobileReports(${AppState.reportPage - 1})" ${AppState.reportPage <= 1 ? "disabled" : ""} class="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase text-slate-600 disabled:opacity-30 transition-all shadow-sm"><i class="fa-solid fa-chevron-left mr-2"></i> Précédent</button>
+                <button onclick="window.fetchMobileReports(${AppState.reportPage - 1})" ${AppState.reportPage <= 1 ? 'disabled' : ''} class="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase text-slate-600 disabled:opacity-30 shadow-sm transition-all hover:bg-slate-50"><i class="fa-solid fa-chevron-left mr-2"></i> Précédent</button>
                 <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Page ${AppState.reportPage} / ${AppState.reportTotalPages}</span>
-                <button onclick="window.fetchMobileReports(${AppState.reportPage + 1})" ${AppState.reportPage >= AppState.reportTotalPages ? "disabled" : ""} class="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase text-slate-600 disabled:opacity-30 transition-all shadow-sm">Suivant <i class="fa-solid fa-chevron-right ml-2"></i></button>
+                <button onclick="window.fetchMobileReports(${AppState.reportPage + 1})" ${AppState.reportPage >= AppState.reportTotalPages ? 'disabled' : ''} class="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase text-slate-600 disabled:opacity-30 shadow-sm transition-all hover:bg-slate-50">Suivant <i class="fa-solid fa-chevron-right ml-2"></i></button>
             </div>`;
 
-    container.innerHTML = html + paginationHtml;
-  } catch (e) {
-    console.error("Erreur rapports:", e);
-    container.innerHTML =
-      '<div class="col-span-full text-center text-red-500 py-10 font-bold uppercase text-[10px]">Erreur de connexion</div>';
-  }
+        container.innerHTML = html + paginationHtml;
+
+    } catch (e) {
+        console.error("Erreur rapports:", e);
+        container.innerHTML = `
+            <div class="col-span-full text-center text-red-500 py-10 bg-red-50 rounded-[2rem] border border-red-100">
+                <i class="fa-solid fa-triangle-exclamation text-2xl mb-2"></i>
+                <p class="font-bold uppercase text-[10px]">Erreur de chargement des données</p>
+            </div>`;
+    }
 }
 
 export function changeReportTab(tab) {
