@@ -15,6 +15,7 @@ import {
   getDistance,
   CSVManager,
   parseDateSmart,
+  formatProductTags
 } from "../core/utils.js";
 
 export async function syncClockInterface() {
