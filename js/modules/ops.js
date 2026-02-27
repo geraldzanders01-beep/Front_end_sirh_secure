@@ -342,6 +342,7 @@ export async function handleClockInOut() {
 
     const fd = new FormData();
     fd.append("id", userId);
+    fd.append("employee_id", userId);
     fd.append("action", action);
     fd.append("gps", currentGps);
     fd.append("ip", ipRes.ip);
