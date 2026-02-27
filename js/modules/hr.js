@@ -375,13 +375,13 @@ const headerAction = document.querySelector(
   document.getElementById("stat-alert").innerText = alertes;
   document.getElementById("stat-active").innerText = actifs;
 
-  // Pagination
-  const totalPages = Math.ceil(
-    filteredAppState.employees.length / ITEMS_PER_PAGE,
-  );
-  document.querySelectorAll(".page-info-global").forEach((el) => {
-    el.innerText = `PAGE ${AppState.currentPage} / ${totalPages || 1}`;
-  });
+ // Pagination
+    const totalPages = Math.ceil(
+        filteredEmployees.length / SIRH_CONFIG.itemsPerPage || 10 // Correction ici : on utilise filteredEmployees
+    );
+    document.querySelectorAll(".page-info-global").forEach((el) => {
+        el.innerText = `PAGE ${AppState.currentPage} / ${totalPages || 1}`;
+    });
 }
 
 export function filterTable() {
