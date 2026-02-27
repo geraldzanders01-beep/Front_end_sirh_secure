@@ -1219,11 +1219,14 @@ export async function handleOnboarding(e) {
   const fd = new FormData();
 
   try {
-    // 2. Récupération sécurisée des champs texte
-    // On vérifie que les éléments existent avant de lire .value
+  
     const getVal = (id) => {
       const el = document.getElementById(id);
-      return el ? el.value : "";
+      if (!el) {
+        console.warn(`Attention: L'élément avec l'ID ${id} est introuvable.`);
+        return ""; // Retourne vide au lieu de crasher
+      }
+      return el.value;
     };
 
     // CHAMPS GÉNERAUX ET HIÉRARCHIQUES
