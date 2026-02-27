@@ -224,8 +224,8 @@ export async function handleClockInOut() {
         </div>
         <div class="space-y-6 flex flex-col">
             <div class="flex p-1 bg-slate-100 rounded-xl border border-slate-200 shrink-0">
-                <button type="button" onclick="switchProofMode('photo')" id="btn-mode-photo" class="flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all bg-white shadow-sm text-blue-600">📸 Cachet</button>
-                <button type="button" onclick="switchProofMode('sign')" id="btn-mode-sign" class="flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all text-slate-500">✍️ Signature</button>
+                <button type="button" onclick="window.switchProofMode('photo')" id="btn-mode-photo" class="flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all bg-white shadow-sm text-blue-600">📸 Cachet</button>
+                <button type="button" onclick="window.switchProofMode('sign')" id="btn-mode-sign" class="flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all text-slate-500">✍️ Signature</button>
             </div>
             <div id="proof-photo-area" class="h-44 bg-slate-900 rounded-2xl overflow-hidden relative border-2 border-slate-200 flex-shrink-0 shadow-inner">
                 <video id="proof-video" autoplay playsinline class="w-full h-full object-cover"></video>
@@ -1633,7 +1633,7 @@ export async function fetchMobileReports(page = 1) {
                         <!-- COLONNE 4 : NOTES -->
                         <td class="p-4 text-right align-top relative">
                             <div class="text-[11px] text-slate-600 italic line-clamp-2 cursor-pointer hover:text-blue-600 transition-colors" 
-                                 onclick="toggleTextFixed(this)" title="Cliquez pour lire en entier" data-fixed="false">
+                                 onclick="window.toggleTextFixed(this)" title="Cliquez pour lire en entier" data-fixed="false">
                                 "${v.notes || "Aucun commentaire"}"
                             </div>
                         </td>
@@ -1720,7 +1720,7 @@ export async function fetchMobileReports(page = 1) {
                             </td>
                             <td class="px-6 py-4 w-2/4 align-top relative">
                                 <div class="text-xs text-slate-600 italic line-clamp-1 cursor-pointer transition-all duration-300"
-                                     onmouseenter="peakText(this)" onmouseleave="unpeakText(this)" onclick="toggleTextFixed(this)" data-fixed="false">
+                                     onmouseenter="peakText(this)" onmouseleave="unpeakText(this)" onclick="window.toggleTextFixed(this)" data-fixed="false">
                                     ${rep.summary || "Aucun texte."}
                                 </div>
                             </td>
@@ -1851,7 +1851,7 @@ export async function openDailyReportModal() {
                 <textarea id="daily-summary" class="swal2-textarea" style="height: 100px; margin-top:0;" placeholder="Nombre de visites, difficultés..."></textarea>
                 
                 <!-- LE MICRO -->
-                <button type="button" onclick="toggleDictation('daily-summary', this)" 
+                <button type="button" onclick="window.toggleDictation('daily-summary', this)" 
                     class="absolute bottom-3 right-3 p-2 rounded-full bg-white border border-slate-200 text-slate-400 shadow-sm hover:text-blue-600 transition-all z-10">
                     <i class="fa-solid fa-microphone"></i>
                 </button>
@@ -2140,7 +2140,7 @@ export async function renderPerformanceTable() {
                     </td>
                     <td class="px-8 py-5 text-sm font-bold text-slate-600">${lieuxUniques} sites visités</td>
                     <td class="px-8 py-5 text-right">
-                        <button onclick="showDetailedEmpReport('${emp.nom}')" class="text-blue-600 font-black text-[10px] uppercase hover:underline">Détails par lieu</button>
+                        <button onclick="window.showDetailedEmpReport('${emp.nom}')" class="text-blue-600 font-black text-[10px] uppercase hover:underline">Détails par lieu</button>
                     </td>
                 </tr>
             `;
