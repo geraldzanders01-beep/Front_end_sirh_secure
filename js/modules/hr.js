@@ -181,25 +181,22 @@ export async function fetchData(forceUpdate = false, page = 1) {
   }
 }
 
+
+
+
+// Remplace toute la fonction changePage par celle-ci :
 export function changePage(direction) {
-  const totalPages = Math.ceil(
-    filteredEmployees.length / ITEMS_PER_PAGE,
-  );
-  const newPage = AppState.currentPage + direction;
-
-  if (newPage >= 1 && newPage <= totalPages) {
-    AppState.currentPage = newPage;
-    renderData();
-
-    // --- CORRECTION DU SCROLL ---
-    // On remonte doucement vers le haut du tableau, pas tout en haut de la page
-    // Cela garde le focus visuel sur les données
-    const tableSection = document.getElementById("view-AppState.employees");
-    if (tableSection) {
-      tableSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    const totalPages = Math.ceil(AppState.employees.length / ITEMS_PER_PAGE);
+    const newPage = AppState.currentPage + direction;
+    if (newPage >= 1 && newPage <= totalPages) {
+        AppState.currentPage = newPage;
+        renderData();
     }
-  }
 }
+
+
+
+
 
 export function renderData() {
   const b = document.getElementById("full-body");
@@ -354,7 +351,7 @@ const headerAction = document.querySelector(
       actionCell += `<button onclick="window.openEditModal('${safeId}')" class="text-slate-400 hover:text-slate-800 transition-all"><i class="fa-solid fa-pen"></i></button>`;
     }
 
-    if (perms.can_delete_AppState.employees) {
+    if (perms.can_delete_employees) {
       actionCell += `<button onclick="window.deleteEmployee('${safeId}')" class="p-2 text-red-200 hover:text-red-600 transition-colors ml-1" title="Supprimer"><i class="fa-solid fa-trash-can"></i></button>`;
     }
 
