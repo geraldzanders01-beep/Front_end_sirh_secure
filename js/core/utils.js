@@ -232,6 +232,34 @@ export function getDriveId(link) {
   return match ? match[1] : null;
 }
 
+
+
+
+
+// --- FONCTION UTILITAIRE POUR NETTOYER ET FORMATER LES TAGS DE PRODUITS ---
+export function formatProductTags(rawProducts) {
+    let prods = [];
+    try {
+        if (typeof rawProducts === 'string') prods = JSON.parse(rawProducts);
+        else if (Array.isArray(rawProducts)) prods = rawProducts;
+    } catch(e) { return ""; }
+
+    if (!prods || prods.length === 0) return "";
+
+    return `<div class="flex flex-wrap gap-1 mt-2">` + 
+        prods.map(p => {
+            let name = "Produit";
+            if (typeof p === 'string') {
+                if (p.startsWith('{')) { 
+                    try { let obj = JSON.parse(p); name = obj.NAME || obj.name || "Produit"; } catch(e) { name = p; }
+                } else { name = p; }
+            } else if (typeof p === 'object' && p !== null) {
+                name = p.NAME || p.name || p.Name || "Produit";
+            }
+            return `<span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[8px] font-black border border-indigo-100 uppercase">${name}</span>`;
+        }).join('') + `</div>`;
+}
+
 /**
  * Sécurité et HTML
  */
@@ -274,3 +302,24 @@ export async function downloadHtmlAsPdf(url, title) {
     window.Swal.fire("Erreur", "Impossible de générer le fichier PDF.", "error");
   }
 }
+
+
+
+// --- FONCTION PRIVÉE DE CLÔTURE AUTOMATIQUE (INTELLIGENCE MÉTIER) ---
+export function calculateAutoClose(startMs, isSecurity) {
+            const startDate = new Date(startMs);
+            if (isSecurity) {
+                // Pour la sécurité/nuit : Forfait de 12 heures de garde
+                return startMs + (12 * 60 * 60 * 1000);
+            } else {
+                // Pour bureau/mobile : Clôture à 18h00 le jour même
+                const eighteenHour = new Date(startDate);
+                eighteenHour.setHours(18, 0, 0, 0);
+                
+                // Si l'entrée était déjà après 18h, on accorde 1h symbolique, sinon 18h
+                return (startDate.getTime() >= eighteenHour.getTime()) 
+                    ? startDate.getTime() + (60 * 60 * 1000) 
+                    : eighteenHour.getTime();
+            }
+        }
+
