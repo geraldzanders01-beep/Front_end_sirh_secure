@@ -87,6 +87,9 @@ window.populateManagerSelects = HR.populateManagerSelects;
 window.fetchMyActivityRecap = HR.fetchMyActivityRecap;
 window.resetCamera = HR.resetCamera;
 window.toggleMoreDocs = HR.toggleMoreDocs;
+window.startCameraFeed = HR.startCameraFeed;
+window.takeSnapshot = HR.takeSnapshot;
+window.handleFileUpload = HR.handleFileUpload;
 
 // --- Congés & Absences (Leaves) ---
 window.openLeaveModal = Leaves.openLeaveModal;
