@@ -1,5 +1,5 @@
 import { AppState } from "../core/state.js";
-import { SIRH_CONFIG, REFRESH_THRESHOLD } from "../core/config.js";
+import { SIRH_CONFIG, REFRESH_THRESHOLD, supabaseClient } from "../core/config.js";
 import { getContrastColor, PremiumUI } from "../core/utils.js";
 import { secureFetch } from "../core/api.js";
 
