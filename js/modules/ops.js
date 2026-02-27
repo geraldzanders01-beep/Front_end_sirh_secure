@@ -111,6 +111,9 @@ export function updateClockUI(statusMode) {
   }
 }
 
+
+
+
 export async function handleClockInOut() {
   const userId = AppState.currentUser.id;
   const today = new Date().toLocaleDateString("fr-CA");
@@ -153,7 +156,7 @@ export async function handleClockInOut() {
       return Swal.fire("Oups", "Entrée déjà validée.", "info");
   }
 
-  // --- 2. LOGIQUE DE SORTIE MOBILE (POP-UP) ---
+  // --- 2. LOGIQUE DE SORTIE MOBILE (POP-UP RAPPORT) ---
   if (action === "CLOCK_OUT" && isMobile) {
     Swal.fire({
       title: "Chargement...",
@@ -180,33 +183,25 @@ export async function handleClockInOut() {
     let presOptions =
       `<option value="">-- Choisir un contact --</option>` +
       prescripteurs
-        .map(
-          (p) =>
-            `<option value="${p.id}">${p.nom_complet} (${p.fonction})</option>`,
-        )
+        .map((p) => `<option value="${p.id}">${p.nom_complet} (${p.fonction})</option>`)
         .join("") +
       `<option value="autre" class="font-bold text-blue-600">➕ Autre (Nouveau Contact)</option>`;
 
     let productsHtml = products
-      .map(
-        (p) => `
+      .map((p) => `
             <label class="cursor-pointer group flex-shrink-0">
                 <input type="checkbox" name="presented_prods" value="${p.id}" data-name="${p.name}" class="peer sr-only">
                 <div class="flex items-center gap-2 p-1.5 pr-3 border border-slate-200 rounded-full peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 transition-all bg-white shadow-sm hover:border-blue-300">
                     <img src="${p.photo_url || "https://via.placeholder.com/50"}" class="w-7 h-7 object-cover rounded-full border border-slate-100">
                     <span class="text-[10px] font-black uppercase whitespace-nowrap">${p.name}</span>
                 </div>
-            </label>`,
-      )
+            </label>`)
       .join("");
 
-    // CORRECTION : On enlève le "const { value: formResult }" pour utiliser la variable du haut
     const swalRes = await Swal.fire({
       title: "Fin de visite",
       customClass: { popup: "wide-modal" },
-      html: `
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-        <!-- COLONNE GAUCHE : FORMULAIRE -->
+      html: `<div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
         <div class="space-y-6">
             <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
                 <label class="text-[10px] font-black text-slate-400 uppercase mb-3 block">1. Identification Contact</label>
@@ -215,7 +210,6 @@ export async function handleClockInOut() {
                     <input id="swal-nom-libre" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm" placeholder="Nom du contact...">
                 </div>
             </div>
-
             <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
                 <label class="text-[10px] font-black text-slate-400 uppercase mb-3 block">2. Résultat de visite</label>
                 <select id="swal-outcome" class="w-full p-3 bg-white border border-slate-200 rounded-xl font-black text-blue-600 outline-none">
@@ -224,74 +218,40 @@ export async function handleClockInOut() {
                     <option value="COMMANDE">💰 Commande prise</option>
                     <option value="RAS">👍 Visite de courtoisie</option>
                 </select>
-                
                 <p class="text-[9px] font-black text-slate-400 uppercase mt-4 mb-2">Produits présentés</p>
                 <div class="flex flex-wrap gap-2 max-h-[100px] overflow-y-auto p-1">${productsHtml}</div>
             </div>
         </div>
-
-        <!-- COLONNE DROITE : MÉDIA & NOTES -->
         <div class="space-y-6 flex flex-col">
-            <!-- SELECTEUR MODE -->
             <div class="flex p-1 bg-slate-100 rounded-xl border border-slate-200 shrink-0">
                 <button type="button" onclick="switchProofMode('photo')" id="btn-mode-photo" class="flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all bg-white shadow-sm text-blue-600">📸 Cachet</button>
                 <button type="button" onclick="switchProofMode('sign')" id="btn-mode-sign" class="flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all text-slate-500">✍️ Signature</button>
             </div>
-
-            <!-- ZONE MÉDIA -->
             <div id="proof-photo-area" class="h-44 bg-slate-900 rounded-2xl overflow-hidden relative border-2 border-slate-200 flex-shrink-0 shadow-inner">
                 <video id="proof-video" autoplay playsinline class="w-full h-full object-cover"></video>
                 <img id="proof-image" class="w-full h-full object-cover hidden absolute top-0 left-0">
                 <canvas id="proof-canvas" class="hidden"></canvas>
                 <button type="button" id="btn-snap" class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white text-slate-900 px-4 py-2 rounded-full text-[10px] font-black shadow-xl">CAPTURER</button>
             </div>
-
             <div id="proof-sign-area" class="hidden h-44 flex-shrink-0">
                 <canvas id="visit-signature-pad" class="signature-zone w-full h-full bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200"></canvas>
             </div>
-
-            <!-- NOTES & CLOTURE -->
             <div class="flex-1 space-y-4">
                 <textarea id="swal-report" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm h-24 resize-none outline-none focus:bg-white" placeholder="Vos observations..."></textarea>
-                
                 <label class="flex items-center gap-3 p-3 bg-red-50 rounded-xl border border-red-100 cursor-pointer group">
                     <input type="checkbox" id="last-exit-check" class="w-5 h-5 accent-red-600">
                     <span class="text-[10px] font-black text-red-700 uppercase">Clôturer ma journée après cette visite</span>
                 </label>
             </div>
         </div>
-    </div>
-`,
+    </div>`,
       confirmButtonText: "Valider le rapport",
       confirmButtonColor: "#2563eb",
       showCancelButton: true,
       cancelButtonText: "Annuler",
-      cancelButtonColor: "#ef4444",
       allowOutsideClick: false,
       didOpen: () => {
-        // 1. GESTION DU CONTEXTE (Mission & Médecin) - Inchangé
-        const ctxMem = localStorage.getItem("active_mission_context");
-        if (ctxMem) {
-          const c = JSON.parse(ctxMem);
-          if (c.prescripteurId)
-            document.getElementById("swal-prescripteur").value =
-              c.prescripteurId;
-          if (c.preNotes)
-            document.getElementById("swal-report").value =
-              `[Objectif: ${c.preNotes}] \n`;
-        }
-
-        document
-          .getElementById("swal-prescripteur")
-          .addEventListener("change", (e) => {
-            document
-              .getElementById("container-autre-nom")
-              .classList.toggle("hidden", e.target.value !== "autre");
-          });
-
-        // 2. INITIALISATION CAMÉRA
         const video = document.getElementById("proof-video");
-        // On s'assure que proofStream est bien assigné à la variable globale
         navigator.mediaDevices
           .getUserMedia({ video: { facingMode: "environment" } })
           .then((s) => {
@@ -300,36 +260,25 @@ export async function handleClockInOut() {
           })
           .catch((err) => console.error("Erreur Caméra:", err));
 
-        // 3. LOGIQUE CAPTURE PHOTO - Sécurisée
         document.getElementById("btn-snap").onclick = () => {
           if (!video || video.videoWidth === 0)
             return Swal.fire("Patientez", "La caméra s'initialise...", "info");
-
           const canvas = document.getElementById("proof-canvas");
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
           canvas.getContext("2d").drawImage(video, 0, 0);
-
-          canvas.toBlob(
-            (b) => {
-              if (!b) return;
-              AppState.proofBlob = b;
-              const imgPreview = document.getElementById("proof-image");
-              imgPreview.src = URL.createObjectURL(b);
-              imgPreview.classList.remove("hidden");
-            },
-            "image/jpeg",
-            0.8,
-          );
+          canvas.toBlob((b) => {
+            if (!b) return;
+            AppState.proofBlob = b;
+            const imgPreview = document.getElementById("proof-image");
+            imgPreview.src = URL.createObjectURL(b);
+            imgPreview.classList.remove("hidden");
+          }, "image/jpeg", 0.8);
         };
 
-        // 4. INITIALISATION SIGNATURE (AVEC FONCTION DE REDIMENSIONNEMENT)
         const signCanvas = document.getElementById("visit-signature-pad");
-
-        // On prépare la fonction de calcul de taille
         window.reinitVisitCanvas = () => {
           const ratio = Math.max(window.devicePixelRatio || 1, 1);
-          // On ne recalcule que si l'élément est visible à l'écran
           if (signCanvas.offsetWidth > 0) {
             signCanvas.width = signCanvas.offsetWidth * ratio;
             signCanvas.height = signCanvas.offsetHeight * ratio;
@@ -338,75 +287,25 @@ export async function handleClockInOut() {
           }
         };
 
-        // Création du pad (on utilise un fond transparent au début pour éviter les bugs)
         window.visitSignPad = new SignaturePad(signCanvas, {
           backgroundColor: "rgba(255, 255, 255, 0)",
           penColor: "rgb(0, 0, 128)",
         });
 
-        // 5. FONCTION SWITCH MODE (CORRIGÉE)
         window.switchProofMode = (mode) => {
           const isPhoto = mode === "photo";
-
-          // 1. Gestion du flux vidéo (Inchangé)
-          if (!isPhoto && proofStream) {
-            proofStream.getTracks().forEach((t) => t.stop());
-            proofStream = null;
-          } else if (isPhoto && !proofStream) {
-            navigator.mediaDevices
-              .getUserMedia({ video: { facingMode: "environment" } })
-              .then((s) => {
-                AppState.proofStream = s;
-                const v = document.getElementById("proof-video");
-                if (v) v.srcObject = s;
-              });
-          }
-
-          // 2. Mise à jour visuelle de l'interface (Inchangé)
-          document
-            .getElementById("proof-photo-area")
-            .classList.toggle("hidden", !isPhoto);
-          document
-            .getElementById("proof-sign-area")
-            .classList.toggle("hidden", isPhoto);
-
-          // --- AJOUT : RÉINITIALISATION DU CANVAS SI ON PASSE EN MODE SIGNATURE ---
-          if (!isPhoto) {
-            // On attend 50ms que la zone soit bien affichée par le navigateur
-            setTimeout(() => {
-              if (typeof window.reinitVisitCanvas === "function") {
-                window.reinitVisitCanvas();
-              }
-            }, 50);
-          }
-          // -----------------------------------------------------------------------
-
-          // 3. Mise à jour des styles de boutons (Inchangé)
-          document.getElementById("btn-mode-photo").className = isPhoto
-            ? "flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase bg-white shadow-sm text-blue-600"
-            : "flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-slate-500";
-          document.getElementById("btn-mode-sign").className = !isPhoto
-            ? "flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase bg-white shadow-sm text-blue-600"
-            : "flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-slate-500";
-
+          document.getElementById("proof-photo-area").classList.toggle("hidden", !isPhoto);
+          document.getElementById("proof-sign-area").classList.toggle("hidden", isPhoto);
+          if (!isPhoto) setTimeout(() => window.reinitVisitCanvas(), 50);
+          document.getElementById("btn-mode-photo").className = isPhoto ? "flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase bg-white shadow-sm text-blue-600" : "flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-slate-500";
+          document.getElementById("btn-mode-sign").className = !isPhoto ? "flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase bg-white shadow-sm text-blue-600" : "flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-slate-500";
           window.currentProofMode = mode;
         };
-
-        // 6. ACTIONS FINALES
-        window.clearVisitSignature = () => {
-          window.visitSignPad.clear();
-        };
-        window.currentProofMode = "photo"; // Mode par défaut
       },
       preConfirm: () => {
         let finalProof = AppState.proofBlob;
-        if (
-          window.currentProofMode === "sign" &&
-          !window.visitSignPad.isEmpty()
-        ) {
-          finalProof = dataURLtoBlob(
-            window.visitSignPad.toDataURL("image/png"),
-          );
+        if (window.currentProofMode === "sign" && !window.visitSignPad.isEmpty()) {
+          finalProof = dataURLtoBlob(window.visitSignPad.toDataURL("image/png"));
         }
         return {
           outcome: document.getElementById("swal-outcome").value,
@@ -414,14 +313,16 @@ export async function handleClockInOut() {
           isLastExit: document.getElementById("last-exit-check").checked,
           prescripteur_id: document.getElementById("swal-prescripteur").value,
           contact_nom_libre: document.getElementById("swal-nom-libre").value,
-          selectedProducts: Array.from(
-            document.querySelectorAll('input[name="presented_prods"]:checked'),
-          ).map((i) => ({ id: i.value, name: i.dataset.name })),
+          selectedProducts: Array.from(document.querySelectorAll('input[name="presented_prods"]:checked')).map((i) => ({ id: i.value, name: i.dataset.name })),
           proofFile: finalProof,
         };
       },
     });
 
+    // --- CORRECTION : La vérification d'annulation est déplacée ici ---
+    if (!swalRes.isConfirmed) return; 
+
+    // --- ENREGISTREMENT DES DONNÉES DU RAPPORT ---
     AppState.formResult = swalRes.value;
     AppState.outcome = AppState.formResult.outcome;
     AppState.report = AppState.formResult.report;
@@ -432,20 +333,11 @@ export async function handleClockInOut() {
   }
 
   // --- 3. POINTAGE GPS & ENVOI ---
-  Swal.fire({
-    title: "Vérification...",
-    text: "Analyse GPS...",
-    didOpen: () => Swal.showLoading(),
-    allowOutsideClick: false,
-  });
+  Swal.fire({ title: "Vérification...", text: "Analyse GPS...", didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
   try {
-    const ipRes = await fetch("https://api.ipify.org?format=json").then((r) =>
-      r.json(),
-    );
-    const pos = await new Promise((res, rej) =>
-      navigator.geolocation.getCurrentPosition(res, rej),
-    );
+    const ipRes = await fetch("https://api.ipify.org?format=json").then((r) => r.json());
+    const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
     const currentGps = `${pos.coords.latitude},${pos.coords.longitude}`;
 
     const fd = new FormData();
@@ -455,62 +347,35 @@ export async function handleClockInOut() {
     fd.append("ip", ipRes.ip);
     fd.append("agent", AppState.currentUser.nom);
 
-    // Sécurisation de l'envoi : on n'envoie les rapports que si on est en CLOCK_OUT
-// Sécurisation de l'envoi : on utilise bien les données de AppState
     if (action === "CLOCK_OUT" && isMobile) {
-      // On utilise AppState. pour CHAQUE valeur
       fd.append("outcome", AppState.outcome || "VU");
       fd.append("report", AppState.report || "");
-      
-      if (AppState.prescripteur_id) {
-          fd.append("prescripteur_id", AppState.prescripteur_id);
-      }
-      if (AppState.contact_nom_libre) {
-          fd.append("contact_nom_libre", AppState.contact_nom_libre);
-      }
-      if (AppState.presentedProducts) {
-          fd.append("presentedProducts", JSON.stringify(AppState.presentedProducts));
-      }
+      if (AppState.prescripteur_id) fd.append("prescripteur_id", AppState.prescripteur_id);
+      if (AppState.contact_nom_libre) fd.append("contact_nom_libre", AppState.contact_nom_libre);
+      if (AppState.presentedProducts) fd.append("presentedProducts", JSON.stringify(AppState.presentedProducts));
       
       if (schedule_id) fd.append("schedule_id", schedule_id);
       if (forced_location_id) fd.append("forced_location_id", forced_location_id);
 
-      // Correction ici aussi : AppState.formResult
       if (AppState.formResult && AppState.formResult.proofFile) {
         Swal.update({ text: "Compression de la preuve..." });
         const compressed = await compressImage(AppState.formResult.proofFile);
         fd.append("proof_photo", compressed, "preuve_visite.jpg");
       }
-      
       if (AppState.isLastExit) fd.append("is_last_exit", "true");
     }
     
-    const response = await secureFetch(URL_CLOCK_ACTION, {
-      method: "POST",
-      body: fd,
-    });
+    const response = await secureFetch(URL_CLOCK_ACTION, { method: "POST", body: fd });
     const resData = await response.json();
 
     if (response.ok) {
-      const nowStr = new Date().toLocaleTimeString("fr-FR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-      if (typeof PremiumUI !== "undefined") {
-        PremiumUI.vibrate("success");
-        PremiumUI.play("success");
-      }
-
+      const nowStr = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
       localStorage.removeItem("active_mission_context");
       let nextState = action === "CLOCK_IN" ? "IN" : "OUT";
       localStorage.setItem(`clock_status_${userId}`, nextState);
-      if (isLastExit || !isMobile)
-        localStorage.setItem(`clock_finished_${userId}`, "true");
-
-      fetchMobileSchedules();
-      updateClockUI(nextState);
-      document.getElementById("clock-last-action").innerText =
-        `Validé : ${action === "CLOCK_IN" ? "Entrée" : "Sortie"} à ${nowStr}`;
+      if (isLastExit || !isMobile) localStorage.setItem(`clock_finished_${userId}`, "true");
+      window.fetchMobileSchedules();
+      window.updateClockUI(nextState);
       Swal.fire("Succès", `Pointage validé : ${resData.zone}`, "success");
     } else {
       throw new Error(resData.error);
@@ -519,6 +384,9 @@ export async function handleClockInOut() {
     Swal.fire("Erreur", e.message, "error");
   }
 }
+
+
+
 
 export async function syncOfflineData() {
   const queue = JSON.parse(localStorage.getItem("sirh_offline_queue") || "[]");
@@ -568,6 +436,9 @@ export async function syncOfflineData() {
     });
   }
 }
+
+
+
 
 export async function fetchMobileLocations() {
   const container = document.getElementById("locations-grid");
