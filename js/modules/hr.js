@@ -280,7 +280,7 @@ const headerAction = document.querySelector(
   const startIndex = (AppState.currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedEmployees = filteredEmployees.slice(
     startIndex,
-    startIndex + AppState.ITEMS_PER_PAGE,
+    startIndex + ITEMS_PER_PAGE,
   );
 
   paginatedEmployees.forEach((e) => {
