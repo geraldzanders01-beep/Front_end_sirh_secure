@@ -181,7 +181,7 @@ export async function fetchData(forceUpdate = false, page = 1) {
 
 export function changePage(direction) {
   const totalPages = Math.ceil(
-    AppState.employees.length / AppState.ITEMS_PER_PAGE,
+    filteredEmployees.length / ITEMS_PER_PAGE,
   );
   const newPage = AppState.currentPage + direction;
 
@@ -509,7 +509,7 @@ export async function syncAllRoleSelects() {
       sessionStorage.setItem("sirh_cache_roles", JSON.stringify(roles));
     }
 
-    window.activeRolesList = roles;
+    AppState.activeRolesList = roles;
     const optionsHtml = roles
       .map((r) => `<option value="${r.role_name}">${r.role_name}</option>`)
       .join("");
@@ -1547,7 +1547,7 @@ export async function openEditModal(id) {
   const roleSelect = document.getElementById("edit-role");
   if (roleSelect) {
     // ON FORCE LA GÉNÉRATION DES OPTIONS IMMÉDIATEMENT
-    const roles = window.activeRolesList || [];
+  const roles = AppState.activeRolesList || [];
     roleSelect.innerHTML =
       '<option value="">-- Sélectionner --</option>' +
       roles
@@ -1941,7 +1941,7 @@ export function openContractModal(id) {
 
   // Initialisation du pad de signature sur le canvas
   const canvas = document.getElementById("signature-pad");
-  signaturePad = new SignaturePad(canvas, {
+  AppState.signaturePad = new SignaturePad(canvas, {
     backgroundColor: "rgba(255, 255, 255, 0)", // Fond transparent
     penColor: "rgb(0, 0, 0)", // Encre noire
   });
@@ -1951,7 +1951,7 @@ export function openContractModal(id) {
   canvas.width = canvas.offsetWidth * ratio;
   canvas.height = canvas.offsetHeight * ratio;
   canvas.getContext("2d").scale(ratio, ratio);
-  signaturePad.clear(); // On vide le cadre au cas où
+  AppState.signaturePad.clear(); // On vide le cadre au cas où
 }
 export function closeContractModal() {
   if (AppState.contractStream)
@@ -2039,7 +2039,7 @@ export function exportToCSV() {
 }
 
 export async function submitSignedContract() {
-  if (!signaturePad || signaturePad.isEmpty()) {
+  if (!AppState.signaturePad || AppState.signaturePad.isEmpty()) {
     return Swal.fire(
       "Attention",
       "Veuillez signer avant de valider.",
@@ -2048,7 +2048,7 @@ export async function submitSignedContract() {
   }
 
   const id = document.getElementById("contract-id-hidden").value;
-  const signatureBase64 = signaturePad.toDataURL();
+  const signatureBase64 = AppState.signaturePad.toDataURL();
 
   Swal.fire({
     title: "Signature en cours...",
