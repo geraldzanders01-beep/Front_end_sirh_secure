@@ -204,13 +204,13 @@ export async function fetchPayrollConstants() {
 
     // On transforme le tableau en objet facile à lire : { "CNSS_EMPLOYEE_RATE": 3.6, ... }
     data.forEach((item) => {
-      payrollConstants[item.key_code] = item.value_number;
+      AppState.payrollConstants[item.key_code] = item.value_number;
     });
-    console.log("📊 Constantes de paie chargées :", payrollConstants);
-  } catch (e) {
-    console.error("Erreur constantes paie", e);
-  }
-}
+    console.log("📊 Constantes de paie chargées :", AppState.payrollConstants); 
+      } catch (e) {
+        console.error("Erreur constantes paie", e);
+      }
+    }
 
 export async function generateAllPay() {
   const mois = document.getElementById("pay-month").value;
