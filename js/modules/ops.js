@@ -456,23 +456,32 @@ export async function handleClockInOut() {
     fd.append("agent", AppState.currentUser.nom);
 
     // Sécurisation de l'envoi : on n'envoie les rapports que si on est en CLOCK_OUT
+// Sécurisation de l'envoi : on utilise bien les données de AppState
     if (action === "CLOCK_OUT" && isMobile) {
-      // On utilise les valeurs stockées dans AppState
+      // On utilise AppState. pour CHAQUE valeur
       fd.append("outcome", AppState.outcome || "VU");
       fd.append("report", AppState.report || "");
       
-      if (AppState.prescripteur_id) fd.append("prescripteur_id", AppState.prescripteur_id);
-      if (AppState.contact_nom_libre) fd.append("contact_nom_libre", AppState.contact_nom_libre);
-      if (AppState.presentedProducts) fd.append("presentedProducts", JSON.stringify(AppState.presentedProducts));
+      if (AppState.prescripteur_id) {
+          fd.append("prescripteur_id", AppState.prescripteur_id);
+      }
+      if (AppState.contact_nom_libre) {
+          fd.append("contact_nom_libre", AppState.contact_nom_libre);
+      }
+      if (AppState.presentedProducts) {
+          fd.append("presentedProducts", JSON.stringify(AppState.presentedProducts));
+      }
       
       if (schedule_id) fd.append("schedule_id", schedule_id);
       if (forced_location_id) fd.append("forced_location_id", forced_location_id);
-    
+
+      // Correction ici aussi : AppState.formResult
       if (AppState.formResult && AppState.formResult.proofFile) {
         Swal.update({ text: "Compression de la preuve..." });
         const compressed = await compressImage(AppState.formResult.proofFile);
         fd.append("proof_photo", compressed, "preuve_visite.jpg");
       }
+      
       if (AppState.isLastExit) fd.append("is_last_exit", "true");
     }
     
