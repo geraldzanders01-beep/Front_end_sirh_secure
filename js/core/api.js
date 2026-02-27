@@ -1,5 +1,4 @@
 // core/api.js
-import { handleLogout } from "../modules/auth.js";
 
 export async function secureFetch(url, options = {}) {
   if (!navigator.onLine) {
@@ -38,7 +37,9 @@ export async function secureFetch(url, options = {}) {
           title: "Session expirée",
           text: "Veuillez vous reconnecter.",
           icon: "info",
-        }).then(() => handleLogout());
+        }).then(() => {
+          if (typeof window.handleLogout === "function") window.handleLogout(); // Appel sécurisé
+        });
         throw new Error("Session expirée.");
       }
 
