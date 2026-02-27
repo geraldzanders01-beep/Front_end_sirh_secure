@@ -8,10 +8,8 @@ export async function loadAccountingView() {
   if (!body) return;
 
   // 0. Charger les taux fiscaux si pas encore fait
-  if (
-    typeof fetchPayrollConstants === "function" &&
-    Object.keys(payrollConstants).length === 0
-  ) {
+if (typeof window.fetchPayrollConstants === "function" && Object.keys(AppState.payrollConstants).length === 0)
+{
     await fetchPayrollConstants();
   }
 
