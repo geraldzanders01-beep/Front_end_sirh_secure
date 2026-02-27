@@ -1047,7 +1047,7 @@ export async function handlePrescripteursCSV(event) {
         `${dataToInsert.length} contacts importés.`,
         "success",
       );
-      fetchPrescripteursManagement();
+      window.fetchPrescripteursManagement();
     } else {
       const err = await response.json();
       throw new Error(err.error);
