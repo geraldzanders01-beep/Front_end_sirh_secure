@@ -91,6 +91,8 @@ window.openLeaveModal = Leaves.openLeaveModal;
 window.submitLeaveRequest = Leaves.submitLeaveRequest;
 window.showLeaveDetail = Leaves.showLeaveDetail;
 window.processLeave = Leaves.processLeave;
+window.fetchLeaveRequests = Leaves.fetchLeaveRequests; 
+
 
 // --- Comptabilité & Paie (Payroll) ---
 window.loadAccountingView = Payroll.loadAccountingView;
