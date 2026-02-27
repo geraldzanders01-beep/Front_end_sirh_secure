@@ -157,6 +157,7 @@ window.cancelFile = Chat.cancelFile;
 window.initChatRealtime = Chat.initChatRealtime;
 
 // --- Administration & Configuration ---
+window.updateFileCountFeedback = Admin.updateFileCountFeedback;
 window.deleteProduct = Admin.deleteProduct;
 window.openAddZoneModal = Admin.openAddZoneModal;
 window.deleteZone = Admin.deleteZone;
