@@ -236,7 +236,12 @@ export function getDriveId(link) {
 
 
 
-// --- FONCTION UTILITAIRE POUR NETTOYER ET FORMATER LES TAGS DE PRODUITS ---
+
+/**
+ * Utilitaire pour nettoyer et formater les tags de produits en HTML
+ * @param {string|Array} rawProducts - Les données brutes des produits
+ * @returns {string} HTML des badges de produits
+ */
 export function formatProductTags(rawProducts) {
     let prods = [];
     try {
@@ -248,17 +253,30 @@ export function formatProductTags(rawProducts) {
 
     return `<div class="flex flex-wrap gap-1 mt-2">` + 
         prods.map(p => {
-            let name = "Produit";
-            if (typeof p === 'string') {
-                if (p.startsWith('{')) { 
-                    try { let obj = JSON.parse(p); name = obj.NAME || obj.name || "Produit"; } catch(e) { name = p; }
-                } else { name = p; }
-            } else if (typeof p === 'object' && p !== null) {
-                name = p.NAME || p.name || p.Name || "Produit";
+            let name = "";
+            // Si c'est un objet (ex: {id: 1, name: "X"})
+            if (typeof p === 'object' && p !== null) {
+                name = p.name || p.NAME || p.Name || "Produit";
+            } 
+            // Si c'est une chaîne qui ressemble à du JSON
+            else if (typeof p === 'string' && p.startsWith('{')) {
+                try { 
+                    const obj = JSON.parse(p); 
+                    name = obj.name || obj.NAME || "Produit";
+                } catch(e) { name = p; }
+            } 
+            // Si c'est juste du texte
+            else {
+                name = p || "Produit";
             }
+            
             return `<span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[8px] font-black border border-indigo-100 uppercase">${name}</span>`;
         }).join('') + `</div>`;
 }
+
+
+
+
 
 /**
  * Sécurité et HTML
