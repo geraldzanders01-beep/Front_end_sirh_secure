@@ -117,6 +117,7 @@ window.renderCharts = Dash.renderCharts;
 window.fetchLiveAttendance = Dash.fetchLiveAttendance;
 
 // --- Opérations & Mobile (Ops) ---
+window.showAuditDetails = Ops.showAuditDetails;
 window.syncClockInterface = Ops.syncClockInterface;
 window.renderPerformanceTable = Ops.renderPerformanceTable;
 window.handleClockInOut = Ops.handleClockInOut;
