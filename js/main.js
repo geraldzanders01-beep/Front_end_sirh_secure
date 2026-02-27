@@ -3,8 +3,7 @@
 // ==============================================================
 import { AppState } from "./core/state.js";
 import { SIRH_CONFIG } from "./core/config.js";
-import { PremiumUI } from "./core/utils.js";
-
+import { PremiumUI, formatProductTags } from "./core/utils.js";
 import * as Auth from "./modules/auth.js";
 import * as UI from "./modules/ui.js";
 import * as Dash from "./modules/dashboard.js";
@@ -118,6 +117,9 @@ window.fetchLiveAttendance = Dash.fetchLiveAttendance;
 
 // --- Opérations & Mobile (Ops) ---
 window.showAuditDetails = Ops.showAuditDetails;
+window.renderAuditTable = Ops.renderAuditTable;
+window.fetchMobileReports = Ops.fetchMobileReports;
+window.showAuditDetails = Ops.showAuditDetails;
 window.syncClockInterface = Ops.syncClockInterface;
 window.renderPerformanceTable = Ops.renderPerformanceTable;
 window.handleClockInOut = Ops.handleClockInOut;
@@ -204,6 +206,7 @@ window.closeEditor = () => {
   const editor = document.getElementById("editor-modal");
   if (editor) editor.classList.add("hidden");
 };
+window.formatProductTags = formatProductTags;
 
 // ==============================================================
 // 3. LOGIQUE D'INITIALISATION DE L'APPLICATION
