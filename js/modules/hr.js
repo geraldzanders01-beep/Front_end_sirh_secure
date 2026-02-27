@@ -277,7 +277,7 @@ const headerAction = document.querySelector(
   }
 
   // --- 3. RENDU DU TABLEAU PRINCIPAL ---
-  const startIndex = (AppState.currentPage - 1) * AppState.ITEMS_PER_PAGE;
+  const startIndex = (AppState.currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedEmployees = filteredEmployees.slice(
     startIndex,
     startIndex + AppState.ITEMS_PER_PAGE,
@@ -379,7 +379,7 @@ const headerAction = document.querySelector(
 
  // Pagination
     const totalPages = Math.ceil(
-        filteredEmployees.length / SIRH_CONFIG.itemsPerPage || 10 // Correction ici : on utilise filteredEmployees
+        filteredEmployees.length / ITEMS_PER_PAGE || 1
     );
     document.querySelectorAll(".page-info-global").forEach((el) => {
         el.innerText = `PAGE ${AppState.currentPage} / ${totalPages || 1}`;
@@ -1209,6 +1209,8 @@ export function updateFileFeedback(inputId, labelId) {
 export async function handleOnboarding(e) {
   e.preventDefault();
   console.log("Tentative de création de profil...");
+    const fd = new FormData();
+
 
   // 1. Vérification de la photo de profil (Obligatoire)
   if (AppState.capturedBlob) {
