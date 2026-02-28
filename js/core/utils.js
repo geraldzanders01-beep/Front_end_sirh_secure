@@ -1,6 +1,4 @@
 import { AppState } from "./state.js";
-import { formatProductTags } from "./core/utils.js";
-
 
 /**
  * UI Premium : Vibrations et Sons
