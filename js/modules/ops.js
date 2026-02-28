@@ -7,6 +7,7 @@ import {
   SCAN_KEY,
   URL_READ_REPORT,
 } from "../core/config.js";
+import { URL_READ_REPORT } from "../core/config.js";
 import { secureFetch } from "../core/api.js";
 import {
   PremiumUI,
@@ -2267,9 +2268,6 @@ export function renderPersonalReport(reports, container) {
 
 
 
-import { AppState } from "../core/state.js";
-import { URL_READ_REPORT } from "../core/config.js";
-import { secureFetch } from "../core/api.js";
 
 /**
  * Récupère et affiche le rapport de présence (Journalier ou Mensuel)
