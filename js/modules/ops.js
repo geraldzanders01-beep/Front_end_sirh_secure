@@ -1292,9 +1292,8 @@ export function showAuditDetails(nom, type, contenu) {
 
 
 
-/**
- * Génère le tableau d'audit d'activité terrain
- * @param {Array} data - Liste des données d'audit
+ * Rendu du tableau d'audit d'activité
+ * @param {Array} data - Données brutes de l'audit
  */
 export function renderAuditTable(data) {
     const container = document.getElementById('reports-list-container');
@@ -1355,8 +1354,6 @@ export function renderAuditTable(data) {
     html += `</tbody></table></div></div>`;
     container.innerHTML = html;
 }
-
-
 
 
 
