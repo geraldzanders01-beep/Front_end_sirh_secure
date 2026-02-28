@@ -1546,12 +1546,8 @@ export function filterPrescripteursLocally() {
 
 
 
-
-
-
 /**
  * Charge et affiche les rapports (Visites ou Bilans) avec calcul des statistiques
- * @param {number} page - Numéro de la page à charger
  */
 export async function fetchMobileReports(page = 1) {
     const container = document.getElementById('reports-list-container');
@@ -1559,20 +1555,22 @@ export async function fetchMobileReports(page = 1) {
     const counterProduits = document.getElementById('stat-produits-total');
     const counterAgents = document.getElementById('stat-agents-actifs');
     const labelEl = document.getElementById('stat-report-label');
-    
     const nameFilter = document.getElementById('filter-report-name')?.value.toLowerCase() || "";
     const periodFilter = document.getElementById('filter-report-date')?.value || "month";
 
     if (!container) return;
     
+    // Adaptation obligatoire : currentUser -> AppState.currentUser
     const isChef = AppState.currentUser.role !== 'EMPLOYEE';
-    AppState.reportPage = page; // Mise à jour dans le State
+    
+    // Adaptation obligatoire : reportPage -> AppState.reportPage
+    AppState.reportPage = page; 
     
     container.innerHTML = '<div class="col-span-full text-center p-10"><i class="fa-solid fa-circle-notch fa-spin text-blue-500 text-2xl"></i></div>';
 
     try {
         const limit = 20;
-        // On utilise AppState.currentReportTab
+        // Adaptation obligatoire : currentReportTab -> AppState.currentReportTab
         const endpoint = AppState.currentReportTab === 'visits' ? 'read-visit-reports' : 'read-daily-reports';
         const url = `${SIRH_CONFIG.apiBaseUrl}/${endpoint}?page=${page}&limit=${limit}&name=${encodeURIComponent(nameFilter)}&period=${periodFilter}`;
         
@@ -1580,9 +1578,10 @@ export async function fetchMobileReports(page = 1) {
         const result = await r.json();
 
         const data = result.data || result; 
-        AppState.reportTotalPages = result.meta?.last_page || 1; // Mise à jour dans le State
+        // Adaptation obligatoire : reportTotalPages -> AppState.reportTotalPages
+        AppState.reportTotalPages = result.meta?.last_page || 1;
 
-        // --- 1. CALCUL DES STATISTIQUES GLOBALES ---
+        // --- 1. CALCUL DES STATISTIQUES GLOBALES POUR LES CARTES ---
         let totalVisitesCount = result.meta?.total || data.length;
         let totalProductsCount = 0;
         let uniqueAgents = new Set();
@@ -1639,25 +1638,25 @@ export async function fetchMobileReports(page = 1) {
                                 <i id="icon-${accordionId}" class="fa-solid fa-chevron-down text-white/50 transition-transform duration-300"></i>
                             </div>
                         </div>
-                        <div id="${accordionId}" class="hidden bg-slate-50/50">
-                            <div class="table-container">
-                                <table class="w-full text-left border-collapse min-w-[800px]">
-                                    <thead class="bg-slate-100 border-b">
-                                        <tr class="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                            <th class="p-4">👤 Contact & Lieu</th>
-                                            <th class="p-4">📦 Détails de la visite</th>
-                                            <th class="p-4 text-center">📸 Preuve</th>
-                                            <th class="p-4 text-right">📝 Notes</th>
-                                            ${isChef ? '<th class="p-4 text-center">Action</th>' : ''}
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-100">`;
+                           <div id="${accordionId}" class="hidden bg-slate-50/50">
+                                <div class="table-container">
+                                    <table class="w-full text-left border-collapse min-w-[800px]">
+                                        <thead class="bg-slate-100 border-b">
+                                            <tr class="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                                <th class="p-4">👤 Contact & Lieu</th>
+                                                <th class="p-4">📦 Détails de la visite</th>
+                                                <th class="p-4 text-center">📸 Preuve</th>
+                                                <th class="p-4 text-right">📝 Notes</th>
+                                                ${isChef ? '<th class="p-4 text-center">Action</th>' : ''}
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100">`;
                
-                visits.forEach(v => {
+            visits.forEach(v => {
                     let durationText = "---";
                     if (v.duration) durationText = v.duration >= 60 ? `${Math.floor(v.duration / 60)}h ${v.duration % 60}m` : `${v.duration} min`;
 
-                    // Utilisation de la fonction importée
+                    // FIX PRODUITS ICI
                     let prodsHtml = formatProductTags(v.presented_products);
 
                     let outcomeBadge = "";
@@ -1703,12 +1702,13 @@ export async function fetchMobileReports(page = 1) {
                             </button>
                         </td>` : ''}
                     </tr>`;
-                });
+            });
                 html += `</tbody></table></div></div></div>`;
             }
             html += `</div>`;
         } 
         else {
+            // LOGIQUE BILANS JOURNALIERS (DAILY)
             const groupedDaily = {};
             data.forEach(rep => {
                 const name = rep.employees?.nom || "Agent Inconnu";
