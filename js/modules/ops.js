@@ -1264,12 +1264,11 @@ export async function fetchPrescripteursManagement() {
 
 
 
-
 /**
- * Affiche une modale de détail pour l'audit (Lieux, Produits, etc.)
+ * Affiche une modale SweetAlert avec les détails de l'audit (Lieux ou Produits)
  * @param {string} nom - Nom du collaborateur
- * @param {string} type - Type d'information (ex: "PRODUITS")
- * @param {string} contenu - Contenu HTML ou texte à afficher
+ * @param {string} type - Type de détail (ex: "PRODUITS", "LIEUX VISITES")
+ * @param {string} contenu - Le texte ou HTML à afficher dans la modale
  */
 export function showAuditDetails(nom, type, contenu) {
     window.Swal.fire({
@@ -1290,11 +1289,6 @@ export function showAuditDetails(nom, type, contenu) {
 
 
 
-
-
- * Rendu du tableau d'audit d'activité
- * @param {Array} data - Données brutes de l'audit
- */
 export function renderAuditTable(data) {
     const container = document.getElementById('reports-list-container');
     if (!container) return;
