@@ -2226,182 +2226,6 @@ export function showDetailedEmpReport(empName) {
   });
 }
 
-export async function fetchAttendanceReport(
-  mode = "PERSONAL",
-  period = "monthly",
-) {
-  const container = document.getElementById("personal-report-container");
-
-  if (mode === "GLOBAL") {
-    Swal.fire({
-      title: "Chargement...",
-      text: "Analyse des présences en cours",
-      didOpen: () => Swal.showLoading(),
-    });
-  } else {
-    if (container)
-      container.innerHTML =
-        '<div class="flex justify-center p-4"><i class="fa-solid fa-circle-notch fa-spin text-indigo-500"></i></div>';
-  }
-
-  try {
-    const url = `${URL_READ_REPORT}?agent=${encodeURIComponent(AppState.currentUser.nom)}&requester_id=${encodeURIComponent(AppState.currentUser.id)}&mode=${mode}&period=${period}`;
-    const r = await secureFetch(url);
-    const rawReports = await r.json();
-
-    // --- NORMALISATION DES DONNÉES ---
-    const cleanReports = rawReports.map((rep) => {
-      if (period === "today") {
-        return {
-          nom: rep.nom || "Inconnu",
-          matricule: rep.matricule || "-",
-          statut: rep.statut || "ABSENT",
-          arrivee: rep.arrivee || "--:--",
-          duree: rep.duree || "0h 00m",
-          zone: rep.zone || "---",
-        };
-      } else {
-        return {
-          mois: rep.mois || "-",
-          nom: rep.nom || "Inconnu",
-          jours: rep.jours || 0,
-          heures: rep.heures || "0h 00m",
-          statut: "Validé",
-        };
-      }
-    });
-
-    if (mode === "GLOBAL") {
-      Swal.close();
-      let tableHtml = "";
-
-      if (period === "today") {
-        // --- RAPPORT JOURNALIER (IMPECCABLE) ---
-        const nbPresents = cleanReports.filter(
-          (r) => r.statut === "PRÉSENT",
-        ).length;
-        const nbPartis = cleanReports.filter(
-          (r) => r.statut === "PARTI",
-        ).length;
-        const nbAbsents = cleanReports.filter(
-          (r) => r.statut === "ABSENT" || r.statut === "CONGÉ",
-        ).length;
-
-        tableHtml = `
-                    <div class="grid grid-cols-3 gap-3 mb-6">
-                        <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-100 text-center">
-                            <p class="text-[8px] font-black text-emerald-600 uppercase">En Poste</p>
-                            <h4 class="text-xl font-black text-emerald-700">${nbPresents}</h4>
-                        </div>
-                        <div class="bg-blue-50 p-3 rounded-2xl border border-blue-100 text-center">
-                            <p class="text-[8px] font-black text-blue-600 uppercase">Terminé</p>
-                            <h4 class="text-xl font-black text-blue-700">${nbPartis}</h4>
-                        </div>
-                        <div class="bg-rose-50 p-3 rounded-2xl border border-rose-100 text-center">
-                            <p class="text-[8px] font-black text-rose-600 uppercase">Absents</p>
-                            <h4 class="text-xl font-black text-rose-700">${nbAbsents}</h4>
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-end mb-4">
-                        <button onclick="window.downloadReportCSV('${period}')" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase shadow hover:bg-emerald-700 transition-all flex items-center gap-2"><i class="fa-solid fa-file-csv"></i> Exporter Excel</button>
-                    </div>
-
-                    <div class="overflow-x-auto max-h-[50vh] custom-scroll border rounded-xl">
-                        <table class="w-full text-left whitespace-nowrap">
-                            <thead class="bg-slate-900 text-white text-[9px] uppercase font-black sticky top-0">
-                                <tr>
-                                    <th class="p-3">Employé</th>
-                                    <th class="p-3 text-center">Statut</th>
-                                    <th class="p-3 text-center">Arrivée</th>
-                                    <th class="p-3 text-center">Temps de Présence</th>
-                                    <th class="p-3 text-right">Zone</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 text-[11px]">
-                `;
-
-        cleanReports.forEach((item) => {
-          let badgeClass = "bg-rose-100 text-rose-700"; // Absent par défaut
-          if (item.statut === "PRÉSENT")
-            badgeClass = "bg-emerald-100 text-emerald-700";
-          else if (item.statut === "PARTI")
-            badgeClass = "bg-blue-100 text-blue-700";
-          else if (item.statut === "CONGÉ")
-            badgeClass = "bg-amber-100 text-amber-700";
-
-          tableHtml += `
-                        <tr class="${item.statut === "ABSENT" ? "opacity-60 bg-slate-50/50" : ""}">
-                            <td class="p-3">
-                                <div class="font-bold text-slate-700 uppercase">${item.nom}</div>
-                                <div class="text-[9px] text-slate-400">ID: ${item.matricule}</div>
-                            </td>
-                            <td class="p-3 text-center">
-                                <span class="px-2 py-0.5 rounded font-black text-[9px] ${badgeClass}">${item.statut}</span>
-                            </td>
-                            <td class="p-3 text-center font-mono font-bold text-slate-500">${item.arrivee}</td>
-                            <td class="p-3 text-center">
-                                <div class="font-black text-indigo-600">${item.duree}</div>
-                                <div class="text-[8px] text-slate-400 font-bold uppercase">${item.statut === "PRÉSENT" ? "Live" : "Total"}</div>
-                            </td>
-                            <td class="p-3 text-right text-slate-400 font-medium">${item.zone}</td>
-                        </tr>
-                    `;
-        });
-
-        if (cleanReports.length === 0)
-          tableHtml += `<tr><td colspan="5" class="p-10 text-center text-slate-400 italic">Aucune donnée pour ce jour.</td></tr>`;
-      } else {
-        // --- RAPPORT MENSUEL (Impeccable par cumul amplitude) ---
-        tableHtml = `
-                    <div class="flex justify-end mb-4">
-                        <button onclick="window.downloadReportCSV('${period}')" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase shadow hover:bg-emerald-700 transition-all flex items-center gap-2"><i class="fa-solid fa-file-csv"></i> Télécharger Cumul</button>
-                    </div>
-                    <div class="overflow-x-auto max-h-[60vh] custom-scroll border rounded-xl">
-                        <table class="w-full text-left whitespace-nowrap border-collapse">
-                            <thead class="bg-slate-900 text-white text-[9px] uppercase font-black sticky top-0">
-                                <tr><th class="p-4">Mois</th><th class="p-4">Employé</th><th class="p-4 text-center">Jours Présence</th><th class="p-4 text-center">Heures Totales</th><th class="p-4 text-right">Statut</th></tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 text-[11px]">
-                `;
-
-        cleanReports.forEach((item) => {
-          tableHtml += `
-                        <tr class="hover:bg-slate-50 transition-all">
-                            <td class="p-4 font-bold text-slate-700 capitalize">${item.mois}</td>
-                            <td class="p-4 font-medium uppercase">${item.nom}</td>
-                            <td class="p-4 text-center font-black text-slate-800">${item.jours} j</td>
-                            <td class="p-4 text-center font-mono text-indigo-600 font-black">${item.heures}</td>
-                            <td class="p-4 text-right"><span class="bg-emerald-50 text-emerald-600 px-2 py-1 rounded font-bold text-[9px]">Validé</span></td>
-                        </tr>`;
-        });
-        if (cleanReports.length === 0)
-          tableHtml += `<tr><td colspan="5" class="p-10 text-center text-slate-400 italic">Aucune donnée mensuelle.</td></tr>`;
-      }
-
-      tableHtml += `</tbody></table></div>`;
-
-      Swal.fire({
-        title:
-          period === "today"
-            ? "Analyse des Présences (Live)"
-            : "Cumul de Présence Mensuel",
-        html: tableHtml,
-        width: "900px",
-        confirmButtonText: "Fermer",
-        confirmButtonColor: "#0f172a",
-        customClass: { popup: "rounded-2xl" },
-      });
-
-      AppState.currentReportData = cleanReports;
-    } else {
-      renderPersonalReport(cleanReports, container);
-    }
-  } catch (e) {
-    console.error("Erreur rapport:", e);
-    Swal.fire("Erreur", "Impossible de charger le rapport.", "error");
-  }
-}
 
 export function renderPersonalReport(reports, container) {
   if (!container) return;
@@ -2439,6 +2263,142 @@ export function renderPersonalReport(reports, container) {
             </div>
         `;
   });
+}
+
+
+
+import { AppState } from "../core/state.js";
+import { URL_READ_REPORT } from "../core/config.js";
+import { secureFetch } from "../core/api.js";
+
+/**
+ * Récupère et affiche le rapport de présence (Journalier ou Mensuel)
+ */
+export async function fetchAttendanceReport(mode = 'PERSONAL', period = 'monthly') {
+    const container = document.getElementById('personal-report-container');
+    
+    if (mode === 'GLOBAL') {
+        window.Swal.fire({ title: 'Chargement...', text: 'Analyse des présences en cours', didOpen: () => window.Swal.showLoading() });
+    } else {
+        if(container) container.innerHTML = '<div class="flex justify-center p-4"><i class="fa-solid fa-circle-notch fa-spin text-indigo-500"></i></div>';
+    }
+
+    try {
+        // Utilisation de AppState.currentUser
+        const url = `${URL_READ_REPORT}?agent=${encodeURIComponent(AppState.currentUser.nom)}&requester_id=${encodeURIComponent(AppState.currentUser.id)}&mode=${mode}&period=${period}`;
+        const r = await secureFetch(url);
+        const cleanReports = await r.json(); 
+
+        if (mode === 'GLOBAL') {
+            window.Swal.close();
+            let tableHtml = '';
+            
+            if (period === 'today') {
+                const nbPresents = cleanReports.filter(r => r.statut === 'PRÉSENT').length;
+                const nbPartis = cleanReports.filter(r => r.statut === 'PARTI').length;
+                const nbAbsents = cleanReports.filter(r => r.statut === 'ABSENT' || r.statut === 'CONGÉ').length;
+
+                tableHtml = `
+                    <div class="grid grid-cols-3 gap-3 mb-6">
+                        <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-100 text-center">
+                            <p class="text-[8px] font-black text-emerald-600 uppercase">En Poste</p>
+                            <h4 class="text-xl font-black text-emerald-700">${nbPresents}</h4>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-2xl border border-blue-100 text-center">
+                            <p class="text-[8px] font-black text-blue-600 uppercase">Terminé</p>
+                            <h4 class="text-xl font-black text-blue-700">${nbPartis}</h4>
+                        </div>
+                        <div class="bg-rose-50 p-3 rounded-2xl border border-rose-100 text-center">
+                            <p class="text-[8px] font-black text-rose-600 uppercase">Absents</p>
+                            <h4 class="text-xl font-black text-rose-700">${nbAbsents}</h4>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end mb-4">
+                        <button onclick="window.downloadReportCSV('${period}')" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase shadow hover:bg-emerald-700 transition-all flex items-center gap-2"><i class="fa-solid fa-file-csv"></i> Exporter Excel</button>
+                    </div>
+                    <div class="overflow-x-auto max-h-[50vh] custom-scroll border rounded-xl">
+                        <table class="w-full text-left whitespace-nowrap">
+                            <thead class="bg-slate-900 text-white text-[9px] uppercase font-black sticky top-0">
+                                <tr>
+                                    <th class="p-3">Employé</th>
+                                    <th class="p-3 text-center">Statut</th>
+                                    <th class="p-3 text-center">Arrivée</th>
+                                    <th class="p-3 text-center">Temps de Présence</th>
+                                    <th class="p-3 text-right">Zone</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-[11px]">
+                `;
+
+                cleanReports.forEach(item => {
+                    let badgeClass = "bg-rose-100 text-rose-700"; 
+                    if (item.statut === 'PRÉSENT') badgeClass = "bg-emerald-100 text-emerald-700";
+                    else if (item.statut === 'PARTI') badgeClass = "bg-blue-100 text-blue-700";
+                    else if (item.statut === 'CONGÉ') badgeClass = "bg-amber-100 text-amber-700";
+
+                    tableHtml += `
+                        <tr class="${item.statut === 'ABSENT' ? 'opacity-60 bg-slate-50/50' : ''}">
+                            <td class="p-3">
+                                <div class="font-bold text-slate-700 uppercase">${item.nom}</div>
+                                <div class="text-[9px] text-slate-400">ID: ${item.matricule}</div>
+                            </td>
+                            <td class="p-3 text-center">
+                                <span class="px-2 py-0.5 rounded font-black text-[9px] ${badgeClass}">${item.statut}</span>
+                            </td>
+                            <td class="p-3 text-center font-mono font-bold text-slate-500">${item.arrivee}</td>
+                            <td class="p-3 text-center">
+                                <div class="font-black text-indigo-600">${item.duree}</div>
+                                <div class="text-[8px] text-slate-400 font-bold uppercase">${item.statut === 'PRÉSENT' ? 'Live' : 'Total'}</div>
+                            </td>
+                            <td class="p-3 text-right text-slate-400 font-medium">${item.zone}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tableHtml = `
+                    <div class="flex justify-end mb-4">
+                        <button onclick="window.downloadReportCSV('${period}')" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase shadow hover:bg-emerald-700 transition-all flex items-center gap-2"><i class="fa-solid fa-file-csv"></i> Télécharger Cumul</button>
+                    </div>
+                    <div class="overflow-x-auto max-h-[60vh] custom-scroll border rounded-xl">
+                        <table class="w-full text-left whitespace-nowrap border-collapse">
+                            <thead class="bg-slate-900 text-white text-[9px] uppercase font-black sticky top-0">
+                                <tr><th class="p-4">Mois</th><th class="p-4">Employé</th><th class="p-4 text-center">Jours Présence</th><th class="p-4 text-center">Heures Totales</th><th class="p-4 text-right">Statut</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-[11px]">
+                `;
+
+                cleanReports.forEach(item => {
+                    tableHtml += `
+                        <tr class="hover:bg-slate-50 transition-all">
+                            <td class="p-4 font-bold text-slate-700 capitalize">${item.mois}</td>
+                            <td class="p-4 font-medium uppercase">${item.nom}</td>
+                            <td class="p-4 text-center font-black text-slate-800">${item.jours} j</td>
+                            <td class="p-4 text-center font-mono text-indigo-600 font-black">${item.heures}</td>
+                            <td class="p-4 text-right"><span class="bg-emerald-50 text-emerald-600 px-2 py-1 rounded font-bold text-[9px]">Validé</span></td>
+                        </tr>`;
+                });
+            }
+
+            tableHtml += `</tbody></table></div>`;
+            window.Swal.fire({
+                title: period === 'today' ? 'Analyse des Présences' : 'Cumul Mensuel',
+                html: tableHtml,
+                width: '900px',
+                confirmButtonText: 'Fermer',
+                confirmButtonColor: '#0f172a',
+                customClass: { popup: 'rounded-2xl' }
+            });
+            // Mise à jour de AppState
+            AppState.currentReportData = cleanReports; 
+        } else {
+            // Assure-toi que renderPersonalReport est aussi exportée dans ops.js
+            window.renderPersonalReport(cleanReports, container);
+        }
+    } catch (e) {
+        console.error("Erreur rapport:", e);
+        window.Swal.fire('Erreur', "Impossible de charger le rapport.", 'error');
+    }
 }
 
 export async function openAttendancePicker() {
