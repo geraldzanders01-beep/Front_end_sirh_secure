@@ -17,7 +17,6 @@ import {
   parseDateSmart,
   formatProductTags
 } from "../core/utils.js";
-import { renderAuditTable } from "./ops.js"; 
 
 
 export async function syncClockInterface() {
