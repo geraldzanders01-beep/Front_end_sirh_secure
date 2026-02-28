@@ -17,6 +17,8 @@ import {
   parseDateSmart,
   formatProductTags
 } from "../core/utils.js";
+import { renderAuditTable } from "./ops.js"; 
+
 
 export async function syncClockInterface() {
   if (!AppState.currentUser || !AppState.currentUser.id) return;
@@ -1268,6 +1270,12 @@ export async function fetchPrescripteursManagement() {
  * @param {string} nom - Nom du collaborateur
  * @param {string} type - Type de détail (ex: "PRODUITS", "LIEUX VISITES")
  * @param {string} contenu - Le texte ou HTML à afficher dans la modale
+
+/**
+ * Affiche une modale SweetAlert avec les détails de l'audit (Lieux ou Produits)
+ * @param {string} nom - Nom du collaborateur
+ * @param {string} type - Type de détail (ex: "PRODUITS", "LIEUX VISITES")
+ * @param {string} contenu - Le texte ou HTML à afficher dans la modale
  */
 export function showAuditDetails(nom, type, contenu) {
     window.Swal.fire({
@@ -1288,6 +1296,11 @@ export function showAuditDetails(nom, type, contenu) {
 
 
 
+
+/**
+ * Génère le tableau d'audit global d'activité (Vue Terrain)
+ * @param {Array} data - Les données reçues du serveur (Audit Global)
+ */
 export function renderAuditTable(data) {
     const container = document.getElementById('reports-list-container');
     if (!container) return;
@@ -1313,9 +1326,15 @@ export function renderAuditTable(data) {
     
     data.forEach(row => {
         // --- SÉCURISATION DES DONNÉES POUR LE ONCLICK ---
+        // On remplace les apostrophes pour ne pas casser la chaîne de caractères JS
         const safeNom = row.nom.replace(/'/g, "&#39;");
-        const safeLieux = row.detail_lieux ? row.detail_lieux.replace(/'/g, "&#39;").split(',').join('<br> • ') : "Aucun lieu";
-        const safeProds = row.detail_produits ? row.detail_produits.replace(/'/g, "&#39;").split(',').join('<br> • ') : "Aucun produit";
+        
+        // On prépare le contenu des listes (on s'assure que les variables existent)
+        const detailLieux = row.detail_lieux || "Aucun lieu répertorié";
+        const detailProds = row.detail_produits || "Aucun produit présenté";
+        
+        const safeLieux = detailLieux.replace(/'/g, "&#39;").split(',').join('<br> • ');
+        const safeProds = detailProds.replace(/'/g, "&#39;").split(',').join('<br> • ');
 
         html += `
             <tr class="hover:bg-blue-50/50 transition-all">
@@ -1327,19 +1346,21 @@ export function renderAuditTable(data) {
                     <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-black text-xs shadow-sm">${row.total_visites}</span>
                 </td>
                 <td class="px-6 py-4 text-center">
+                    <!-- CLIC SUR LE NOMBRE : Affiche les noms des produits -->
                     <button onclick="window.showAuditDetails('${safeNom}', 'PRODUITS PRÉSENTÉS', '• ${safeProds}')" 
                             class="bg-indigo-50 text-indigo-600 border border-indigo-200 px-3 py-1 rounded-full font-black text-xs hover:bg-indigo-600 hover:text-white transition-all">
                         ${row.total_produits}
                     </button>
                 </td>
                 <td class="px-6 py-4">
+                    <!-- CLIC SUR LES LIEUX : Affiche la liste complète -->
                     <div class="text-[10px] text-slate-600 max-w-[200px] truncate cursor-pointer hover:text-blue-600 font-bold" 
                          onclick="window.showAuditDetails('${safeNom}', 'LIEUX VISITES', '• ${safeLieux}')">
-                        <i class="fa-solid fa-eye mr-1 opacity-50"></i> ${row.detail_lieux}
+                        <i class="fa-solid fa-eye mr-1 opacity-50"></i> ${detailLieux}
                     </div>
                 </td>
                 <td class="px-6 py-4 text-[10px] text-slate-500 italic text-right">
-                    <div class="max-w-[150px] truncate" title="${row.dernier_rapport}">${row.dernier_rapport}</div>
+                    <div class="max-w-[150px] truncate" title="${row.dernier_rapport || ''}">${row.dernier_rapport || 'RAS'}</div>
                 </td>
             </tr>`;
     });
@@ -1347,6 +1368,7 @@ export function renderAuditTable(data) {
     html += `</tbody></table></div></div>`;
     container.innerHTML = html;
 }
+
 
 
 
@@ -1813,6 +1835,59 @@ export function changeReportTab(tab) {
     fetchMobileReports();
   }
 }
+
+
+
+
+/**
+ * Récupère et calcule la synthèse d'audit global pour le mois en cours
+ */
+export async function fetchGlobalAudit() {
+    const container = document.getElementById('reports-list-container');
+    const labelEl = document.getElementById('stat-report-label');
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+
+    if (!container) return;
+    
+    // Affichage du loader
+    container.innerHTML = '<div class="col-span-full text-center p-10"><i class="fa-solid fa-circle-notch fa-spin text-blue-500 text-3xl"></i></div>';
+
+    try {
+        const r = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/get-global-audit?month=${month}&year=${year}`);
+        const data = await r.json();
+        
+        // Stockage dans l'état global
+        AppState.lastAuditData = data;
+        
+        if(labelEl) labelEl.innerText = "VISITES CUMULÉES (ÉQUIPE TERRAIN)";
+        
+        // Calculs des 3 KPIs
+        const totalVisites = data.reduce((acc, row) => acc + row.total_visites, 0);
+        const totalProduits = data.reduce((acc, row) => acc + (row.total_produits || 0), 0);
+        const agentsActifs = data.filter(row => row.total_visites > 0).length;
+
+        // Mise à jour des compteurs dans l'UI
+        const elVisites = document.getElementById('stat-visites-total');
+        const elProduits = document.getElementById('stat-produits-total');
+        const elAgents = document.getElementById('stat-agents-actifs');
+
+        if(elVisites) elVisites.innerText = totalVisites;
+        if(elProduits) elProduits.innerText = totalProduits;
+        if(elAgents) elAgents.innerText = agentsActifs;
+
+        // Appel de la fonction de rendu du tableau (doit aussi être dans ops.js)
+        renderAuditTable(data);
+
+    } catch (e) {
+        console.error("Erreur Audit Global:", e);
+        container.innerHTML = '<div class="col-span-full text-center text-red-500 py-10 font-bold uppercase text-xs tracking-widest">Erreur lors de la génération de la synthèse</div>';
+    }
+}
+
+
+
 
 export function peakText(el) {
   el.classList.remove("line-clamp-1");
