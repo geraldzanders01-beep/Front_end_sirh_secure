@@ -116,7 +116,6 @@ window.renderCharts = Dash.renderCharts;
 window.fetchLiveAttendance = Dash.fetchLiveAttendance;
 
 // --- Opérations & Mobile (Ops) ---
-window.showAuditDetails = Ops.showAuditDetails;
 window.renderAuditTable = Ops.renderAuditTable;
 window.fetchMobileReports = Ops.fetchMobileReports;
 window.showAuditDetails = Ops.showAuditDetails;
@@ -153,6 +152,8 @@ window.renderPersonalReport = Ops.renderPersonalReport;
 window.downloadReportCSV = Ops.downloadReportCSV;
 window.fetchMobileSchedules = Ops.fetchMobileSchedules;
 window.updateClockUI = Ops.updateClockUI;
+window.exportAuditToExcel = Ops.exportAuditToExcel;
+
 
 
 
