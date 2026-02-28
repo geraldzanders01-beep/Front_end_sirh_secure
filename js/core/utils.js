@@ -237,9 +237,7 @@ export function getDriveId(link) {
 
 
 
-/**
- * Utilitaire pour nettoyer et formater les tags de produits en HTML
-/**
+
 export function formatProductTags(rawProducts) {
     let prods = [];
     try {
