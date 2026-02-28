@@ -1,4 +1,6 @@
 import { AppState } from "./state.js";
+import { formatProductTags } from "./core/utils.js";
+
 
 /**
  * UI Premium : Vibrations et Sons
@@ -239,9 +241,7 @@ export function getDriveId(link) {
 
 /**
  * Utilitaire pour nettoyer et formater les tags de produits en HTML
- * @param {string|Array} rawProducts - Les données brutes des produits
- * @returns {string} HTML des badges de produits
- */
+/**
 export function formatProductTags(rawProducts) {
     let prods = [];
     try {
