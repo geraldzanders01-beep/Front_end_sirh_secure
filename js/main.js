@@ -116,6 +116,7 @@ window.renderCharts = Dash.renderCharts;
 window.fetchLiveAttendance = Dash.fetchLiveAttendance;
 
 // --- Opérations & Mobile (Ops) ---
+window.fetchGlobalAudit = Ops.fetchGlobalAudit;
 window.renderAuditTable = Ops.renderAuditTable;
 window.fetchMobileReports = Ops.fetchMobileReports;
 window.showAuditDetails = Ops.showAuditDetails;
@@ -200,7 +201,6 @@ window.fetchZones = Admin.fetchZones;
 window.fetchTemplates = Admin.fetchTemplates;
 window.fetchFlashMessage = Admin.fetchFlashMessage;
 window.triggerRobotCheck = Admin.triggerRobotCheck;
-window.fetchGlobalAudit = Admin.fetchGlobalAudit;
 
 // --- Divers / Utilitaires ---
 window.closeEditor = () => {
