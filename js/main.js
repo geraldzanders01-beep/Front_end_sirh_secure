@@ -211,6 +211,9 @@ window.closeEditor = () => {
 };
 window.formatProductTags = formatProductTags;
 
+
+
+window.blobToDataURL = Utils.blobToDataURL || (async (b) => new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(b); }));
 // ==============================================================
 // 3. LOGIQUE D'INITIALISATION DE L'APPLICATION
 // ==============================================================
