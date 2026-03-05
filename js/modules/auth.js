@@ -170,7 +170,7 @@ export async function setSession(n, r, id, perms, type) {
     // Le logo et la barre de chargement restent ici tant que le serveur n'a pas répondu
     await Promise.all([
       window.refreshAllData(false),
-      window.syncClockInterface(),
+      window.refreshClockButton();
       window.fetchAndPopulateDepartments(),
       window.syncAllRoleSelects(),
       window.fetchContractTemplatesForSelection(),
@@ -178,6 +178,7 @@ export async function setSession(n, r, id, perms, type) {
 
     await window.applyModulesUI();
     window.applyPermissionsUI(perms);
+    await window.refreshClockButton();
 
     // 4. NAVIGATION PRÉEMPTIVE (On choisit la vue SOUS le loader)
     const savedView = localStorage.getItem("sirh_last_view");
