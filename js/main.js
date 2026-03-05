@@ -13,6 +13,8 @@ import * as Payroll from "./modules/payroll.js";
 import * as Ops from "./modules/ops.js";
 import * as Chat from "./modules/chat.js";
 import * as Admin from "./modules/admin.js";
+import * as Utils from "./core/utils.js"; 
+
 
 // ==============================================================
 // 2. ATTACHEMENT À WINDOW (OBLIGATOIRE POUR LES ONCLICK DU HTML)
