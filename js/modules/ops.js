@@ -14,6 +14,7 @@ import {
   dataURLtoBlob,
   getDistance,
   CSVManager,
+  blobToDataURL,
   parseDateSmart,
   formatProductTags
 } from "../core/utils.js";
@@ -148,21 +149,14 @@ export function stopAllCameras() {
 }
 
 
-
-
-
-
-
 export async function handleClockInOut() {
     const userId = AppState.currentUser.id;
     const today = new Date().toLocaleDateString('fr-CA');
+    const actionTime = new Date().toISOString(); // On fige l'heure exacte du clic
 
     const btn = document.getElementById('btn-clock');
-
-    // 1. LA SOURCE DE VÉRITÉ EST MAINTENANT LE BOUTON (qui a été mis à jour par le serveur)
-    const action = btn.dataset.action; // Soit 'CLOCK_IN', soit 'CLOCK_OUT'
+    const action = btn.dataset.action; 
     
-    // --- 1. INITIALISATION DES VARIABLES VIA LE STATE ---
     AppState.formResult = null; 
     AppState.outcome = null;
     AppState.report = null;
@@ -175,7 +169,6 @@ export async function handleClockInOut() {
     let schedule_id = null;
     let forced_location_id = null;
 
-    // Récupération du contexte si lancé depuis l'agenda
     const savedContext = localStorage.getItem('active_mission_context');
     if (savedContext) {
         const ctx = JSON.parse(savedContext);
@@ -186,9 +179,6 @@ export async function handleClockInOut() {
     const empData = AppState.employees.find(e => e.id === userId);
     const isMobile = (empData?.employee_type === 'MOBILE') || (AppState.currentUser?.employee_type === 'MOBILE');
     
-    const currentStatus = localStorage.getItem(`clock_status_${userId}`) || 'OUT';
-
-    // Sécurité pour les fixes
     if (!isMobile) {
         const inDone = localStorage.getItem(`clock_in_done_${userId}`) === 'true';
         const outDone = localStorage.getItem(`clock_out_done_${userId}`) === 'true';
@@ -196,7 +186,6 @@ export async function handleClockInOut() {
         if (action === 'CLOCK_IN' && inDone) return Swal.fire('Oups', 'Entrée déjà validée.', 'info');
     }
 
-    // Sécurité flux caméra (Version complète qui libère bien la mémoire)
     const stopAllCameras = () => {
         if (AppState.proofStream) {
             AppState.proofStream.getTracks().forEach(t => t.stop());
@@ -206,20 +195,27 @@ export async function handleClockInOut() {
         if (video) video.srcObject = null;
     };
 
-    // --- 2. LOGIQUE DE SORTIE MOBILE (POP-UP) ---
+    // --- LOGIQUE DE SORTIE MOBILE (MODALE) ---
     if (action === 'CLOCK_OUT' && isMobile) {
-        Swal.fire({ title: 'Chargement...', text: 'Préparation du rapport...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+        Swal.fire({ title: 'Chargement...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
-        let products = [];
-        let prescripteurs =[];
-        try {
-            const[prodRes, presRes] = await Promise.all([
-                secureFetch(`${SIRH_CONFIG.apiBaseUrl}/list-products`),
-                secureFetch(`${SIRH_CONFIG.apiBaseUrl}/list-prescripteurs`)
-            ]);
-            products = await prodRes.json();
-            prescripteurs = await presRes.json();
-        } catch (e) { console.error("Erreur chargement CRM", e); }
+        // NOUVEAU : On utilise le cache local en priorité pour le mode HORS LIGNE
+        let products = AppState.allProductsData || [];
+        let prescripteurs = AppState.allPrescripteurs ||[];
+
+        // Si on est en ligne mais que le cache est vide, on va chercher sur le serveur
+        if (navigator.onLine && (products.length === 0 || prescripteurs.length === 0)) {
+            try {
+                const[prodRes, presRes] = await Promise.all([
+                    secureFetch(`${SIRH_CONFIG.apiBaseUrl}/list-products`),
+                    secureFetch(`${SIRH_CONFIG.apiBaseUrl}/list-prescripteurs`)
+                ]);
+                products = await prodRes.json();
+                AppState.allProductsData = products; // On met en cache
+                prescripteurs = await presRes.json();
+                AppState.allPrescripteurs = prescripteurs; // On met en cache
+            } catch (e) { console.warn("Mode hors ligne forcé", e); }
+        }
 
         Swal.close();
 
@@ -241,7 +237,6 @@ export async function handleClockInOut() {
             customClass: { popup: 'wide-modal' },
             html: `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-                    <!-- COLONNE GAUCHE : FORMULAIRE -->
                     <div class="space-y-6">
                         <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
                             <label class="text-[10px] font-black text-slate-400 uppercase mb-3 block">1. Identification Contact</label>
@@ -250,7 +245,6 @@ export async function handleClockInOut() {
                                 <input id="swal-nom-libre" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm" placeholder="Nom du contact...">
                             </div>
                         </div>
-
                         <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
                             <label class="text-[10px] font-black text-slate-400 uppercase mb-3 block">2. Résultat de visite</label>
                             <select id="swal-outcome" class="w-full p-3 bg-white border border-slate-200 rounded-xl font-black text-blue-600 outline-none">
@@ -259,36 +253,26 @@ export async function handleClockInOut() {
                                 <option value="COMMANDE">💰 Commande prise</option>
                                 <option value="RAS">👍 Visite de courtoisie</option>
                             </select>
-                            
                             <p class="text-[9px] font-black text-slate-400 uppercase mt-4 mb-2">Produits présentés</p>
                             <div class="flex flex-wrap gap-2 max-h-[100px] overflow-y-auto p-1">${productsHtml}</div>
                         </div>
                     </div>
-
-                    <!-- COLONNE DROITE : MÉDIA & NOTES -->
                     <div class="space-y-6 flex flex-col">
-                        <!-- SELECTEUR MODE -->
                         <div class="flex p-1 bg-slate-100 rounded-xl border border-slate-200 shrink-0">
                             <button type="button" onclick="window.switchProofMode('photo')" id="btn-mode-photo" class="flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all bg-white shadow-sm text-blue-600">📸 Cachet</button>
                             <button type="button" onclick="window.switchProofMode('sign')" id="btn-mode-sign" class="flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all text-slate-500">✍️ Signature</button>
                         </div>
-
-                        <!-- ZONE MÉDIA -->
                         <div id="proof-photo-area" class="h-44 bg-slate-900 rounded-2xl overflow-hidden relative border-2 border-slate-200 flex-shrink-0 shadow-inner">
                             <video id="proof-video" autoplay playsinline class="w-full h-full object-cover"></video>
                             <img id="proof-image" class="w-full h-full object-cover hidden absolute top-0 left-0">
                             <canvas id="proof-canvas" class="hidden"></canvas>
                             <button type="button" id="btn-snap" class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white text-slate-900 px-4 py-2 rounded-full text-[10px] font-black shadow-xl">CAPTURER</button>
                         </div>
-
                         <div id="proof-sign-area" class="hidden h-44 flex-shrink-0">
                             <canvas id="visit-signature-pad" class="signature-zone w-full h-full bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200"></canvas>
                         </div>
-
-                        <!-- NOTES & CLOTURE -->
                         <div class="flex-1 space-y-4">
                             <textarea id="swal-report" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm h-24 resize-none outline-none focus:bg-white" placeholder="Vos observations..."></textarea>
-                            
                             <label class="flex items-center gap-3 p-3 bg-red-50 rounded-xl border border-red-100 cursor-pointer group">
                                 <input type="checkbox" id="last-exit-check" class="w-5 h-5 accent-red-600">
                                 <span class="text-[10px] font-black text-red-700 uppercase">Clôturer ma journée après cette visite</span>
@@ -304,7 +288,6 @@ export async function handleClockInOut() {
             cancelButtonColor: '#ef4444', 
             allowOutsideClick: false,
             didOpen: () => {
-                // 1. GESTION DU CONTEXTE
                 const ctxMem = localStorage.getItem('active_mission_context');
                 if (ctxMem) {
                     const c = JSON.parse(ctxMem);
@@ -316,24 +299,16 @@ export async function handleClockInOut() {
                     document.getElementById('container-autre-nom').classList.toggle('hidden', e.target.value !== 'autre');
                 });
 
-                // 2. INITIALISATION CAMÉRA
                 const video = document.getElementById('proof-video');
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                    .then(s => { 
-                        AppState.proofStream = s; 
-                        if (video) video.srcObject = s; 
-                    })
+                    .then(s => { AppState.proofStream = s; if (video) video.srcObject = s; })
                     .catch(err => console.error("Erreur Caméra:", err));
 
-                // 3. LOGIQUE CAPTURE PHOTO
                 document.getElementById('btn-snap').onclick = () => {
                     if (!video || video.videoWidth === 0) return Swal.fire('Patientez', 'La caméra s\'initialise...', 'info');
-                    
                     const canvas = document.getElementById('proof-canvas');
-                    canvas.width = video.videoWidth; 
-                    canvas.height = video.videoHeight;
+                    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                     canvas.getContext('2d').drawImage(video, 0, 0);
-                    
                     canvas.toBlob(b => { 
                         if(!b) return;
                         AppState.proofBlob = b; 
@@ -343,9 +318,7 @@ export async function handleClockInOut() {
                     }, 'image/jpeg', 0.8);
                 };
 
-                // 4. INITIALISATION SIGNATURE
                 const signCanvas = document.getElementById('visit-signature-pad');
-                
                 window.reinitVisitCanvas = () => {
                     const ratio = Math.max(window.devicePixelRatio || 1, 1);
                     if (signCanvas.offsetWidth > 0) {
@@ -356,53 +329,27 @@ export async function handleClockInOut() {
                     }
                 };
 
-                // Si SignaturePad est chargé en global (script tag html)
-                window.visitSignPad = new window.SignaturePad(signCanvas, { 
-                    backgroundColor: 'rgba(255, 255, 255, 0)', 
-                    penColor: 'rgb(0, 0, 128)' 
-                });    
+                window.visitSignPad = new window.SignaturePad(signCanvas, { backgroundColor: 'rgba(255, 255, 255, 0)', penColor: 'rgb(0, 0, 128)' });    
 
-                // 5. FONCTION SWITCH MODE (AVEC CORRECTION DU IF/ELSE)
                 window.switchProofMode = (mode) => {
                     const isPhoto = mode === 'photo';
-                    
-                    // CORRECTION: Ajout du bloc "if" manquant
-                    if (!isPhoto) {
-                        stopAllCameras(); 
-                    }
+                    if (!isPhoto) { stopAllCameras(); }
                     else if (isPhoto && !AppState.proofStream) { 
                         navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                            .then(s => { 
-                                AppState.proofStream = s; 
-                                const v = document.getElementById('proof-video');
-                                if (v) v.srcObject = s; 
-                            }); 
+                            .then(s => { AppState.proofStream = s; const v = document.getElementById('proof-video'); if (v) v.srcObject = s; }); 
                     }
-
                     document.getElementById('proof-photo-area').classList.toggle('hidden', !isPhoto);
                     document.getElementById('proof-sign-area').classList.toggle('hidden', isPhoto);
-                    
-                    if (!isPhoto) {
-                        setTimeout(() => {
-                            if (typeof window.reinitVisitCanvas === 'function') {
-                                window.reinitVisitCanvas();
-                            }
-                        }, 50);
-                    }
-
+                    if (!isPhoto) { setTimeout(() => { if (typeof window.reinitVisitCanvas === 'function') window.reinitVisitCanvas(); }, 50); }
                     document.getElementById('btn-mode-photo').className = isPhoto ? 'flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase bg-white shadow-sm text-blue-600' : 'flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-slate-500';
                     document.getElementById('btn-mode-sign').className = !isPhoto ? 'flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase bg-white shadow-sm text-blue-600' : 'flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-slate-500';
-                    
                     window.currentProofMode = mode;
                 };
 
                 window.clearVisitSignature = () => { window.visitSignPad.clear(); };
                 window.currentProofMode = 'photo';
             },
-
-            willClose: () => { 
-                stopAllCameras(); 
-            },
+            willClose: () => { stopAllCameras(); },
             preConfirm: () => {
                 let finalProof = AppState.proofBlob;
                 if (window.currentProofMode === 'sign' && !window.visitSignPad.isEmpty()) {
@@ -421,8 +368,6 @@ export async function handleClockInOut() {
         });
 
         if (!swalRes.isConfirmed) return; 
-        
-        // Enregistrement dans le State
         AppState.formResult = swalRes.value;
         AppState.outcome = AppState.formResult.outcome;
         AppState.report = AppState.formResult.report;
@@ -432,22 +377,94 @@ export async function handleClockInOut() {
         AppState.contact_nom_libre = AppState.formResult.contact_nom_libre;
     }
 
-    // --- 3. POINTAGE GPS & ENVOI ---
     Swal.fire({ title: 'Vérification...', text: 'Analyse GPS...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
     try {
-        const ipRes = await fetch('https://api.ipify.org?format=json').then(r => r.json());
-        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
-        const currentGps = `${pos.coords.latitude},${pos.coords.longitude}`;
+        // --- NOUVEAU : GESTION INTELLIGENTE DU MODE HORS LIGNE ---
+        let currentIp = "offline";
+        let currentGps = "0,0";
 
+        // On essaie d'avoir le GPS (Même hors ligne, la puce GPS du tel fonctionne souvent)
+        try {
+            const pos = await new Promise((res, rej) => {
+                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000 });
+            });
+            currentGps = `${pos.coords.latitude},${pos.coords.longitude}`;
+        } catch (gpsError) {
+            console.warn("GPS non disponible ou timeout.");
+            currentGps = "OFFLINE_LOC";
+        }
+
+        if (navigator.onLine) {
+            try {
+                const ipRes = await fetch('https://api.ipify.org?format=json').then(r => r.json());
+                currentIp = ipRes.ip;
+            } catch(e) {}
+        }
+
+        // SI L'UTILISATEUR N'A PAS INTERNET : ON MET EN FILE D'ATTENTE
+        if (!navigator.onLine) {
+            console.log("🌐 HORS LIGNE : Sauvegarde locale du rapport...");
+            
+            let photoBase64 = null;
+            if (action === 'CLOCK_OUT' && isMobile && AppState.formResult && AppState.formResult.proofFile) {
+                // On compresse et on convertit l'image en texte pour pouvoir la stocker !
+                const compressed = await compressImage(AppState.formResult.proofFile);
+                photoBase64 = await window.blobToDataURL(compressed); 
+            }
+
+            const offlinePayload = {
+                id: userId,
+                action: action,
+                gps: currentGps,
+                ip: "offline",
+                agent: AppState.currentUser.nom,
+                time: actionTime, // Très important : on sauvegarde l'heure exacte du clic
+                outcome: AppState.outcome || 'VU',
+                report: AppState.report || '',
+                prescripteur_id: AppState.prescripteur_id,
+                contact_nom_libre: AppState.contact_nom_libre,
+                presentedProducts: AppState.presentedProducts,
+                schedule_id: schedule_id,
+                forced_location_id: forced_location_id,
+                proof_photo_base64: photoBase64, // L'image en texte
+                is_last_exit: AppState.isLastExit ? 'true' : 'false'
+            };
+
+            const queue = JSON.parse(localStorage.getItem("sirh_offline_queue") || "[]");
+            queue.push(offlinePayload);
+            localStorage.setItem("sirh_offline_queue", JSON.stringify(queue));
+
+            // MISE À JOUR UI LOCALE
+            localStorage.removeItem('active_mission_context');
+            let nextState = (action === 'CLOCK_IN') ? 'IN' : 'OUT';
+            localStorage.setItem(`clock_status_${userId}`, nextState);
+            if (AppState.isLastExit || !isMobile) localStorage.setItem(`clock_finished_${userId}`, 'true');
+
+            stopAllCameras();
+            if(typeof window.updateClockUI === 'function') window.updateClockUI(nextState);
+
+            const nowStr = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+            const lastActionEl = document.getElementById('clock-last-action');
+            if (lastActionEl) lastActionEl.innerText = `Sauvegardé 📶 : ${action === 'CLOCK_IN' ? 'Entrée' : 'Sortie'} à ${nowStr}`;
+
+            Swal.fire({
+                icon: 'info',
+                title: 'Sauvegarde Locale',
+                text: 'Vous êtes hors ligne. Le pointage a été enregistré dans le téléphone et sera envoyé dès le retour de la connexion.'
+            });
+            return; // On arrête là !
+        }
+
+        // SI ON EST EN LIGNE (COMPORTEMENT NORMAL)
         const fd = new FormData();
         fd.append('id', userId);
         fd.append('action', action);
         fd.append('gps', currentGps);
-        fd.append('ip', ipRes.ip);
+        fd.append('ip', currentIp);
         fd.append('agent', AppState.currentUser.nom);
+        fd.append('time', actionTime); // On envoie l'heure exacte
         
-        // Sécurisation de l'envoi : on n'envoie les rapports que si on est en CLOCK_OUT
         if (action === 'CLOCK_OUT' && isMobile) {
             fd.append('outcome', AppState.outcome || 'VU');
             fd.append('report', AppState.report || '');
@@ -470,14 +487,8 @@ export async function handleClockInOut() {
 
         if (response.ok) {
             const nowStr = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+            if (typeof PremiumUI !== 'undefined') { PremiumUI.vibrate('success'); PremiumUI.play('success'); }
             
-            // UI Premium
-            if (typeof PremiumUI !== 'undefined') { 
-                PremiumUI.vibrate('success'); 
-                PremiumUI.play('success'); 
-            }
-            
-            // Mise à jour de l'état local
             localStorage.removeItem('active_mission_context');
             let nextState = (action === 'CLOCK_IN') ? 'IN' : 'OUT';
             localStorage.setItem(`clock_status_${userId}`, nextState);
@@ -485,7 +496,6 @@ export async function handleClockInOut() {
                 localStorage.setItem(`clock_finished_${userId}`, 'true');
             }
 
-            // Rafraîchissements d'interface
             if(typeof window.fetchMobileSchedules === 'function') window.fetchMobileSchedules(); 
             if(typeof window.updateClockUI === 'function') window.updateClockUI(nextState);
             
@@ -494,8 +504,7 @@ export async function handleClockInOut() {
                 lastActionEl.innerText = `Validé : ${action === 'CLOCK_IN' ? 'Entrée' : 'Sortie'} à ${nowStr}`;
             }
             
-            stopAllCameras(); // On s'assure que la webcam est bien éteinte
-            
+            stopAllCameras(); 
             Swal.fire('Succès', `Pointage validé : ${resData.zone}`, 'success');
             await refreshClockButton();
 
@@ -503,7 +512,7 @@ export async function handleClockInOut() {
             throw new Error(resData.error);
         }
     } catch (e) {
-        stopAllCameras(); // On éteint la caméra même s'il y a une erreur GPS
+        stopAllCameras(); 
         Swal.fire('Erreur', e.message, 'error');
     }
 }
@@ -511,54 +520,75 @@ export async function handleClockInOut() {
 
 
 export async function syncOfflineData() {
-  const queue = JSON.parse(localStorage.getItem("sirh_offline_queue") || "[]");
+    const queue = JSON.parse(localStorage.getItem("sirh_offline_queue") || "[]");
 
-  if (queue.length === 0) return; // Rien à faire
+    if (queue.length === 0) return; // Rien à faire
 
-  const Toast = Swal.mixin({
-    toast: true,
-    position: "top-end",
-    showConfirmButton: false,
-  });
-  Toast.fire({
-    icon: "info",
-    title: `Synchronisation de ${queue.length} pointage(s)...`,
-  });
+    const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+    });
+    Toast.fire({
+        icon: "info",
+        title: `Réseau détecté. Synchronisation de ${queue.length} action(s)...`,
+    });
 
-  const remainingQueue = [];
+    const remainingQueue =[];
 
-  for (const item of queue) {
-    try {
-      // On tente d'envoyer
-      await secureFetch(URL_CLOCK_ACTION, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(item),
-      });
-    } catch (e) {
-      console.error("Echec synchro item", item, e);
-      remainingQueue.push(item); // Si ça rate encore, on le garde pour la prochaine fois
+    for (const item of queue) {
+        try {
+            // On reconstruit le FormData (Simule exactement un envoi normal)
+            const fd = new FormData();
+            
+            // On injecte toutes les clés (sauf la photo qui a un format spécial)
+            Object.keys(item).forEach(key => {
+                if (key !== 'proof_photo_base64' && item[key] !== null && item[key] !== undefined) {
+                    if (typeof item[key] === 'object') {
+                        fd.append(key, JSON.stringify(item[key]));
+                    } else {
+                        fd.append(key, item[key]);
+                    }
+                }
+            });
+
+            // Si le rapport contenait une photo hors ligne (Base64), on la re-transforme en fichier
+            if (item.proof_photo_base64) {
+                const blob = dataURLtoBlob(item.proof_photo_base64);
+                fd.append('proof_photo', blob, 'preuve_visite_offline.jpg');
+            }
+
+            // On envoie
+            await secureFetch(URL_CLOCK_ACTION, {
+                method: "POST",
+                body: fd, // Pas de Content-Type ici, le navigateur gère le multipart/form-data
+            });
+            
+        } catch (e) {
+            console.error("Echec synchro item", item, e);
+            remainingQueue.push(item); // Si ça rate encore (serveur down), on le garde pour plus tard
+        }
     }
-  }
 
-  // Mise à jour de la file d'attente (on ne garde que les échecs)
-  localStorage.setItem("sirh_offline_queue", JSON.stringify(remainingQueue));
+    // Mise à jour de la file d'attente (on ne garde que les échecs)
+    localStorage.setItem("sirh_offline_queue", JSON.stringify(remainingQueue));
 
-  if (remainingQueue.length === 0) {
-    Toast.fire({
-      icon: "success",
-      title: "Tous les pointages ont été synchronisés !",
-    });
-    document.getElementById("clock-last-action").innerText =
-      "Dernière action : " + new Date().toLocaleTimeString() + " (Synchronisé)";
-  } else {
-    Toast.fire({
-      icon: "warning",
-      title: `Reste ${remainingQueue.length} pointage(s) à envoyer.`,
-    });
-  }
+    if (remainingQueue.length === 0) {
+        Toast.fire({
+            icon: "success",
+            title: "Toutes les visites hors-ligne ont été synchronisées !",
+        });
+        
+        // On actualise le bouton pour être sûr que l'état correspond au serveur
+        if (typeof window.refreshClockButton === 'function') window.refreshClockButton();
+        
+    } else {
+        Toast.fire({
+            icon: "warning",
+            title: `Reste ${remainingQueue.length} action(s) à envoyer.`,
+        });
+    }
 }
-
 
 
 
