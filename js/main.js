@@ -116,6 +116,8 @@ window.renderCharts = Dash.renderCharts;
 window.fetchLiveAttendance = Dash.fetchLiveAttendance;
 
 // --- Opérations & Mobile (Ops) ---
+window.refreshClockButton = Ops.refreshClockButton;
+window.stopAllCameras = Ops.stopAllCameras;
 window.fetchGlobalAudit = Ops.fetchGlobalAudit;
 window.renderAuditTable = Ops.renderAuditTable;
 window.fetchMobileReports = Ops.fetchMobileReports;
