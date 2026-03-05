@@ -272,7 +272,15 @@ export function formatProductTags(rawProducts) {
 
 
 
-
+// Permet de convertir une image (Blob) en texte (Base64) pour la stocker hors-ligne
+export function blobToDataURL(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(e);
+        reader.readAsDataURL(blob);
+    });
+}
 
 /**
  * Sécurité et HTML
