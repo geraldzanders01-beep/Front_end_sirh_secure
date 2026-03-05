@@ -170,7 +170,7 @@ export async function setSession(n, r, id, perms, type) {
     // Le logo et la barre de chargement restent ici tant que le serveur n'a pas répondu
     await Promise.all([
       window.refreshAllData(false),
-      window.refreshClockButton();
+      window.refreshClockButton(),
       window.fetchAndPopulateDepartments(),
       window.syncAllRoleSelects(),
       window.fetchContractTemplatesForSelection(),
