@@ -110,21 +110,22 @@ export async function refreshClockButton() {
     if (!AppState.currentUser || !AppState.currentUser.id) return;
     
     try {
-        // On appelle ta route 'attendance-status'
-        const r = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/attendance-status?id=${AppState.currentUser.id}`);
-        const status = await r.json(); // { action: 'CLOCK_IN' ou 'CLOCK_OUT', can_clock: true/false }
+        // ON UTILISE LA BONNE ROUTE (Celle qui gère les dates)
+        const r = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/get-clock-status?employee_id=${AppState.currentUser.id}`);
+        const data = await r.json(); 
         
         const btn = document.getElementById('btn-clock');
         if (btn) {
-            // On met à jour l'état du bouton pour la prochaine action
-            btn.dataset.action = status.action;
+            // On met à jour l'action (Si IN -> bouton sortira, sinon -> bouton entrera)
+            btn.dataset.action = (data.status === 'IN') ? 'CLOCK_OUT' : 'CLOCK_IN';
             
-            // Si l'action renvoyée est 'DONE', la journée est finie
-            if (status.action === 'DONE' || status.can_clock === false) {
+            // On applique le design
+            if (data.day_finished === true) {
                 updateClockUI('DONE');
+            } else if (data.status === 'IN') {
+                updateClockUI('IN');
             } else {
-                // Sinon, si on doit sortir (CLOCK_OUT), c'est qu'on est à l'intérieur (IN)
-                updateClockUI(status.action === 'CLOCK_OUT' ? 'IN' : 'OUT');
+                updateClockUI('OUT');
             }
         }
     } catch (e) {
@@ -178,13 +179,6 @@ export async function handleClockInOut() {
 
     const empData = AppState.employees.find(e => e.id === userId);
     const isMobile = (empData?.employee_type === 'MOBILE') || (AppState.currentUser?.employee_type === 'MOBILE');
-    
-    if (!isMobile) {
-        const inDone = localStorage.getItem(`clock_in_done_${userId}`) === 'true';
-        const outDone = localStorage.getItem(`clock_out_done_${userId}`) === 'true';
-        if (inDone && outDone) return Swal.fire('Terminé', 'Votre journée est clôturée.', 'success');
-        if (action === 'CLOCK_IN' && inDone) return Swal.fire('Oups', 'Entrée déjà validée.', 'info');
-    }
 
     const stopAllCameras = () => {
         if (AppState.proofStream) {
