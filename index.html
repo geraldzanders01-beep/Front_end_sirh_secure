@@ -1700,12 +1700,14 @@
         <!-- COLONNE DROITE : ARCHIVES & CONTACTS (Aéré & Lisible) -->
         <div class="flex-1 p-5 md:p-12 md:overflow-y-auto bg-slate-50 custom-scroll min-h-[400px]">
             
-            <!-- Titre Section 1 -->
-            <div class="flex items-center gap-4 mb-8">
-                <div class="h-[1px] flex-1 bg-slate-200"></div>
-                <h4 class="text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Archives Numériques</h4>
-                <div class="h-[1px] flex-1 bg-slate-200"></div>
+        <!-- Titre Section 1 & Bouton Archivage -->
+            <div class="flex items-center justify-between gap-4 mb-6">
+                <h4 class="text-slate-800 font-black text-[12px] uppercase tracking-[0.1em]">Archives Numériques</h4>
+                <button id="btn-bulk-archive" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-2 shadow-sm border border-blue-100">
+                    <i class="fa-solid fa-layer-group"></i> Upload Multiple
+                </button>
             </div>
+            <div class="h-[1px] w-full bg-slate-200 mb-6"></div>
             
             <!-- Grille des documents (Gérée par ton JS) -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12" id="folder-docs-grid"></div>
