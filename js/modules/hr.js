@@ -1037,10 +1037,13 @@ export function openFullFolder(id) {
                     <div class="p-2.5 rounded-xl bg-${doc.color}-50 text-${doc.color}-600"><i class="fa-solid ${doc.icon}"></i></div>
                     <p class="text-xs font-bold text-slate-700">${doc.label}</p>
                 </div>
-                <div class="flex gap-2">
-                    ${hasLink ? `<button onclick="viewDocument('${doc.link}', '${safeLabel}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Consulter"><i class="fa-solid fa-eye"></i></button>` : ""}
-                    ${canEdit ? `<button onclick="updateSingleDoc('${doc.key}', '${e.id}')" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="Modifier"><i class="fa-solid fa-pen-to-square"></i></button>` : ""}
+               <div class="flex gap-2">
+                    ${hasLink ? `<button onclick="viewDocumentHistory('${e.id}', '${doc.key}', '${safeLabel}')" class="p-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Voir l'historique"><i class="fa-solid fa-clock-rotate-left"></i></button>` : ""}
+                    ${hasLink ? `<button onclick="viewDocument('${doc.link}', '${safeLabel}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Consulter Actuel"><i class="fa-solid fa-eye"></i></button>` : ""}
+                    ${canEdit ? `<button onclick="updateSingleDoc('${doc.key}', '${e.id}')" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="Mettre à jour"><i class="fa-solid fa-cloud-arrow-up"></i></button>` : ""}
                 </div>
+
+                
             </div>`;
   });
 
@@ -2947,6 +2950,62 @@ export function previewContractFile(e) {
     img.classList.remove("hidden");
     document.getElementById("contract-icon").classList.add("hidden");
   }
+}
+
+
+
+export async function viewDocumentHistory(empId, docKey, docLabel) {
+    Swal.fire({ title: 'Recherche...', didOpen: () => Swal.showLoading() });
+    
+    try {
+        const response = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/read-archives?employee_id=${empId}&doc_type=${docKey}`);
+        const archives = await response.json();
+        
+        if (archives.length === 0) {
+            return Swal.fire("Historique Vierge", "Aucune ancienne version n'est enregistrée pour ce document.", "info");
+        }
+
+        let html = '<div class="text-left space-y-4 max-h-[60vh] overflow-y-auto custom-scroll pr-2 mt-4">';
+        
+        archives.forEach((arc, index) => {
+            const dateObj = new Date(arc.created_at);
+            const dateStr = dateObj.toLocaleDateString('fr-FR');
+            const timeStr = dateObj.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+            
+            // Le premier de la liste est souvent l'actuel
+            const isCurrent = index === 0 ? '<span class="bg-emerald-100 text-emerald-700 text-[9px] px-2 py-0.5 rounded font-black uppercase ml-2">Actif</span>' : '';
+            const safeLabel = docLabel.replace(/'/g, "\\'");
+
+            html += `
+                <div class="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl hover:bg-white transition-all shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center"><i class="fa-solid fa-file-contract"></i></div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-800 uppercase tracking-tighter">Version du ${dateStr} ${isCurrent}</p>
+                            <p class="text-[10px] text-slate-400 font-medium">À ${timeStr} • Par ${arc.agent || 'Système'}</p>
+                        </div>
+                    </div>
+                    <button onclick="viewDocument('${arc.file_url}', '${safeLabel} - Archive')" class="px-4 py-2 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase hover:bg-blue-600 transition-all shadow-md active:scale-95">
+                        Ouvrir
+                    </button>
+                </div>
+            `;
+        });
+        html += '</div>';
+
+        Swal.fire({
+            title: `<span class="text-lg font-black uppercase tracking-tight text-slate-800">Historique : ${docLabel}</span>`,
+            html: html,
+            width: '600px',
+            showConfirmButton: false,
+            showCloseButton: true,
+            customClass: { popup: 'rounded-2xl' }
+        });
+        
+    } catch (e) {
+        console.error(e);
+        Swal.fire("Erreur", "Impossible de charger l'historique.", "error");
+    }
 }
 
 export function resetContractCamera() {
