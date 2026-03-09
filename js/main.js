@@ -102,6 +102,7 @@ window.fetchLeaveRequests = Leaves.fetchLeaveRequests;
 
 
 // --- Comptabilité & Paie (Payroll) ---
+window.viewPayroll = Payroll.viewPayroll;
 window.loadAccountingView = Payroll.loadAccountingView;
 window.calculateRow = Payroll.calculateRow;
 window.generateAllPay = Payroll.generateAllPay;
