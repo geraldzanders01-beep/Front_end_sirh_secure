@@ -42,6 +42,7 @@ window.applyBranding = UI.applyBranding;
 window.initDarkMode = UI.initDarkMode;
 
 // --- Ressources Humaines (HR) ---
+window.downloadEmployeeZip = HR.downloadEmployeeZip;
 window.openBulkArchiveModal = HR.openBulkArchiveModal;
 window.viewDocumentHistory = HR.viewDocumentHistory;
 window.fetchData = HR.fetchData;
