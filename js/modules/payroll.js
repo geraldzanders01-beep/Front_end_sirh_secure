@@ -447,45 +447,73 @@ export async function fetchPayrollData() {
       return;
     }
 
-    payrolls.forEach((p) => {
-      // On récupère le nom et le poste depuis l'objet lié
-    const nomEmp = p.employees ? p.employees.nom : AppState.currentUser.nom;
-    const posteEmp = p.employees ? p.employees.poste : "--";
 
-      // Attention aux minuscules/majuscules venant de Supabase
-      const montant = p.salaire_net
-        ? new Intl.NumberFormat("fr-FR").format(p.salaire_net) + " FCFA"
-        : "--";
+payrolls.forEach((p) => {
+      const nomEmp = p.employees ? p.employees.nom : AppState.currentUser.nom;
+      const posteEmp = p.employees ? p.employees.poste : "--";
+      const montant = p.salaire_net ? new Intl.NumberFormat("fr-FR").format(p.salaire_net) + " FCFA" : "--";
       const titre = `${p.mois} ${p.annee}`;
-      const fileUrl = p.fiche_pdf_url; // Nom exact de ta colonne Supabase
+      const fileUrl = p.fiche_pdf_url; 
+      
+      // --- NOUVEAU : LOGIQUE DU BADGE DE CONSULTATION ---
+      let statusBadge = `<span class="bg-orange-50 text-orange-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-orange-100"><i class="fa-regular fa-eye-slash mr-1"></i> Non consulté</span>`;
+      
+      if (p.date_consultation) {
+          const dateVue = new Date(p.date_consultation).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+          statusBadge = `<span class="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-emerald-100" title="Preuve légale de remise"><i class="fa-solid fa-check-double mr-1"></i> Vu le ${dateVue}</span>`;
+      }
 
       container.innerHTML += `
-                            <div class="flex flex-col justify-between p-4 border border-slate-100 bg-slate-50 rounded-xl hover:bg-white hover:border-blue-200 hover:shadow-md transition-all group">
-                                <div class="flex items-start justify-between mb-3">
-                                    <div class="bg-white border border-slate-100 text-emerald-600 p-2.5 rounded-xl shadow-sm">
-                                        <i class="fa-solid fa-file-invoice text-xl"></i>
-                                    </div>
-                                    <button onclick="viewDocument('${fileUrl}', 'Bulletin ${titre}')" class="text-slate-300 hover:text-blue-600 transition-colors">
-                                        <i class="fa-solid fa-eye"></i>
-                                    </button>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">${nomEmp}</p>
-                                    <p class="text-xs font-bold text-slate-700 mb-1">Bulletin de ${titre}</p>
-                                    
-                                    <!-- MODIFICATION ICI : Ajout du Privacy Mode sur le montant -->
-                                    <p class="text-[10px] text-emerald-600 font-black uppercase tracking-wide bg-emerald-50 inline-block px-2 py-1 rounded sensitive-value" 
-                                       onclick="toggleSensitiveData(this)" 
-                                       title="Cliquez pour afficher">
-                                        ${montant}
-                                    </p>
-                                </div>
-                            </div>
-                        `;
+        <div class="flex flex-col justify-between p-4 border border-slate-100 bg-slate-50 rounded-xl hover:bg-white hover:border-blue-200 hover:shadow-md transition-all group relative">
+            <div class="flex items-start justify-between mb-3">
+                <div class="bg-white border border-slate-100 text-emerald-600 p-2.5 rounded-xl shadow-sm">
+                    <i class="fa-solid fa-file-invoice text-xl"></i>
+                </div>
+                <!-- ON UTILISE MAINTENANT window.viewPayroll AU LIEU DE viewDocument -->
+                <button onclick="window.viewPayroll('${p.id}', '${fileUrl}', 'Bulletin ${titre}')" class="text-slate-300 hover:text-blue-600 transition-colors p-2 bg-white rounded-lg shadow-sm border border-slate-100 group-hover:bg-blue-50 group-hover:border-blue-200">
+                    <i class="fa-solid fa-eye"></i> Ouvrir
+                </button>
+            </div>
+            <div>
+                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">${nomEmp}</p>
+                <p class="text-xs font-bold text-slate-700 mb-2">Bulletin de ${titre}</p>
+                
+                <div class="flex items-center justify-between mt-3 pt-3 border-t border-slate-200/60">
+                    <p class="text-[10px] text-emerald-600 font-black uppercase tracking-wide sensitive-value" onclick="toggleSensitiveData(this)" title="Cliquez pour afficher">
+                        ${montant}
+                    </p>
+                    ${statusBadge}
+                </div>
+            </div>
+        </div>
+      `;
     });
+    
   } catch (e) {
     console.warn("Erreur bulletins:", e);
     container.innerHTML =
       '<p class="col-span-full text-[10px] text-red-400 italic text-center py-4">Erreur de chargement</p>';
   }
+}
+
+
+
+export async function viewPayroll(payrollId, fileUrl, title) {
+    // 1. On ouvre le document immédiatement pour ne pas faire attendre l'utilisateur
+    window.viewDocument(fileUrl, title);
+
+    // 2. On envoie un signal silencieux au serveur pour dire "Il l'a lu !"
+    try {
+        await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/mark-payroll-read`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: payrollId })
+        });
+        
+        // On rafraîchit la liste en arrière-plan pour que le badge passe au vert (Vu) à la fermeture du PDF
+        setTimeout(() => fetchPayrollData(), 2000);
+        
+    } catch (e) {
+        console.error("Erreur logging paie:", e);
+    }
 }
