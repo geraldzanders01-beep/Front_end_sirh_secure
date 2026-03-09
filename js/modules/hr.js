@@ -1047,6 +1047,10 @@ export function openFullFolder(id) {
             </div>`;
   });
 
+  // --- NOUVEAU : Associer le bouton "Upload Multiple" au bon employé ---
+  const bulkBtn = document.getElementById("btn-bulk-archive");
+  if (bulkBtn) bulkBtn.setAttribute("onclick", `window.openBulkArchiveModal('${e.id}')`);
+  
   document.getElementById("folder-modal").classList.remove("hidden");
 }
 
@@ -3016,4 +3020,102 @@ export function resetContractCamera() {
   document.getElementById("btn-contract-capture").classList.add("hidden");
   if (AppState.contractStream)
     AppState.contractStream.getTracks().forEach((t) => t.stop());
+}
+
+
+
+export async function openBulkArchiveModal(empId) {
+    const { value: formValues } = await Swal.fire({
+        title: '<span class="text-xl font-black uppercase tracking-tight">Numérisation Massive</span>',
+        html: `
+            <p class="text-xs text-slate-500 mb-6 px-2 text-left">Sélectionnez les documents scannés ou photographiés. Ils seront compressés et classés automatiquement dans le dossier du collaborateur.</p>
+            <div class="space-y-4 text-left bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-1"><i class="fa-solid fa-file-signature text-blue-500 mr-1"></i> Contrat signé</label>
+                    <input type="file" id="bulk-contrat" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:bg-white file:text-blue-600 file:shadow-sm hover:file:bg-blue-50" accept="image/*,application/pdf">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-1 mt-4"><i class="fa-solid fa-id-card text-purple-500 mr-1"></i> Pièce d'Identité</label>
+                    <input type="file" id="bulk-id_card" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:bg-white file:text-purple-600 file:shadow-sm hover:file:bg-purple-50" accept="image/*,application/pdf">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-1 mt-4"><i class="fa-solid fa-file-pdf text-indigo-500 mr-1"></i> Curriculum Vitae</label>
+                    <input type="file" id="bulk-cv" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:bg-white file:text-indigo-600 file:shadow-sm hover:file:bg-indigo-50" accept="image/*,application/pdf">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-1 mt-4"><i class="fa-solid fa-graduation-cap text-emerald-500 mr-1"></i> Diplôme</label>
+                    <input type="file" id="bulk-diploma" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:bg-white file:text-emerald-600 file:shadow-sm hover:file:bg-emerald-50" accept="image/*,application/pdf">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-1 mt-4"><i class="fa-solid fa-file-invoice text-orange-500 mr-1"></i> Attestation / Autre</label>
+                    <input type="file" id="bulk-attestation" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:bg-white file:text-orange-600 file:shadow-sm hover:file:bg-orange-50" accept="image/*,application/pdf">
+                </div>
+
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Archiver les documents",
+        confirmButtonColor: "#0f172a",
+        cancelButtonText: "Annuler",
+        width: '600px',
+        customClass: { popup: 'rounded-[2rem]' },
+        preConfirm: () => {
+            return {
+                contrat: document.getElementById('bulk-contrat').files[0],
+                id_card: document.getElementById('bulk-id_card').files[0],
+                cv: document.getElementById('bulk-cv').files[0],
+                diploma: document.getElementById('bulk-diploma').files[0],
+                attestation: document.getElementById('bulk-attestation').files[0]
+            }
+        }
+    });
+
+    if (formValues) {
+        // On vérifie s'il a sélectionné au moins UN fichier
+        const hasFiles = Object.values(formValues).some(file => file !== undefined);
+        if (!hasFiles) return Swal.fire("Attention", "Vous n'avez sélectionné aucun fichier.", "warning");
+
+        Swal.fire({ title: "Archivage en cours...", text: "Compression et envoi des données...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        const fd = new FormData();
+        fd.append("employee_id", empId);
+        fd.append("agent", AppState.currentUser.nom);
+
+        try {
+            // Traitement et compression intelligente des fichiers
+            const types = ['contrat', 'id_card', 'cv', 'diploma', 'attestation'];
+            for (const type of types) {
+                const file = formValues[type];
+                if (file) {
+                    // Si c'est une image, on la compresse via ton utilitaire, sinon on l'envoie telle quelle (ex: PDF)
+                    const processedFile = file.type.startsWith('image/') ? await window.compressImage(file) : file;
+                    // Le 3ème argument définit le nom de fichier d'origine
+                    fd.append(type, processedFile, file.name); 
+                }
+            }
+
+            const response = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/bulk-upload-docs`, {
+                method: "POST",
+                body: fd
+            });
+
+            if (response.ok) {
+                const resData = await response.json();
+                Swal.fire("Succès", `${resData.count} document(s) archivé(s) avec succès.`, "success");
+                
+                // On rafraîchit la base et on rouvre le dossier pour voir les nouveaux fichiers
+                await window.fetchData(true);
+                window.openFullFolder(empId);
+            } else {
+                throw new Error("Erreur serveur lors de l'archivage.");
+            }
+        } catch (e) {
+            Swal.fire("Erreur", e.message, "error");
+        }
+    }
 }
