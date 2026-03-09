@@ -1047,10 +1047,13 @@ export function openFullFolder(id) {
             </div>`;
   });
 
-  // --- NOUVEAU : Associer le bouton "Upload Multiple" au bon employé ---
+// --- NOUVEAU : Associer les boutons d'archivage au bon employé ---
   const bulkBtn = document.getElementById("btn-bulk-archive");
   if (bulkBtn) bulkBtn.setAttribute("onclick", `window.openBulkArchiveModal('${e.id}')`);
-  
+
+  const exportBtn = document.getElementById("btn-export-zip");
+  if (exportBtn) exportBtn.setAttribute("onclick", `window.downloadEmployeeZip('${e.id}', '${escapeHTML(e.nom)}')`);
+
   document.getElementById("folder-modal").classList.remove("hidden");
 }
 
@@ -3117,5 +3120,56 @@ export async function openBulkArchiveModal(empId) {
         } catch (e) {
             Swal.fire("Erreur", e.message, "error");
         }
+    }
+}
+
+
+
+export async function downloadEmployeeZip(empId, empName) {
+    Swal.fire({
+        title: 'Création de l\'archive...',
+        html: '<p class="text-xs text-slate-500 mb-4">Aspiration et compression des documents en cours.</p><i class="fa-solid fa-file-zipper text-5xl text-slate-800 animate-bounce"></i>',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    try {
+        const token = localStorage.getItem("sirh_token");
+        
+        // On utilise "fetch" natif car secureFetch s'attend généralement à recevoir du JSON, or ici on reçoit un fichier (Blob)
+        const response = await fetch(`${SIRH_CONFIG.apiBaseUrl}/export-folder/${empId}`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || "Erreur du serveur lors de la compression.");
+        }
+
+        // Transformation de la réponse en fichier binaire
+        const blob = await response.blob();
+        
+        // Création d'un lien de téléchargement invisible
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        const cleanName = empName.replace(/[^a-zA-Z0-9]/g, "_");
+        a.download = `Dossier_${cleanName}.zip`; // Le nom du fichier qui s'enregistrera sur le PC
+        
+        document.body.appendChild(a);
+        a.click(); // Déclenche le téléchargement
+        
+        // Nettoyage
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+        Swal.fire("Terminé !", "L'archive a été téléchargée avec succès.", "success");
+
+    } catch (e) {
+        console.error("Export ZIP Error:", e);
+        Swal.fire("Échec", e.message, "error");
     }
 }
