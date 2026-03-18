@@ -247,73 +247,134 @@ export async function fetchPayrollConstants() {
 
 
 export async function generateAllPay() {
-  const mois = document.getElementById("pay-month").value;
-  const annee = document.getElementById("pay-year").value;
-  const records = [];
+    const mois = document.getElementById("pay-month").value;
+    const annee = document.getElementById("pay-year").value;
+    const records =[];
 
-  document.querySelectorAll('[id^="net-"]').forEach((el) => {
-    const index = el.id.split("-")[1]; // On récupère l'index de la ligne
-    const netValue = parseInt(el.dataset.net) || 0;
+    // 1. Récupération des données depuis le tableau
+    document.querySelectorAll('[id^="net-"]').forEach((el) => {
+        const index = el.id.split("-")[1];
+        const netValue = parseInt(el.dataset.net) || 0;
 
-    if (netValue > 0) {
-    // Remplace le bloc de récupération des valeurs par celui-ci :
-      const baseVal = parseInt(document.getElementById(`base-${index}`).value) || 0;
-      const indemVal = parseInt(document.getElementById(`indem-constante-${index}`).innerText) || 0;
-      const primeVal = parseInt(document.getElementById(`prime-${index}`).value) || 0;
-      const acompteVal = parseInt(document.getElementById(`acompte-${index}`).value) || 0; 
-      const taxVal = parseInt(document.getElementById(`tax-${index}`).value) || 0;
+        if (netValue > 0) {
+            const baseVal = parseInt(document.getElementById(`base-${index}`).value) || 0;
+            const indemVal = parseInt(document.getElementById(`indem-constante-${index}`).innerText) || 0;
+            const primeVal = parseInt(document.getElementById(`prime-${index}`).value) || 0;
+            const acompteVal = parseInt(document.getElementById(`acompte-${index}`).value) || 0; // Ajout Acompte
+            const taxVal = parseInt(document.getElementById(`tax-${index}`).value) || 0;
 
-      records.push({
-        id: el.dataset.id,
-        matricule: el.dataset.matricule,
-        nom: el.dataset.nom,
-        poste: el.dataset.poste,
-        mois: mois,
-        annee: annee,
-        salaire_base: baseVal,
-        indemnites_fixes: indemVal, 
-        primes: primeVal,
-        acomptes: acompteVal, 
-        retenues: taxVal,
-        salaire_net: netValue,
-        taux_cnss: AppState.payrollConstants["CNSS_EMPLOYEE_RATE"] || 0,
-        taux_irpp: AppState.payrollConstants["IRPP_BASE_RATE"] || 0,
-      });
+            records.push({
+                id: el.dataset.id,
+                matricule: el.dataset.matricule,
+                nom: el.dataset.nom,
+                poste: el.dataset.poste,
+                mois: mois,
+                annee: annee,
+                salaire_base: baseVal,
+                indemnites_fixes: indemVal, 
+                primes: primeVal,
+                acomptes: acompteVal, // Ajout Acompte
+                retenues: taxVal,
+                salaire_net: netValue,
+                taux_cnss: AppState.payrollConstants["CNSS_EMPLOYEE_RATE"] || 0,
+                taux_irpp: AppState.payrollConstants["IRPP_BASE_RATE"] || 0,
+            });
+        }
+    });
+
+    if (records.length === 0) return Swal.fire("Oups", "Saisissez au moins un salaire positif.", "warning");
+
+    // --- 2. LOGIQUE BATCH (Découpage en lots de 3) ---
+    const chunkSize = 3; 
+    const chunks =[];
+    for (let i = 0; i < records.length; i += chunkSize) {
+        chunks.push(records.slice(i, i + chunkSize));
     }
-  });
 
-  if (records.length === 0)
-    return Swal.fire("Oups", "Saisissez au moins un salaire.", "warning");
+    // 3. Affichage de la progression
+    let processedCount = 0;
+    Swal.fire({
+        title: "Génération en cours...",
+        html: `
+            <p class="text-sm text-slate-500 mb-4">Création des bulletins PDF et archivage...</p>
+            <div class="text-3xl font-black text-blue-600 mb-2" id="payroll-progress-text">0 / ${records.length}</div>
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Bulletins Traités</p>
+        `,
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        didOpen: () => Swal.showLoading()
+    });
 
-  Swal.fire({
-    title: "Édition en cours...",
-    text: `Publication de ${records.length} bulletins`,
-    allowOutsideClick: false,
-    didOpen: () => Swal.showLoading(),
-  });
+    try {
+        // 4. Envoi des lots un par un (On attend que le lot 1 finisse avant d'envoyer le lot 2)
+        for (const chunk of chunks) {
+            const response = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/process-payroll`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    payrollRecords: chunk,
+                    agent: AppState.currentUser.nom,
+                }),
+            });
 
-  const response = await secureFetch(
-    `${SIRH_CONFIG.apiBaseUrl}/process-payroll`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        payrollRecords: records,
-        agent: AppState.currentUser.nom,
-      }),
-    },
-  );
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || "Erreur lors de la génération");
+            }
 
-  if (response.ok) {
-    Swal.fire(
-      "Terminé !",
-      "Les bulletins sont maintenant dans les espaces personnels.",
-      "success",
-    );
-    switchView("dash");
-  }
+            // Mise à jour de la progression visuelle
+            processedCount += chunk.length;
+            const progressText = document.getElementById("payroll-progress-text");
+            if (progressText) {
+                progressText.innerText = `${processedCount} / ${records.length}`;
+            }
+        }
+
+        // 5. Succès Total
+        Swal.fire(
+            "Terminé !",
+            "Tous les bulletins ont été générés et distribués dans les espaces personnels.",
+            "success"
+        );
+        
+        // Optionnel : On peut retourner au Dashboard
+        setTimeout(() => window.switchView("dash"), 1500);
+
+    } catch (e) {
+        console.error("Erreur Batch Paie:", e);
+        Swal.fire("Erreur", `Le processus s'est arrêté à ${processedCount}/${records.length}. Erreur: ${e.message}`, "error");
+    }
 }
 
+
+
+
+// --- MISE À JOUR DES CONSTANTES DE PAIE ---
+router.post("/update-config-salaries", async (req, res) => {
+    if (!checkPerm(req, "can_see_payroll") && !checkPerm(req, "can_manage_config")) {
+        return res.status(403).json({ error: "Accès refusé" });
+    }
+
+    const { cnss, irpp } = req.body;
+
+    try {
+        // Met à jour la CNSS
+        await supabase.from("salaries_config").update({ value_number: parseFloat(cnss) }).eq("key_code", "CNSS_EMPLOYEE_RATE");
+        // Met à jour l'IRPP
+        await supabase.from("salaries_config").update({ value_number: parseFloat(irpp) }).eq("key_code", "IRPP_BASE_RATE");
+
+        // Log d'audit
+        await supabase.from("logs").insert([{
+            agent: req.user.nom || "RH",
+            action: "PARAMÈTRES PAIE",
+            details: `Mise à jour des taux : CNSS (${cnss}%) | IRPP (${irpp}%)`
+        }]);
+
+        return res.json({ status: "success" });
+    } catch (e) {
+        return res.status(500).json({ error: e.message });
+    }
+});
 export function exportPayrollTemplate() {
   // 1. On récupère toutes les lignes affichées dans le tableau de comptabilité
   const rows = document.querySelectorAll(".accounting-row");
