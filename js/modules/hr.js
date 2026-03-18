@@ -720,7 +720,7 @@ export async function loadMyProfile() {
       dC.innerHTML = "";
       const allDocs = [
         {
-          label: "Contrat Actuel",
+          label: `Document Engagement`,
           link: myData.doc,
           icon: "fa-file-signature",
           color: "blue",
@@ -980,7 +980,7 @@ export function openFullFolder(id) {
 
   const docs = [
     {
-      label: "Contrat Actuel",
+      label: `Document Engagement`,
       link: e.doc,
       icon: "fa-file-signature",
       color: "blue",
