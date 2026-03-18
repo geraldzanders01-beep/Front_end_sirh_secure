@@ -614,6 +614,82 @@ export async function savePayrollConfig(e) {
     }
 }
 
+
+
+
+export async function simulateMoMoPayment() {
+    // 1. Calculer le montant total net à payer depuis le tableau actuel
+    let totalNet = 0;
+    let count = 0;
+    document.querySelectorAll('[id^="net-"]').forEach(el => {
+        const val = parseInt(el.dataset.net) || 0;
+        if (val > 0) {
+            totalNet += val;
+            count++;
+        }
+    });
+
+    if (count === 0) {
+        return Swal.fire("Tableau vide", "Veuillez d'abord saisir les salaires à payer.", "warning");
+    }
+
+    const fmtTotal = new Intl.NumberFormat('fr-FR').format(totalNet);
+
+    // 2. Ouvrir la modale de confirmation (Design MTN)
+    const { value: confirmMoMo } = await Swal.fire({
+        title: '<span style="color:#004f71">Décaisser via MTN MoMo</span>',
+        html: `
+            <div class="text-left p-2">
+                <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 mb-6">
+                    <p class="text-[10px] font-black text-blue-600 uppercase">Résumé du Virement Groupé</p>
+                    <h3 class="text-2xl font-black text-blue-900 mt-1">${fmtTotal} CFA</h3>
+                    <p class="text-xs text-blue-400">${count} collaborateurs concernés</p>
+                </div>
+                <label class="text-[10px] font-black text-slate-400 uppercase ml-1">Numéro du Compte Entreprise (MoMo Business)</label>
+                <input type="tel" id="momo-source" class="swal2-input !mt-1" placeholder="Ex: 229 66 XX XX XX">
+                <p class="text-[9px] text-slate-400 mt-4 italic">Note : Cette action déclenchera une demande d'approbation sur le téléphone du gestionnaire du compte MoMo Business.</p>
+            </div>
+        `,
+        confirmButtonText: 'Lancer le paiement groupé',
+        confirmButtonColor: '#ffcc00',
+        confirmButtonTextColor: '#004f71',
+        showCancelButton: true,
+        cancelButtonText: 'Annuler',
+        customClass: {
+            confirmButton: 'text-blue-900 font-black',
+            popup: 'rounded-[2rem]'
+        }
+    });
+
+    if (confirmMoMo) {
+        // 3. Animation de connexion aux API de MTN
+        Swal.fire({
+            title: 'Connexion MTN Gateway...',
+            html: '<p class="text-sm">Vérification du solde et sécurisation du tunnel (Sandbox API)...</p>',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+                // Simulation d'attente API (3 secondes)
+                setTimeout(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Paiement Transmis !',
+                        html: `
+                            <div class="text-center">
+                                <p class="text-sm text-slate-600 mb-4">La demande de paiement groupé de <b>${fmtTotal} CFA</b> a été envoyée au réseau MTN.</p>
+                                <div class="bg-emerald-50 p-3 rounded-xl inline-block text-emerald-600 font-bold text-xs border border-emerald-100">
+                                   ID Transaction : MTN-${Math.floor(Math.random()*1000000)}
+                                </div>
+                            </div>
+                        `,
+                        confirmButtonColor: '#004f71'
+                    });
+                }, 3000);
+            }
+        });
+    }
+}
+
 export async function viewPayroll(payrollId, fileUrl, title) {
     // 1. On ouvre le document immédiatement pour ne pas faire attendre l'utilisateur
     window.viewDocument(fileUrl, title);
