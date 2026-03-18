@@ -1086,199 +1086,173 @@
     </form>
 </section>
 
-                    <!-- VUE 5: MON PROFIL (STRUCTURE CORRIGÉE PLEINE LARGEUR) -->
-    <section id="view-my-profile" class="view-section">
-        <div class="max-w-6xl mx-auto">
-            <h2 class="text-2xl font-extrabold text-slate-800 mb-8">Mon Espace Personnel</h2>
 
-            <!-- WIDGET POINTAGE & ACTION -->
-            <div class="bg-slate-900 rounded-xl p-6 mb-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full blur-[80px] opacity-20 pointer-events-none"></div>
-                
-                <div class="z-10 mb-6 md:mb-0 text-center md:text-left">
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">État Actuel</p>
-                    <div class="flex items-center gap-3 justify-center md:justify-start">
-                        <div id="clock-status-dot" class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div>
-                        <h3 id="clock-status-text" class="text-2xl font-black">NON POINTÉ</h3>
-                    </div>
-                    <p id="clock-last-action" class="text-xs text-slate-500 mt-1 font-mono">Dernière action : Aucune</p>
-                </div>
-
-                <div class="flex gap-4 z-10 w-full md:w-auto">
-                    <button data-perm="can_clock" onclick="handleClockInOut()" id="btn-clock" data-action="CLOCK_IN" class="flex-1 md:flex-none bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-2xl font-black uppercase transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-fingerprint"></i> <span>ENTRÉE</span>
-                    </button>
-                    <button data-perm="can_request_leave" onclick="openLeaveModal()" class="flex-1 md:flex-none bg-slate-800 hover:bg-slate-700 text-white px-6 py-4 rounded-2xl font-bold uppercase transition-all border border-slate-700 active:scale-95 text-xs">
-                        <i class="fa-solid fa-plane-departure mr-2"></i> Demander un Congé
-                    </button>
-                    <button data-module="MOD_MOBILE_WORKFORCE" data-perm="can_submit_daily_report" onclick="openDailyReportModal()" class="flex-1 md:flex-none bg-orange-500 hover:bg-orange-400 text-white px-6 py-4 rounded-2xl font-bold uppercase transition-all shadow-lg active:scale-95 text-xs">
-                        <i class="fa-solid fa-flag-checkered mr-2"></i> Rapport de Fin de Journée
-                    </button>
-                </div>
-            </div>
-
-
-                        <!-- NOUVEAU WIDGET SOLDE CONGÉS -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 mb-8 flex justify-between items-center">
-                <div>
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Solde Congés Restant</p>
-                    <h3 id="leave-balance-display" class="text-4xl font-black mt-2 text-indigo-600">--</h3>
-                </div>
-                <div class="p-3 bg-indigo-100 text-indigo-600 rounded-xl"><i class="fa-solid fa-calendar-check text-3xl"></i></div>
-            </div>
-            <!-- FIN NOUVEAU WIDGET SOLDE CONGÉS -->
-
-            <!-- WIDGET POINTAGE & ACTION (Qui est déjà là) -->
-            <div class="bg-slate-900 rounded-xl p-6 mb-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
-                <!-- ... le reste du code du pointage ... -->
-            </div>
-
-            <!-- ZONE HAUTE : PHOTO (Gauche) + FORMULAIRE (Droite) -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-                
-                <!-- COLONNE GAUCHE : PHOTO & IDENTITÉ -->
-                <div class="space-y-6">
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 text-center relative overflow-hidden h-full">
-                        <div class="absolute top-0 left-0 w-full h-24 bg-blue-600/10"></div>
-                        <div class="relative">
-                            <div class="w-28 h-28 bg-white p-1 rounded-full mx-auto mb-4 shadow-lg overflow-hidden relative group">
-                                <span id="emp-avatar" class="w-full h-full flex items-center justify-center text-3xl font-bold text-slate-300 bg-slate-50">?</span>
-                                <img id="emp-photo-real" class="w-full h-full object-cover hidden">
-                                <div onclick="triggerPhotoUpload()" class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"><i class="fa-solid fa-camera text-white"></i></div>
-                            </div>
-                            <h3 id="emp-name" class="font-bold text-xl text-slate-800">...</h3>
-                            <p id="emp-job" class="text-sm text-blue-600 font-bold mb-4 uppercase">...</p>
-                            <div class="bg-slate-50 rounded-2xl p-4 text-xs space-y-2 text-left border border-slate-100">
-                                <div class="flex justify-between font-bold uppercase tracking-tighter"><span>Début :</span> <span id="emp-start-date" class="text-slate-800">--/--/----</span></div>
-                                <div class="flex justify-between font-bold uppercase tracking-tighter"><span>Fin :</span> <span id="emp-end-date" class="text-slate-800">--/--/----</span></div>
-                            </div>
-                            <button onclick="downloadMyBadge()" class="w-full bg-slate-900 text-white py-3.5 rounded-xl text-sm font-black mt-6 shadow-xl active:scale-95 transition-all"><i class="fa-solid fa-id-card mr-2"></i> MON BADGE D'ACCÈS</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- COLONNE DROITE : FORMULAIRE -->
-                <div class="md:col-span-2 space-y-6">
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 h-full">
-                        <div class="flex justify-between items-center mb-8"><h3 class="font-bold text-lg text-slate-800">Coordonnées</h3><button data-perm="can_edit_own_profile" onclick="toggleEditMode()" class="text-blue-600 text-sm font-bold bg-blue-50 px-4 py-1.5 rounded-lg active:scale-95 transition-all">Modifier</button></div>
-                        <form id="form-self-update" class="space-y-5">
-                            <input type="file" id="emp-upload-photo" class="hidden" accept="image/*" onchange="previewPhoto(event)">
-                            <div class="grid grid-cols-2 gap-6">
-                                <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Date de Naissance</label><input type="date" id="emp-dob" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none" disabled></div>
-                                <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Téléphone</label><input type="tel" id="emp-phone" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none" disabled></div>
-                            </div>
-                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Email Personnel</label><input type="email" id="emp-email" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none" disabled></div>
-                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Adresse Résidentielle</label><textarea id="emp-address" rows="3" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl resize-none outline-none" disabled></textarea></div>
-                            <div id="save-btn-container" class="hidden pt-6 flex justify-end gap-3"><button type="button" onclick="toggleEditMode()" class="px-6 py-3 font-bold text-slate-400 text-sm">Annuler</button><button type="button" onclick="saveMyProfile()" class="bg-blue-600 text-white px-10 py-3 rounded-xl font-black shadow-lg uppercase text-xs">Sauvegarder</button></div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-
-
-
-
-            
-
-                <!-- BLOC SUIVI DEMANDES CONGÉS (Employé) -->
-    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 mb-8">
-        <h3 class="font-black text-xs uppercase text-slate-400 mb-6 flex items-center gap-2 tracking-widest">
-            <i class="fa-solid fa-hourglass-half text-blue-500 text-lg"></i> Mes Demandes de Congés
-        </h3>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left whitespace-nowrap">
-                <thead class="bg-slate-50/80 text-[10px] uppercase font-black text-slate-400">
-                    <tr>
-                        <th class="px-6 py-3">Période</th>
-                        <th class="px-6 py-3">Type</th>
-                        <th class="px-6 py-3">Motif</th>
-                        <th class="px-6 py-3 text-right">Statut</th>
-                    </tr>
-                </thead>
-                <tbody id="my-leave-requests-body">
-                    <!-- Rempli par le JS -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <!-- FIN BLOC SUIVI DEMANDES CONGÉS -->
-
-
-<!-- RECAPITULATIF POUR DELEGUES UNIQUEMENT (Ajout de l'ID ici) -->
-<div id="mobile-recap-section" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 hidden">
-    <!-- RECAP VISITES DU JOUR -->
-    <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
-        <h4 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest label-visit-p"><i class="fa-solid fa-location-dot mr-2"></i> Mes Activités</h4>
-        <div id="my-today-visits" class="space-y-2 max-h-48 overflow-y-auto custom-scroll"></div>
-    </div>
-
-    <!-- RECAP BILANS DU MOIS -->
-    <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
-        <h4 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest label-report-p"><i class="fa-solid fa-clipboard-check mr-2"></i> Mes Rapports</h4>
-        <div id="my-month-dailies" class="space-y-2 max-h-48 overflow-y-auto custom-scroll"></div>
-    </div>
-</div>
-
-            
-
-            <!-- ZONE BASSE : DOCUMENTS & PAIE (PLEINE LARGEUR MAINTENANT) -->
-            <div class="space-y-8">
-                
-                <!-- BLOC DOCUMENTS -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
-                    <h3 class="font-black text-xs uppercase text-slate-400 mb-6 flex items-center gap-2 tracking-widest">
-                        <i class="fa-solid fa-folder-open text-yellow-500 text-lg"></i> Mes Documents Administratifs
-                    </h3>
-                    <!-- Le conteneur ID doc-container sera rempli par le JS en mode grille -->
-                    <div id="doc-container" class="w-full"></div>
-                </div>
-
-
-
-            <!-- Bloc Rapports avec Scroll -->
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 mb-8">
-                <div class="flex justify-between items-center mb-4"> <!-- mb réduit -->
-                    <h3 class="font-black text-xs uppercase text-slate-400 flex items-center gap-2 tracking-widest">
-                        <i class="fa-solid fa-clock-rotate-left text-indigo-500 text-lg"></i> Mes Rapports d'Activité
-                    </h3>
-                    <button onclick="fetchAttendanceReport('PERSONAL')" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-all">
-                        <i class="fa-solid fa-rotate mr-1"></i> Actualiser
-                    </button>
-                </div>
-                
-                <!-- ICI : On ajoute max-h-[300px] et custom-scroll -->
-                <div id="personal-report-container" class="space-y-3 max-h-[300px] custom-scroll pr-2">
-                    <p class="text-[10px] text-slate-400 italic">Cliquez sur actualiser pour voir vos rapports.</p>
-                </div>
-            </div>
-
-
-
-                                        <!-- Bloc Paie avec Scroll -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-black text-xs uppercase text-slate-400 flex items-center gap-2 tracking-widest">
-                            <i class="fa-solid fa-file-invoice-dollar text-emerald-500 text-lg"></i> Mes Bulletins de Paie
-                        </h3>
-                        <span class="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-1 rounded">
-                            Total : <span id="count-payroll">0</span>
-                        </span>
-                    </div>
-
-                    <!-- ICI : Scroll vertical + Grille responsive -->
-                    <div class="max-h-[350px] custom-scroll pr-2">
-                        <div id="payroll-container" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            <div class="col-span-full text-center py-4 text-slate-400 italic text-xs">Recherche des bulletins...</div>
-                        </div>
-                    </div>
-                </div>
-
-
-
+<!-- VUE 5: MON PROFIL (COCKPIT EMPLOYÉ) -->
+<section id="view-my-profile" class="view-section">
+    <div class="max-w-6xl mx-auto px-1">
+        
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Mon Espace Personnel</h2>
+            <div class="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase border border-blue-100">
+                Session Sécurisée
             </div>
         </div>
-    </section>
+
+        <!-- ========================================================== -->
+        <!-- 1. NOUVEAU BLOC : MA PERFORMANCE (TEMPS / ARGENT / DROITS) -->
+        <!-- ========================================================== -->
+        <div id="user-performance-cockpit" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-fadeIn">
+            <!-- Heures travaillées -->
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 relative overflow-hidden group">
+                <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Temps travaillé (Mois)</p>
+                <h3 id="user-stat-hours" class="text-3xl font-black mt-2 text-slate-800">--h --m</h3>
+                <div class="mt-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase">Calculé en direct</span>
+                </div>
+                <i class="fa-solid fa-clock-pulse absolute -right-2 -bottom-2 text-6xl text-slate-50 opacity-10 group-hover:rotate-12 transition-transform"></i>
+            </div>
+
+            <!-- Primes accumulées -->
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 relative overflow-hidden group">
+                <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Primes accumulées (Est.)</p>
+                <div class="flex items-baseline gap-2">
+                    <h3 id="user-stat-primes" class="text-3xl font-black mt-2 text-emerald-600">--</h3>
+                    <span class="text-[10px] font-bold text-emerald-400 uppercase">CFA</span>
+                </div>
+                <p class="text-[9px] text-slate-400 mt-4 italic">Prochaine paie : Fin de mois</p>
+                <i class="fa-solid fa-wallet absolute -right-2 -bottom-2 text-6xl text-slate-50 opacity-10 group-hover:scale-110 transition-transform"></i>
+            </div>
+
+            <!-- Solde Congés (Remplaçant l'ancien widget seul) -->
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 relative overflow-hidden group">
+                <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Solde Congés Restant</p>
+                <h3 id="leave-balance-display" class="text-3xl font-black mt-2 text-indigo-600">-- Jours</h3>
+                <button onclick="document.getElementById('my-leave-requests-body').scrollIntoView({behavior: 'smooth'})" class="mt-4 text-[9px] font-black text-indigo-400 uppercase underline hover:text-indigo-600">Voir l'historique</button>
+                <i class="fa-solid fa-calendar-check absolute -right-2 -bottom-2 text-6xl text-slate-50 opacity-10 group-hover:-rotate-12 transition-transform"></i>
+            </div>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- 2. WIDGET POINTAGE & ACTION -->
+        <!-- ========================================================== -->
+        <div class="bg-slate-900 rounded-[2rem] p-6 mb-10 text-white shadow-xl flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full blur-[80px] opacity-10 pointer-events-none"></div>
+            
+            <div class="z-10 mb-6 md:mb-0 text-center md:text-left">
+                <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Pointage Actuel</p>
+                <div class="flex items-center gap-3 justify-center md:justify-start">
+                    <div id="clock-status-dot" class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div>
+                    <h3 id="clock-status-text" class="text-2xl font-black uppercase tracking-tight">VÉRIFICATION...</h3>
+                </div>
+                <p id="clock-last-action" class="text-[10px] text-slate-500 mt-1 font-mono uppercase">Chargement du statut...</p>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-3 z-10 w-full md:w-auto">
+                <button data-perm="can_clock" onclick="handleClockInOut()" id="btn-clock" class="flex-1 md:flex-none bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-xl font-black uppercase transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-fingerprint"></i> <span>--</span>
+                </button>
+                <button data-perm="can_request_leave" onclick="openLeaveModal()" class="flex-1 md:flex-none bg-slate-800 hover:bg-slate-700 text-white px-6 py-4 rounded-xl font-bold uppercase transition-all border border-slate-700 active:scale-95 text-[10px]">
+                    <i class="fa-solid fa-plane-departure mr-2 text-blue-400"></i> Demander Absence
+                </button>
+                <button data-module="MOD_MOBILE_WORKFORCE" data-perm="can_submit_daily_report" onclick="openDailyReportModal()" class="flex-1 md:flex-none bg-orange-500 hover:bg-orange-400 text-white px-6 py-4 rounded-xl font-bold uppercase shadow-lg active:scale-95 text-[10px] label-report-s">
+                    <i class="fa-solid fa-flag-checkered mr-2"></i> Bilan Journée
+                </button>
+            </div>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- 3. ZONE INFOS & COORDONNÉES -->
+        <!-- ========================================================== -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            <!-- Carte Photo -->
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center relative overflow-hidden h-full flex flex-col justify-center">
+                <div class="absolute top-0 left-0 w-full h-24 bg-slate-50"></div>
+                <div class="relative">
+                    <div class="w-32 h-32 bg-white p-1.5 rounded-full mx-auto mb-4 shadow-lg overflow-hidden relative group">
+                        <span id="emp-avatar" class="w-full h-full flex items-center justify-center text-4xl font-black text-slate-300 bg-slate-100">?</span>
+                        <img id="emp-photo-real" class="w-full h-full object-cover hidden">
+                        <div onclick="triggerPhotoUpload()" class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"><i class="fa-solid fa-camera text-white"></i></div>
+                    </div>
+                    <h3 id="emp-name" class="font-black text-xl text-slate-800 uppercase tracking-tighter">--</h3>
+                    <p id="emp-job" class="text-[10px] text-blue-600 font-black mb-4 uppercase tracking-widest">--</p>
+                    <div class="bg-slate-50 rounded-2xl p-4 text-[10px] space-y-2 text-left border border-slate-100">
+                        <div class="flex justify-between font-black uppercase"><span>Engagement :</span> <span id="emp-start-date" class="text-slate-800">--/--/----</span></div>
+                        <div class="flex justify-between font-black uppercase text-slate-400"><span>Fin de contrat :</span> <span id="emp-end-date">--/--/----</span></div>
+                    </div>
+                    <button onclick="downloadMyBadge()" class="w-full bg-slate-900 text-white py-3.5 rounded-xl text-[10px] font-black mt-6 shadow-xl active:scale-95 transition-all uppercase tracking-widest"><i class="fa-solid fa-id-card mr-2 text-blue-400"></i> Télécharger mon Badge</button>
+                </div>
+            </div>
+
+            <!-- Carte Coordonnées -->
+            <div class="md:col-span-2 bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 h-full">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="font-black text-xs uppercase text-slate-400 tracking-widest">Coordonnées personnelles</h3>
+                    <button data-perm="can_edit_own_profile" onclick="toggleEditMode()" class="text-blue-600 text-[10px] font-black bg-blue-50 px-4 py-2 rounded-lg active:scale-95 transition-all uppercase">Modifier mes infos</button>
+                </div>
+                <form id="form-self-update" class="space-y-6">
+                    <input type="file" id="emp-upload-photo" class="hidden" accept="image/*" onchange="previewPhoto(event)">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div><label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Naissance</label><input type="date" id="emp-dob" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold" disabled></div>
+                        <div><label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Téléphone</label><input type="tel" id="emp-phone" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold" disabled></div>
+                    </div>
+                    <div><label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Email personnel</label><input type="email" id="emp-email" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold" disabled></div>
+                    <div><label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-1">Domicile actuel</label><textarea id="emp-address" rows="2" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl resize-none outline-none font-bold" disabled></textarea></div>
+                    <div id="save-btn-container" class="hidden pt-4 flex justify-end gap-3"><button type="button" onclick="toggleEditMode()" class="px-6 py-3 font-black text-slate-400 uppercase text-[10px]">Annuler</button><button type="button" onclick="saveMyProfile()" class="bg-blue-600 text-white px-10 py-3 rounded-xl font-black shadow-lg uppercase text-[10px]">Enregistrer</button></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- 4. RECAPITULATIF & HISTORIQUES (BAS DE PAGE) -->
+        <!-- ========================================================== -->
+        <div class="space-y-8 pb-20">
+            
+            <!-- Congés -->
+            <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                <h3 class="font-black text-xs uppercase text-slate-400 mb-6 tracking-widest flex items-center gap-2"><i class="fa-solid fa-hourglass-half text-blue-500 text-lg"></i> Mes Demandes de Congés</h3>
+                <div class="overflow-x-auto"><table class="w-full text-left whitespace-nowrap"><tbody id="my-leave-requests-body" class="divide-y divide-slate-100"></tbody></table></div>
+            </div>
+
+            <!-- Terrain (Si mobile) -->
+            <div id="mobile-recap-section" class="grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
+                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                    <h4 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest label-visit-p"><i class="fa-solid fa-location-dot mr-2"></i> Mes Activités</h4>
+                    <div id="my-today-visits" class="space-y-2 max-h-48 overflow-y-auto custom-scroll"></div>
+                </div>
+                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                    <h4 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest label-report-p"><i class="fa-solid fa-clipboard-check mr-2"></i> Mes Rapports</h4>
+                    <div id="my-month-dailies" class="space-y-2 max-h-48 overflow-y-auto custom-scroll"></div>
+                </div>
+            </div>
+
+            <!-- Documents -->
+            <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                <h3 class="font-black text-xs uppercase text-slate-400 mb-8 tracking-widest flex items-center gap-2"><i class="fa-solid fa-folder-open text-yellow-500 text-lg"></i> Dossier Administratif Personnel</h3>
+                <div id="doc-container" class="w-full"></div>
+            </div>
+
+            <!-- Rapports & Paie -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 h-full">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-black text-xs uppercase text-slate-400 tracking-widest flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-indigo-500 text-lg"></i> Présences Validées</h3>
+                        <button onclick="fetchAttendanceReport('PERSONAL')" class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 uppercase">Actualiser</button>
+                    </div>
+                    <div id="personal-report-container" class="space-y-3 max-h-[300px] overflow-y-auto custom-scroll pr-2"></div>
+                </div>
+
+                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 h-full">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-black text-xs uppercase text-slate-400 tracking-widest flex items-center gap-2"><i class="fa-solid fa-file-invoice-dollar text-emerald-500 text-lg"></i> Bulletins de Paie</h3>
+                        <span class="text-[10px] font-black bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg uppercase"><span id="count-payroll">0</span> fiches</span>
+                    </div>
+                    <div id="payroll-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[300px] overflow-y-auto custom-scroll pr-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>  
 
 
 
