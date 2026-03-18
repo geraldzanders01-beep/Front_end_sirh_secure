@@ -213,7 +213,7 @@ window.fetchZones = Admin.fetchZones;
 window.fetchTemplates = Admin.fetchTemplates;
 window.fetchFlashMessage = Admin.fetchFlashMessage;
 window.triggerRobotCheck = Admin.triggerRobotCheck;
-window.applyDynamicLabels();
+window.applyDynamicLabels = Utils.applyDynamicLabels;
 
 
 // --- Divers / Utilitaires ---
