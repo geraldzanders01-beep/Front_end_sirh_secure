@@ -511,27 +511,39 @@ export function toggleWidget(widgetId) {
 
 
 
-
 export async function subscribeUserToPush() {
-    // 1. Vérifier si le navigateur supporte les notifications
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        return console.warn("Les notifications ne sont pas supportées.");
-    }
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
     try {
         const registration = await navigator.serviceWorker.ready;
         
-        // 2. Demander la permission
+        // Vérifier si on est déjà abonné
+        const existingSubscription = await registration.pushManager.getSubscription();
+        if (existingSubscription) return;
+
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') return;
 
-        // 3. Créer l'abonnement auprès de Google/Apple
+        // Fonction pour convertir la clé VAPID
+        const urlBase64ToUint8Array = (base64String) => {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        };
+
+        const publicKey = 'BM48rks5FJAMMZ9QcGpFPfvQz5TlS6CCeN8uvrucR7yKmJCmwMxjgzTuREGznW48kgwm8LPYwelg1R8wUzA0Pq0'; 
+        
         const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: 'TA_CLE_PUBLIQUE_VAPID_ICI' // <--- METS TA CLÉ PUBLIQUE ICI
+            applicationServerKey: urlBase64ToUint8Array(publicKey)
         });
 
-        // 4. Envoyer cet abonnement à ton Backend pour le stocker dans Supabase
+        // Envoi au serveur
         await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/subscribe-push`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -541,9 +553,9 @@ export async function subscribeUserToPush() {
             })
         });
 
-        console.log("✅ Téléphone enregistré pour les notifications Push !");
+        console.log("🚀 Notifications Push activées !");
     } catch (e) {
-        console.error("Erreur abonnement Push:", e);
+        console.error("Erreur Push:", e);
     }
 }
 
