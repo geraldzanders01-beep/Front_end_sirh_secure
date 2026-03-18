@@ -509,6 +509,44 @@ export function toggleWidget(widgetId) {
   }
 }
 
+
+
+
+export async function subscribeUserToPush() {
+    // 1. Vérifier si le navigateur supporte les notifications
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        return console.warn("Les notifications ne sont pas supportées.");
+    }
+
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        
+        // 2. Demander la permission
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') return;
+
+        // 3. Créer l'abonnement auprès de Google/Apple
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: 'TA_CLE_PUBLIQUE_VAPID_ICI' // <--- METS TA CLÉ PUBLIQUE ICI
+        });
+
+        // 4. Envoyer cet abonnement à ton Backend pour le stocker dans Supabase
+        await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/subscribe-push`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                subscription: subscription,
+                user_id: AppState.currentUser.id
+            })
+        });
+
+        console.log("✅ Téléphone enregistré pour les notifications Push !");
+    } catch (e) {
+        console.error("Erreur abonnement Push:", e);
+    }
+}
+
 export function applyWidgetPreferences() {
   // On ajoute les IDs du menu (commençant par m-) à la liste
   const widgets = [
