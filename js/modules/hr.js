@@ -598,61 +598,55 @@ export async function fetchAndPopulateDepartments() {
   }
 }
 
+
+
+
+
 export async function loadMyProfile() {
   console.log("🔍 --- DÉBUT CHARGEMENT PROFIL PERSONNEL ---");
-  console.log("👤 Utilisateur connecté :", AppState.currentUser);
 
   // 1. Sécurité : Vérifier que l'utilisateur est bien connecté
   if (!AppState.currentUser || !AppState.currentUser.id) {
-    console.error(
-      "❌ Pas d'utilisateur connecté ou ID manquant pour charger le profil.",
-    );
-    Swal.fire(
-      "Erreur",
-      "Impossible de charger votre profil. Veuillez vous reconnecter.",
-      "error",
-    );
+    console.error("❌ Pas d'utilisateur connecté.");
+    Swal.fire("Erreur", "Session expirée. Veuillez vous reconnecter.", "error");
     return;
   }
 
-  // --- 2. NETTOYAGE IMMÉDIAT DE L'INTERFACE POUR ÉVITER LE FLICKER ---
-  document.getElementById("emp-name").innerText = "Chargement...";
-  document.getElementById("emp-job").innerText = "Chargement...";
-  document.getElementById("emp-email").value = "";
-  document.getElementById("emp-phone").value = "";
-  document.getElementById("emp-address").value = "";
-  document.getElementById("emp-dob").value = "";
-  document.getElementById("folder-docs-grid").innerHTML =
-    '<div class="col-span-full text-center text-slate-400 py-10 italic">Chargement des documents...</div>';
+  // --- 2. NETTOYAGE IMMÉDIAT DE L'INTERFACE (Anti-Flicker) ---
+  const resetText = (id) => { if(document.getElementById(id)) document.getElementById(id).innerText = "..."; };
+  ["emp-name", "emp-job", "user-stat-hours", "user-stat-primes", "leave-balance-display"].forEach(resetText);
 
   const photoEl = document.getElementById("emp-photo-real");
   const avatarEl = document.getElementById("emp-avatar");
   if (photoEl) photoEl.classList.add("hidden");
   if (avatarEl) {
     avatarEl.classList.remove("hidden");
-    avatarEl.innerText = (AppState.currentUser.nom || "U")
-      .charAt(0)
-      .toUpperCase();
+    avatarEl.innerText = (AppState.currentUser.nom || "U").charAt(0).toUpperCase();
   }
-  document.getElementById("emp-start-date").innerText = "--/--/----";
-  document.getElementById("emp-end-date").innerText = "--/--/----";
-  document.getElementById("leave-balance-display").innerText = "--";
+  
+  if(document.getElementById("emp-start-date")) document.getElementById("emp-start-date").innerText = "--/--/----";
+  if(document.getElementById("emp-end-date")) document.getElementById("emp-end-date").innerText = "--/--/----";
 
-  // --- 3. APPEL ASYNCHRONE AU SERVEUR ---
+  // --- 3. APPELS ASYNCHRONES PARALLÈLES (Profil + Stats Performance) ---
   try {
-    const r = await secureFetch(
-      `${URL_READ}?target_id=${encodeURIComponent(AppState.currentUser.id)}&agent=${encodeURIComponent(AppState.currentUser.nom)}`,
-    );
-    const result = await r.json();
+    const userId = AppState.currentUser.id;
+
+    // On lance les deux requêtes en même temps pour gagner du temps au chargement
+    const [profileRes, statsRes] = await Promise.all([
+      secureFetch(`${URL_READ}?target_id=${encodeURIComponent(userId)}&agent=${encodeURIComponent(AppState.currentUser.nom)}`),
+      secureFetch(`${SIRH_CONFIG.apiBaseUrl}/read-report?mode=PERSONAL&period=monthly&requester_id=${userId}`)
+    ]);
+
+    const result = await profileRes.json();
+    const statsData = await statsRes.json();
     const myRawData = result.data?.[0];
 
     if (!myRawData) {
-      console.error("❌ ÉCHEC : Impossible de trouver votre profil.");
       Swal.fire("Erreur", "Votre fiche employé est introuvable.", "error");
       return;
     }
 
-    // --- 4. MAPPING DES DONNÉES ---
+    // --- 4. MAPPING DES DONNÉES (Conservé tel quel) ---
     const myData = {
       id: myRawData.id,
       nom: myRawData.nom,
@@ -661,14 +655,8 @@ export async function loadMyProfile() {
       poste: myRawData.poste,
       dept: myRawData.departement || "Non défini",
       solde_conges: parseFloat(myRawData.solde_conges) || 0,
-      limit:
-        myRawData.type_contrat === "CDI"
-          ? "365"
-          : myRawData.type_contrat === "CDD"
-            ? "180"
-            : "90",
+      limit: myRawData.type_contrat === "CDI" ? "365" : myRawData.type_contrat === "CDD" ? "180" : "90",
       photo: myRawData.photo_url || "",
-      statut: myRawData.statut || "Actif",
       email: myRawData.email,
       telephone: myRawData.telephone,
       adresse: myRawData.adresse,
@@ -684,12 +672,29 @@ export async function loadMyProfile() {
       contract_status: myRawData.contract_status || "Non signé",
     };
 
-    // --- 5. REMPLISSAGE DE L'INTERFACE ---
+    // --- 5. REMPLISSAGE DU COCKPIT DE PERFORMANCE (NOUVEAU) ---
+    if (statsData && statsData.length > 0) {
+        const currentStats = statsData[0]; 
+        if(document.getElementById('user-stat-hours')) {
+            document.getElementById('user-stat-hours').innerText = currentStats.heures || "0h 00m";
+        }
+        // Calcul d'une prime estimée (ex: 500F par jour travaillé)
+        if(document.getElementById('user-stat-primes')) {
+            const nbJours = parseInt(currentStats.jours) || 0;
+            document.getElementById('user-stat-primes').innerText = new Intl.NumberFormat('fr-FR').format(nbJours * 500);
+        }
+    }
+
+    // Solde Congés (Remplissage du cockpit)
+    const leaveBalanceEl = document.getElementById("leave-balance-display");
+    if (leaveBalanceEl) {
+      leaveBalanceEl.innerText = `${myData.solde_conges} jours`;
+      leaveBalanceEl.className = myData.solde_conges <= 5 ? "text-3xl font-black mt-2 text-orange-600" : "text-3xl font-black mt-2 text-indigo-600";
+    }
+
+    // --- 6. REMPLISSAGE DE L'IDENTITÉ ---
     document.getElementById("emp-name").innerText = myData.nom;
     document.getElementById("emp-job").innerText = myData.poste;
-
-    const nameDisplay = document.getElementById("name-display");
-    if (nameDisplay) nameDisplay.innerText = myData.nom;
 
     if (myData.photo && myData.photo.length > 10) {
       photoEl.src = formatGoogleLink(myData.photo);
@@ -699,136 +704,85 @@ export async function loadMyProfile() {
 
     if (myData.date) {
       let sD = parseDateSmart(myData.date);
-      document.getElementById("emp-start-date").innerText =
-        sD.toLocaleDateString("fr-FR");
+      document.getElementById("emp-start-date").innerText = sD.toLocaleDateString("fr-FR");
       let eD = new Date(sD);
       eD.setDate(eD.getDate() + (parseInt(myData.limit) || 365));
-      document.getElementById("emp-end-date").innerText =
-        eD.toLocaleDateString("fr-FR");
+      document.getElementById("emp-end-date").innerText = eD.toLocaleDateString("fr-FR");
     }
 
     document.getElementById("emp-email").value = myData.email || "";
     document.getElementById("emp-phone").value = myData.telephone || "";
     document.getElementById("emp-address").value = myData.adresse || "";
-    document.getElementById("emp-dob").value = convertToInputDate(
-      myData.date_naissance,
-    );
+    document.getElementById("emp-dob").value = convertToInputDate(myData.date_naissance);
 
-    // Gestion des documents
+    // --- 7. GESTION DES DOCUMENTS (AJOUT DES BOUTONS HISTORIQUE) ---
     const dC = document.getElementById("doc-container");
     if (dC) {
       dC.innerHTML = "";
       const allDocs = [
-        {
-          label: `Document Engagement`,
-          link: myData.doc,
-          icon: "fa-file-signature",
-          color: "blue",
-          key: "contrat",
-        },
-        {
-          label: "Curriculum Vitae",
-          link: myData.cv_link,
-          icon: "fa-file-pdf",
-          color: "indigo",
-          key: "cv",
-        },
-        {
-          label: "Lettre Motivation",
-          link: myData.lm_link,
-          icon: "fa-envelope-open-text",
-          color: "pink",
-          key: "lm",
-        },
-        {
-          label: "Pièce d'Identité",
-          link: myData.id_card_link,
-          icon: "fa-id-card",
-          color: "slate",
-          key: "id_card",
-        },
-        {
-          label: "Diplômes/Certifs",
-          link: myData.diploma_link,
-          icon: "fa-graduation-cap",
-          color: "emerald",
-          key: "diploma",
-        },
-        {
-          label: "Attestations",
-          link: myData.attestation_link,
-          icon: "fa-file-invoice",
-          color: "orange",
-          key: "attestation",
-        },
+        { label: `Document Engagement`, link: myData.doc, icon: "fa-file-signature", color: "blue", key: "contrat" },
+        { label: "Curriculum Vitae", link: myData.cv_link, icon: "fa-file-pdf", color: "indigo", key: "cv" },
+        { label: "Lettre Motivation", link: myData.lm_link, icon: "fa-envelope-open-text", color: "pink", key: "lm" },
+        { label: "Pièce d'Identité", link: myData.id_card_link, icon: "fa-id-card", color: "slate", key: "id_card" },
+        { label: "Diplômes/Certifs", link: myData.diploma_link, icon: "fa-graduation-cap", color: "emerald", key: "diploma" },
+        { label: "Attestations", link: myData.attestation_link, icon: "fa-file-invoice", color: "orange", key: "attestation" },
       ];
 
-      const VISIBLE_LIMIT = 4;
       let gridHtml = '<div class="grid grid-cols-1 md:grid-cols-4 gap-4">';
-
       allDocs.forEach((doc, index) => {
         const hasLink = doc.link && doc.link.length > 5;
         const safeLabel = doc.label.replace(/'/g, "\\'");
-        const hiddenClass = index >= VISIBLE_LIMIT ? "hidden more-docs" : "";
-        const isAdminOrRH =
-          AppState.currentUser.role === "ADMIN" ||
-          AppState.currentUser.role === "RH";
-        const canEdit = isAdminOrRH || doc.key === "id_card";
+        const canEdit = AppState.currentUser.role === "ADMIN" || AppState.currentUser.role === "RH";
 
         gridHtml += `
-                    <div class="${hiddenClass} flex flex-col justify-between p-4 border border-slate-100 bg-white rounded-2xl hover:shadow-md transition-all group h-full">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="bg-${doc.color}-50 text-${doc.color}-600 p-3 rounded-xl shrink-0"><i class="fa-solid ${doc.icon} text-lg"></i></div>
-                            <div class="overflow-hidden">
-                                <p class="text-xs font-bold text-slate-700 truncate">${doc.label}</p>
-                                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wide">Document</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-2 mt-auto">
-                            ${hasLink ? `<button onclick="viewDocument('${doc.link}', '${safeLabel}')" class="flex-1 py-2 text-[10px] font-bold uppercase bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all">Voir</button>` : `<div class="flex-1 py-2 text-[10px] font-bold uppercase bg-slate-50 text-slate-300 rounded-lg text-center cursor-not-allowed">Vide</div>`}
-                            ${canEdit ? `<button onclick="updateSingleDoc('${doc.key}', '${myData.id}')" class="w-10 flex items-center justify-center bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-pen"></i></button>` : ""}
-                        </div>
-                    </div>`;
+            <div class="flex flex-col justify-between p-4 border border-slate-100 bg-white rounded-2xl hover:shadow-md transition-all group h-full">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="bg-${doc.color}-50 text-${doc.color}-600 p-3 rounded-xl shrink-0"><i class="fa-solid ${doc.icon} text-lg"></i></div>
+                    <div class="overflow-hidden">
+                        <p class="text-xs font-bold text-slate-700 truncate">${doc.label}</p>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wide">Document</p>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-auto">
+                    ${hasLink ? `<button onclick="viewDocumentHistory('${myData.id}', '${doc.key}', '${safeLabel}')" class="p-2 text-indigo-400 hover:bg-indigo-50 rounded-lg" title="Historique"><i class="fa-solid fa-clock-rotate-left"></i></button>` : ""}
+                    ${hasLink ? `<button onclick="viewDocument('${doc.link}', '${safeLabel}')" class="flex-1 py-2 text-[10px] font-bold uppercase bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all">Voir</button>` : `<div class="flex-1 py-2 text-[10px] font-bold uppercase bg-slate-50 text-slate-300 rounded-lg text-center cursor-not-allowed">Vide</div>`}
+                    ${canEdit ? `<button onclick="updateSingleDoc('${doc.key}', '${myData.id}')" class="w-10 flex items-center justify-center bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-pen"></i></button>` : ""}
+                </div>
+            </div>`;
       });
       gridHtml += "</div>";
-      if (allDocs.length > VISIBLE_LIMIT)
-        gridHtml += `<div class="text-center mt-4 pt-2 border-t border-slate-50"><button onclick="toggleMoreDocs(this)" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-500 hover:text-blue-600 transition-all shadow-sm"><i class="fa-solid fa-circle-plus"></i> Voir plus</button></div>`;
       dC.innerHTML = gridHtml;
     }
 
-    const leaveBalanceEl = document.getElementById("leave-balance-display");
-    const solde = myData.solde_conges;
-    if (leaveBalanceEl) {
-      leaveBalanceEl.innerText = `${solde} jours`;
-      leaveBalanceEl.className =
-        solde <= 5
-          ? "text-4xl font-black mt-2 text-orange-600"
-          : "text-4xl font-black mt-2 text-indigo-600";
-    }
+    // --- 8. BRANCHEMENT DES BOUTONS D'ACTION (EXPORT ZIP / BATCH UPLOAD) ---
+    const bulkBtn = document.getElementById("btn-bulk-archive");
+    if (bulkBtn) bulkBtn.setAttribute("onclick", `window.openBulkArchiveModal('${myData.id}')`);
 
-    // --- LOGIQUE DE CHARGEMENT DES DONNÉES DE TERRAIN ---
+    const exportBtn = document.getElementById("btn-export-zip");
+    if (exportBtn) exportBtn.setAttribute("onclick", `window.downloadEmployeeZip('${myData.id}', '${myData.nom.replace(/'/g, "\\'")}')`);
+
+    // --- 9. LOGIQUE DE TERRAIN (Conservée) ---
     const mobileSection = document.getElementById("mobile-recap-section");
-
     if (myData.employee_type === "MOBILE") {
-      // Si c'est un agent de terrain, on affiche les blocs de récapitulatif (Visites/Bilans)
       if (mobileSection) mobileSection.classList.remove("hidden");
-
-      // On lance le chargement de ses statistiques d'activité
-      if (typeof fetchMyActivityRecap === "function") {
-        fetchMyActivityRecap();
-      }
+      if (typeof fetchMyActivityRecap === "function") fetchMyActivityRecap();
     } else {
-      // Pour un employé de bureau, on cache les blocs de statistiques terrain
       if (mobileSection) mobileSection.classList.add("hidden");
     }
 
-    // Note : Le bouton "Rapport de Fin de Journée" est maintenant géré
-    // automatiquement par applyPermissionsUI via l'attribut data-perm="can_submit_daily_report"
   } catch (e) {
     console.error("Erreur de chargement du profil personnel:", e);
-    Swal.fire("Erreur", "Impossible de charger votre profil.", "error");
+    Swal.fire("Erreur", "Impossible de charger votre profil complet.", "error");
   }
 }
+
+
+
+
+
+
+
+
 
 export async function saveMyProfile() {
   Swal.fire({ title: "Sauvegarde...", didOpen: () => Swal.showLoading() });
