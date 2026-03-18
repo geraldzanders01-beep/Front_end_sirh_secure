@@ -48,82 +48,85 @@ if (typeof window.fetchPayrollConstants === "function" && Object.keys(AppState.p
       return;
     }
 
-    // 3. Rendu du tableau (AVEC SÉCURITÉ ANTI-CRASH)
+// 3. Rendu du tableau (AVEC SÉCURITÉ ANTI-CRASH ET NOUVELLES COLONNES)
     employeesToPay.forEach((emp, index) => {
-      // SÉCURITÉ : On s'assure que le nom et le matricule existent toujours
       const safeNom = emp.nom || "Inconnu";
       const safeMatricule = emp.matricule || "N/A";
       const safePoste = emp.poste || "Non défini";
-      const initial =
-        safeNom !== "Inconnu" ? safeNom.charAt(0).toUpperCase() : "?";
-
-      // Chaîne de recherche sécurisée
+      const initial = safeNom !== "Inconnu" ? safeNom.charAt(0).toUpperCase() : "?";
       const searchString = `${safeNom.toLowerCase()} ${safeMatricule.toLowerCase()}`;
-
-      // Calcul des indemnités
-      const totalIndemnites =
-        (parseFloat(emp.indemnite_transport) || 0) +
-        (parseFloat(emp.indemnite_logement) || 0);
+      const totalIndemnites = (parseFloat(emp.indemnite_transport) || 0) + (parseFloat(emp.indemnite_logement) || 0);
 
       body.innerHTML += `
-                <tr class="hover:bg-blue-50/50 transition-all accounting-row animate-fadeIn" 
-                    data-search="${searchString}">
-                    
-                    <!-- 1. COLLABORATEUR -->
-                    <td class="px-6 py-5">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400">${initial}</div>
-                            <div>
-                                <div class="font-black text-slate-800 text-[11px] uppercase">${safeNom}</div>
-                                <div class="text-[9px] text-slate-400 font-bold">${safeMatricule} • ${safePoste}</div>
-                            </div>
-                        </div>
-                    </td>
+        <tr class="hover:bg-blue-50/50 transition-all accounting-row animate-fadeIn" data-search="${searchString}">
+            
+            <!-- 1. COLLABORATEUR -->
+            <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400">${initial}</div>
+                    <div>
+                        <div class="font-black text-slate-800 text-[11px] uppercase">${safeNom}</div>
+                        <div class="text-[9px] text-slate-400 font-bold">${safeMatricule} • ${safePoste}</div>
+                    </div>
+                </div>
+            </td>
 
-                    <!-- 2. BASE (MODIFIABLE) -->
-                    <td class="px-4 py-5 text-center">
-                        <input type="number" oninput="calculateRow(${index})" id="base-${index}" 
-                               class="w-full p-2 bg-slate-50 border-none rounded-xl text-center font-black text-xs focus:ring-2 focus:ring-blue-500" 
-                               value="${emp.salaire_brut_fixe || 0}">
-                    </td>
+            <!-- 2. BASE -->
+            <td class="px-2 py-4 text-center">
+                <input type="number" oninput="window.calculateRow(${index})" id="base-${index}" 
+                       class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-center font-black text-xs focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition-all" 
+                       value="${emp.salaire_brut_fixe || 0}">
+            </td>
 
-                    <!-- 3. INDEMNITÉS FIXES -->
-                    <td class="px-4 py-5 text-center">
-                        <div class="bg-indigo-50 border border-indigo-100 rounded-xl py-2 shadow-sm">
-                            <span id="indem-constante-${index}" class="text-indigo-700 font-black text-xs">${totalIndemnites}</span>
-                            <p class="text-[7px] text-indigo-400 font-bold uppercase tracking-tighter">Fixe (Transp+Log)</p>
-                        </div>
-                    </td>
-                    
-                    <!-- 4. PRIMES VARIABLES -->
-                    <td class="px-4 py-5 text-center">
-                        <input type="number" oninput="calculateRow(${index})" id="prime-${index}" 
-                               class="w-full p-2 bg-emerald-50 border-none rounded-xl text-center font-black text-xs text-emerald-600 focus:ring-2 focus:ring-emerald-500" 
-                               value="0">
-                    </td>
+            <!-- 3. INDEMNITÉS FIXES -->
+            <td class="px-2 py-4 text-center">
+                <div class="bg-indigo-50/50 border border-indigo-100 rounded-xl py-2 shadow-sm">
+                    <span id="indem-constante-${index}" class="text-indigo-700 font-black text-xs">${totalIndemnites}</span>
+                    <p class="text-[7px] text-indigo-400 font-bold uppercase tracking-tighter">Fixe</p>
+                </div>
+            </td>
+            
+            <!-- 4. PRIMES VARIABLES -->
+            <td class="px-2 py-4 text-center">
+                <input type="number" oninput="window.calculateRow(${index})" id="prime-${index}" 
+                       class="w-full p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-center font-black text-xs text-emerald-700 focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm transition-all placeholder-emerald-300" 
+                       placeholder="0">
+            </td>
 
-                    <!-- 5. RETENUES -->
-                    <td class="px-4 py-5 text-center">
-                        <input type="number" oninput="calculateRow(${index})" id="tax-${index}" 
-                               class="w-full p-2 bg-red-50 border-none rounded-xl text-center font-black text-xs text-red-600 focus:ring-2 focus:ring-red-500" 
-                               value="0">
-                    </td>
+            <!-- 5. ACOMPTES (NOUVEAU) -->
+            <td class="px-2 py-4 text-center">
+                <input type="number" oninput="window.calculateRow(${index})" id="acompte-${index}" 
+                       class="w-full p-2.5 bg-orange-50 border border-orange-200 rounded-xl text-center font-black text-xs text-orange-700 focus:ring-2 focus:ring-orange-500 outline-none shadow-sm transition-all placeholder-orange-300" 
+                       placeholder="0">
+            </td>
 
-                    <!-- 6. NET À PAYER -->
-                    <td class="px-6 py-5 text-right">
-                        <div class="text-sm font-black text-blue-600 sensitive-value" 
-                             onclick="toggleSensitiveData(this)" 
-                             id="net-${index}" 
-                             data-id="${emp.id}" 
-                             data-nom="${safeNom}" 
-                             data-poste="${safePoste}" 
-                             data-matricule="${safeMatricule}">0 CFA</div>
-                    </td>
-                </tr>`;
+            <!-- 6. RETENUES / TAXES (AVEC CADENAS INTELLIGENT) -->
+            <td class="px-2 py-4 text-center">
+                <div class="relative flex items-center group">
+                    <input type="number" oninput="window.calculateRow(${index})" id="tax-${index}" data-auto="true" readonly
+                           class="w-full pl-2 pr-8 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-center font-black text-xs text-red-600 outline-none shadow-inner transition-all">
+                    <button onclick="window.toggleTaxLock(${index})" id="tax-lock-${index}" class="absolute right-2 text-slate-400 hover:text-blue-600 transition-colors" title="Déverrouiller la saisie manuelle">
+                        <i class="fa-solid fa-lock text-[10px]"></i>
+                    </button>
+                </div>
+                <p class="text-[7px] text-slate-400 font-bold uppercase tracking-tighter mt-1" id="tax-label-${index}">Calcul Auto</p>
+            </td>
+
+            <!-- 7. NET À PAYER -->
+            <td class="px-6 py-4 text-right">
+                <div class="text-sm font-black text-blue-600 bg-blue-50 px-3 py-2 rounded-xl inline-block shadow-sm border border-blue-100 sensitive-value" 
+                     onclick="window.toggleSensitiveData(this)" 
+                     id="net-${index}" 
+                     data-id="${emp.id}" 
+                     data-nom="${safeNom}" 
+                     data-poste="${safePoste}" 
+                     data-matricule="${safeMatricule}">0 CFA</div>
+            </td>
+        </tr>`;
     });
 
-    // 4. Calcul immédiat
-    employeesToPay.forEach((_, i) => calculateRow(i));
+    // 4. Calcul immédiat à l'affichage
+    employeesToPay.forEach((_, i) => window.calculateRow(i));
   } catch (e) {
     console.error("Erreur de rendu paie:", e);
     body.innerHTML =
@@ -222,17 +225,12 @@ export async function generateAllPay() {
     const netValue = parseInt(el.dataset.net) || 0;
 
     if (netValue > 0) {
-      // On récupère les valeurs directement depuis les champs du tableau
-      const baseVal =
-        parseInt(document.getElementById(`base-${index}`).value) || 0;
-      const indemVal =
-        parseInt(
-          document.getElementById(`indem-constante-${index}`).innerText,
-        ) || 0;
-      const primeVal =
-        parseInt(document.getElementById(`prime-${index}`).value) || 0;
-      const taxVal =
-        parseInt(document.getElementById(`tax-${index}`).value) || 0;
+    // Remplace le bloc de récupération des valeurs par celui-ci :
+      const baseVal = parseInt(document.getElementById(`base-${index}`).value) || 0;
+      const indemVal = parseInt(document.getElementById(`indem-constante-${index}`).innerText) || 0;
+      const primeVal = parseInt(document.getElementById(`prime-${index}`).value) || 0;
+      const acompteVal = parseInt(document.getElementById(`acompte-${index}`).value) || 0; 
+      const taxVal = parseInt(document.getElementById(`tax-${index}`).value) || 0;
 
       records.push({
         id: el.dataset.id,
@@ -242,8 +240,9 @@ export async function generateAllPay() {
         mois: mois,
         annee: annee,
         salaire_base: baseVal,
-        indemnites_fixes: indemVal, // AJOUTÉ : Somme Transport + Logement
+        indemnites_fixes: indemVal, 
         primes: primeVal,
+        acomptes: acompteVal, 
         retenues: taxVal,
         salaire_net: netValue,
         taux_cnss: AppState.payrollConstants["CNSS_EMPLOYEE_RATE"] || 0,
