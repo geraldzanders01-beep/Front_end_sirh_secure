@@ -220,13 +220,13 @@
         
         <!-- Lieux & Sites : Seuls ceux qui gèrent voient ce bouton -->
         <button data-perm="can_manage_mobile_locations" onclick="switchView('mobile-locations')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
-            <i class="fa-solid fa-map-location-dot w-5"></i> <span class="font-semibold">Lieux & Sites</span>
+            <i class="fa-solid fa-map-location-dot w-5"></i> <span class="font-semibold label-location-p">Sites</span>
         </button>
 
         <!-- Répertoire Médical : Pour Délégués et Managers -->
         <button data-perm="can_view_prescripteurs" onclick="switchView('prescripteurs-list')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
             <i class="fa-solid fa-user-doctor w-5 text-purple-400"></i> 
-            <span class="font-semibold text-purple-300 group-hover:text-white">Répertoire Médical</span>
+            <span class="font-semibold label-target-p">Contacts</span>
         </button>
         
         <!-- Plannings : Garde can_manage_schedules qui existait déjà -->
@@ -236,7 +236,7 @@
 
         <button data-module="MOD_CATALOG" data-perm="can_see_catalog" onclick="switchView('catalog')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
             <i class="fa-solid fa-box-archive w-5 text-emerald-400"></i> 
-            <span class="font-semibold">Catalogue Produits</span>
+    <span class="font-semibold label-product-p">Catalogue</span>
         </button>
 
         <button data-perm="can_view_reports" onclick="switchView('mobile-reports')" class="nav-btn w-full flex items-center gap-4 p-4 rounded-xl transition-all hover:text-white group">
@@ -1211,13 +1211,13 @@
 <div id="mobile-recap-section" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 hidden">
     <!-- RECAP VISITES DU JOUR -->
     <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
-        <h4 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest"><i class="fa-solid fa-location-dot mr-2"></i> Mes Visites du Jour</h4>
+        <h4 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest label-visit-p"><i class="fa-solid fa-location-dot mr-2"></i> Mes Activités</h4>
         <div id="my-today-visits" class="space-y-2 max-h-48 overflow-y-auto custom-scroll"></div>
     </div>
 
     <!-- RECAP BILANS DU MOIS -->
     <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
-        <h4 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest"><i class="fa-solid fa-clipboard-check mr-2"></i> Mes Bilans Mensuels</h4>
+        <h4 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest label-report-p"><i class="fa-solid fa-clipboard-check mr-2"></i> Mes Rapports</h4>
         <div id="my-month-dailies" class="space-y-2 max-h-48 overflow-y-auto custom-scroll"></div>
     </div>
 </div>
