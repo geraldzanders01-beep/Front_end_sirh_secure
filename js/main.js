@@ -41,6 +41,7 @@ window.applyWidgetPreferences = UI.applyWidgetPreferences;
 window.requestNotificationPermission = UI.requestNotificationPermission;
 window.applyBranding = UI.applyBranding;
 window.initDarkMode = UI.initDarkMode;
+window.subscribeUserToPush = UI.subscribeUserToPush;
 
 // --- Ressources Humaines (HR) ---
 window.downloadEmployeeZip = HR.downloadEmployeeZip;
