@@ -168,10 +168,10 @@ export async function setSession(n, r, id, perms, type) {
   try {
     // 3. CHARGEMENT DES DONNÉES CRITIQUES
     // Le logo et la barre de chargement restent ici tant que le serveur n'a pas répondu
-    await Promise.all([
+  await Promise.all([
       window.refreshAllData(false),
       window.refreshClockButton(),
-      await window.fetchAndApplyLabels();
+      window.fetchAndApplyLabels(), 
       window.fetchAndPopulateDepartments(),
       window.syncAllRoleSelects(),
       window.fetchContractTemplatesForSelection(),
