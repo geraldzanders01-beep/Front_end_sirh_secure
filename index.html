@@ -1411,6 +1411,31 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="zones-container">
         <!-- Rempli par JS -->
     </div>
+
+
+
+    <!-- NOUVEAU BLOC : CONFIGURATION PAIE -->
+    <div class="mt-12 mb-6">
+        <h2 class="text-2xl font-black text-slate-800 tracking-tight">Taux & Cotisations (Paie)</h2>
+        <p class="text-sm text-slate-500 font-bold uppercase tracking-widest mt-1">Configuration fiscale et sociale</p>
+    </div>
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-2xl mb-12">
+        <form onsubmit="window.savePayrollConfig(event)" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Taux CNSS Employé (%)</label>
+                    <input type="number" step="0.01" id="config-cnss" class="w-full p-3 bg-white border border-slate-200 rounded-lg font-black text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" required>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Taux IRPP Estimé (%)</label>
+                    <input type="number" step="0.01" id="config-irpp" class="w-full p-3 bg-white border border-slate-200 rounded-lg font-black text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" required>
+                </div>
+            </div>
+            <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-blue-600 transition-all active:scale-95 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i> Enregistrer les taux
+            </button>
+        </form>
+    </div>
 </section>
 
 
