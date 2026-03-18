@@ -178,6 +178,7 @@ export async function setSession(n, r, id, perms, type) {
 
     await window.applyModulesUI();
     window.applyPermissionsUI(perms);
+    window.applyDynamicLabels();
     await window.refreshClockButton();
 
     // 4. NAVIGATION PRÉEMPTIVE (On choisit la vue SOUS le loader)
