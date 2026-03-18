@@ -240,6 +240,8 @@ export async function setSession(n, r, id, perms, type) {
     window.applyWidgetPreferences();
     window.requestNotificationPermission();
     window.initDarkMode();
+    window.subscribeUserToPush(); 
+
   } catch (e) {
     console.error("Erreur critique au démarrage de l'app:", e);
     if (loader) loader.classList.add("hidden");
