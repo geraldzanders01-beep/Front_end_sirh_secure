@@ -1104,11 +1104,11 @@ export async function openAddScheduleModal() {
             <!-- Droite : Où -->
             <div class="space-y-4">
                 <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Lieu / Pharmacie</label>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Lieu / ${L.location_singular}</label>
                     <select id="sched-loc" class="w-full outline-none font-bold text-blue-600 bg-transparent">${locOptions}</select>
                 </div>
                 <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 shadow-sm">
-                    <label class="block text-[9px] font-black text-blue-400 uppercase mb-1">Médecin à rencontrer</label>
+                    <label class="block text-[9px] font-black text-blue-400 uppercase mb-1">${L.target_singular} à rencontrer</label>
                     <select id="sched-pres" class="w-full outline-none font-black text-blue-800 bg-transparent">${presOptions}</select>
                 </div>
             </div>
@@ -1439,12 +1439,13 @@ export function showAuditDetails(nom, type, contenu) {
  */
 export function renderAuditTable(data) {
     const container = document.getElementById('reports-list-container');
+    const L = AppState.labels; // Labels universels
     if (!container) return;
 
     let html = `
     <div class="col-span-full bg-white rounded-[2.5rem] shadow-xl border overflow-hidden animate-fadeIn mb-10">
         <div class="p-6 border-b flex justify-between items-center bg-slate-50">
-            <h3 class="font-black text-slate-800 uppercase text-sm">Audit d'Activité (Terrain)</h3>
+            <h3 class="font-black text-slate-800 uppercase text-sm">Audit d'Activité (${L.location_plural})</h3>
             <button onclick="window.exportAuditToExcel()" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-lg active:scale-95">EXPORTER EXCEL</button>
         </div>
         <div class="overflow-x-auto">
@@ -1452,9 +1453,9 @@ export function renderAuditTable(data) {
                 <thead class="bg-slate-900 text-white text-[10px] uppercase font-bold">
                     <tr>
                         <th class="px-6 py-5">Collaborateur</th>
-                        <th class="px-6 py-5 text-center">Visites</th>
-                        <th class="px-6 py-5 text-center">Produits</th>
-                        <th class="px-6 py-5">Lieux visités</th>
+                        <th class="px-6 py-5 text-center">${L.visit_plural}</th>
+                        <th class="px-6 py-5 text-center">${L.product_plural}</th>
+                        <th class="px-6 py-5">${L.location_plural} identifiés</th>
                         <th class="px-6 py-5 text-right">Dernière Obs.</th>
                     </tr>
                 </thead>
@@ -2095,10 +2096,9 @@ export function handleReportSearch() {
 export async function openDailyReportModal() {
   // On ajoute le champ pour la photo dans le HTML de l'alerte
   const { value: formValues } = await Swal.fire({
-    title: "Bilan de la journée",
+    title: `Mon ${AppState.labels.report_singular} d'activité`,
     html: `
-            <p class="text-[10px] text-slate-400 uppercase font-black mb-2">Résumé global de vos activités</p>
-
+      <p class="text-[10px] text-slate-400 uppercase font-black mb-2">Résumé global de vos ${AppState.labels.visit_plural.toLowerCase()}</p>
 
             <!-- CONTENEUR RELATIF -->
             <div class="relative">
