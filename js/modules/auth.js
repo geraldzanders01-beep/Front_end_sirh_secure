@@ -171,6 +171,7 @@ export async function setSession(n, r, id, perms, type) {
     await Promise.all([
       window.refreshAllData(false),
       window.refreshClockButton(),
+      await window.fetchAndApplyLabels();
       window.fetchAndPopulateDepartments(),
       window.syncAllRoleSelects(),
       window.fetchContractTemplatesForSelection(),
@@ -216,7 +217,7 @@ export async function setSession(n, r, id, perms, type) {
     appLayout.classList.remove("hidden");
 
     // On utilise le double cycle pour garantir que le navigateur a "peint" l'app en mémoire
-    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         // L'application est prête en arrière-plan. On lance l'échange visuel.
 
