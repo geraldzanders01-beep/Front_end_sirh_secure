@@ -70,6 +70,18 @@ export const AppState = {
   currentReportData: [],
   lastAuditData: [],
   currentPerformanceData: [], // Ajouté pour la synthèse manager (Ops.js)
+  labels: {
+    visit_singular: "Intervention",
+    visit_plural: "Interventions",
+    target_singular: "Contact",
+    target_plural: "Contacts",
+    location_singular: "Site",
+    location_plural: "Sites",
+    product_singular: "Article",
+    product_plural: "Articles",
+    report_singular: "Bilan",
+    report_plural: "Bilans"
+  },
 
   // --- Paramètres & Config ---
   companyConfig: {
