@@ -325,7 +325,46 @@ export async function downloadHtmlAsPdf(url, title) {
   }
 }
 
+/**
+ * Remplace les textes des éléments HTML portant les classes 'label-xxx'
+ * par les valeurs définies dans AppState.labels (Dictionnaire dynamique)
+ */
+export function applyDynamicLabels() {
+    const labels = AppState.labels;
+    if (!labels) return;
 
+    // Correspondance entre les classes CSS et les clés du dictionnaire
+    const mapping = {
+        '.label-visit-s': labels.visit_singular,
+        '.label-visit-p': labels.visit_plural,
+        '.label-target-s': labels.target_singular,
+        '.label-target-p': labels.target_plural,
+        '.label-location-s': labels.location_singular,
+        '.label-location-p': labels.location_plural,
+        '.label-product-s': labels.product_singular,
+        '.label-product-p': labels.product_plural,
+        '.label-report-s': labels.report_singular,
+        '.label-report-p': labels.report_plural,
+    };
+
+    Object.keys(mapping).forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => {
+            const icon = el.querySelector('i');
+            const newText = mapping[selector];
+            
+            if (newText) {
+                if (icon) {
+                    // On vide mais on garde l'icône FontAwesome
+                    el.innerHTML = '';
+                    el.appendChild(icon);
+                    el.appendChild(document.createTextNode(' ' + newText));
+                } else {
+                    el.innerText = newText;
+                }
+            }
+        });
+    });
+}
 
 // --- FONCTION PRIVÉE DE CLÔTURE AUTOMATIQUE (INTELLIGENCE MÉTIER) ---
 export function calculateAutoClose(startMs, isSecurity) {
