@@ -152,50 +152,73 @@ export function filterAccountingTableLocally() {
   });
 }
 
+export function toggleTaxLock(index) {
+    const inputTax = document.getElementById(`tax-${index}`);
+    const lockBtn = document.getElementById(`tax-lock-${index}`);
+    const label = document.getElementById(`tax-label-${index}`);
+
+    const isAuto = inputTax.dataset.auto === "true";
+
+    if (isAuto) {
+        // On DÉVERROUILLE (Passe en manuel)
+        inputTax.dataset.auto = "false";
+        inputTax.readOnly = false;
+        inputTax.classList.replace("bg-slate-100", "bg-white");
+        inputTax.classList.replace("shadow-inner", "shadow-sm");
+        inputTax.classList.add("focus:ring-2", "focus:ring-red-500");
+        lockBtn.innerHTML = '<i class="fa-solid fa-unlock text-[10px] text-red-500"></i>';
+        label.innerText = "Saisie Manuelle";
+        label.classList.replace("text-slate-400", "text-red-400");
+    } else {
+        // On VERROUILLE (Repasse en auto)
+        inputTax.dataset.auto = "true";
+        inputTax.readOnly = true;
+        inputTax.classList.replace("bg-white", "bg-slate-100");
+        inputTax.classList.replace("shadow-sm", "shadow-inner");
+        inputTax.classList.remove("focus:ring-2", "focus:ring-red-500");
+        lockBtn.innerHTML = '<i class="fa-solid fa-lock text-[10px]"></i>';
+        label.innerText = "Calcul Auto";
+        label.classList.replace("text-red-400", "text-slate-400");
+        
+        // On force un recalcul immédiat avec les taux officiels
+        calculateRow(index);
+    }
+}
+
 export function calculateRow(index) {
-  // 1. Récupération des valeurs de base
-  const base = parseInt(document.getElementById(`base-${index}`).value) || 0;
+    const base = parseInt(document.getElementById(`base-${index}`).value) || 0;
+    const indemnitesFixes = parseInt(document.getElementById(`indem-constante-${index}`).innerText) || 0;
+    const primeVariable = parseInt(document.getElementById(`prime-${index}`).value) || 0;
+    const acompte = parseInt(document.getElementById(`acompte-${index}`).value) || 0;
+    
+    const inputTax = document.getElementById(`tax-${index}`);
 
-  // 2. Récupération des indemnités fixes (Somme transport + logement affichée dans le tableau)
-  const indemnitesFixes =
-    parseInt(document.getElementById(`indem-constante-${index}`).innerText) ||
-    0;
+    // Si le cadenas est fermé (AUTO), le système calcule les taxes lui-même
+    if (inputTax && inputTax.dataset.auto === "true") {
+        const rateCNSS = AppState.payrollConstants["CNSS_EMPLOYEE_RATE"] || 0;
+        const rateIRPP = AppState.payrollConstants["IRPP_BASE_RATE"] || 0;
+        const totalTaxRate = rateCNSS + rateIRPP;
+        
+        // La taxe s'applique généralement sur la Base + Primes
+        const assietteFiscale = base + primeVariable;
+        inputTax.value = Math.round(assietteFiscale * (totalTaxRate / 100));
+    }
 
-  // 3. AUTOMATISATION DES RETENUES (Stratégie Étape 4)
-  // On récupère les taux chargés depuis la table 'salaries_config'
-  const rateCNSS = AppState.payrollConstants["CNSS_EMPLOYEE_RATE"] || 0;
-  const rateIRPP = AppState.payrollConstants["IRPP_BASE_RATE"] || 0;
-  const totalTaxRate = rateCNSS + rateIRPP;
+    const retenues = parseInt(inputTax.value) || 0;
 
-  const inputTax = document.getElementById(`tax-${index}`);
+    // LE CALCUL FINAL
+    const net = base + indemnitesFixes + primeVariable - acompte - retenues;
 
-  // On calcule automatiquement la retenue seulement si le champ est à 0
-  // ou s'il est marqué comme étant en mode "auto"
-  if (
-    inputTax &&
-    (inputTax.value === "0" || inputTax.dataset.auto === "true")
-  ) {
-    const estimationRetenues = Math.round(base * (totalTaxRate / 100));
-    inputTax.value = estimationRetenues;
-    inputTax.dataset.auto = "true"; // On garde la trace que c'est un calcul auto
-  }
+    // Mise à jour de l'affichage
+    const display = document.getElementById(`net-${index}`);
+    display.innerText = new Intl.NumberFormat("fr-FR").format(net) + " CFA";
 
-  // 4. Calcul final avec les primes variables saisies
-  const primeVariable =
-    parseInt(document.getElementById(`prime-${index}`).value) || 0;
-  const retenues = parseInt(inputTax.value) || 0;
-
-  const net = base + indemnitesFixes + primeVariable - retenues;
-
-  // 5. Mise à jour visuelle (Format Premium)
-  const display = document.getElementById(`net-${index}`);
-  display.innerText = new Intl.NumberFormat("fr-FR").format(net) + " CFA";
-
-  // 6. Stockage des données pour l'envoi final au serveur (Publish)
-  display.dataset.net = net;
-  display.dataset.base = base;
-  display.dataset.prime = primeVariable;
-  display.dataset.tax = retenues;
+    // Stockage dans le HTML pour la génération des PDF
+    display.dataset.net = net;
+    display.dataset.base = base;
+    display.dataset.prime = primeVariable;
+    display.dataset.acompte = acompte;
+    display.dataset.tax = retenues;
 }
 
 export async function fetchPayrollConstants() {
