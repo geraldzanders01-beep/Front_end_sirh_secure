@@ -79,8 +79,34 @@ self.addEventListener("fetch", (e) => {
   );
 });
 
-// 4. NOTIFICATIONS PUSH
-self.addEventListener('notificationclick', (event) => {
+
+
+// Dans sw.js
+self.addEventListener('push', function(event) {
+    const data = event.data.json(); // Données envoyées par ton serveur
+
+    const options = {
+        body: data.body,
+        icon: '/assets/icons/icon-512x512.png',
+        badge: '/assets/icons/badge-72x72.png', // Petite icône barre du haut
+        image: data.image || null, // Optionnel : grande image
+        vibrate: [200, 100, 200],
+        data: { url: data.url }, // URL à ouvrir au clic
+        actions: [
+            { action: 'open', title: 'Voir l\'appli' },
+            { action: 'close', title: 'Ignorer' }
+        ]
+    };
+
+    event.waitUntil(
+        self.registration.showNotification(data.title, options)
+    );
+});
+
+// Gérer le clic sur la notification
+self.addEventListener('notificationclick', function(event) {
     event.notification.close();
-    event.waitUntil(clients.openWindow('/'));
+    event.waitUntil(
+        clients.openWindow(event.notification.data.url)
+    );
 });
