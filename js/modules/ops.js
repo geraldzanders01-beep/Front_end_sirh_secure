@@ -342,11 +342,28 @@ export async function handleClockInOut() {
     Swal.fire({ title: 'Vérification...', text: 'GPS...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
     try {
-        let currentGps = "0,0";
+let currentGps = "0,0";
         try {
-            const pos = await new Promise((res, rej) => { navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000 }); });
+            // Vérification si le navigateur autorise le GPS (bloqué en HTTP)
+            if (!navigator.geolocation) {
+                throw new Error("Votre navigateur bloque le GPS (Site non sécurisé)");
+            }
+
+            const pos = await new Promise((res, rej) => { 
+                navigator.geolocation.getCurrentPosition(res, rej, { 
+                    timeout: 8000,
+                    enableHighAccuracy: true 
+                }); 
+            });
             currentGps = `${pos.coords.latitude},${pos.coords.longitude}`;
-        } catch (e) { currentGps = "GPS_TIMEOUT"; }
+        } catch (e) { 
+            console.error("Erreur GPS détaillée:", e);
+            // Si on est en HTTP, on prévient l'utilisateur
+            if (location.protocol !== 'https:') {
+                return Swal.fire("Sécurité", "Le GPS nécessite une connexion sécurisée HTTPS.", "error");
+            }
+            currentGps = "GPS_DISABLED"; 
+        }
 
         const fd = new FormData();
         fd.append('id', userId);
