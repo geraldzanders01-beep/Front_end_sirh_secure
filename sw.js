@@ -79,34 +79,36 @@ self.addEventListener("fetch", (e) => {
   );
 });
 
+// 4. NOTIFICATIONS PUSH
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    event.waitUntil(clients.openWindow('/'));
+});
 
 
-// Dans sw.js
-self.addEventListener('push', function(event) {
-    const data = event.data.json(); // Données envoyées par ton serveur
+
+// --- ÉCOUTE DES NOTIFICATIONS PUSH ---
+self.addEventListener('push', (event) => {
+    if (!event.data) return;
+
+    // Le serveur envoie les infos en JSON
+    const data = event.data.json(); 
 
     const options = {
         body: data.body,
-        icon: '/assets/icons/icon-512x512.png',
-        badge: '/assets/icons/badge-72x72.png', // Petite icône barre du haut
-        image: data.image || null, // Optionnel : grande image
-        vibrate: [200, 100, 200],
-        data: { url: data.url }, // URL à ouvrir au clic
+        icon: 'https://cdn-icons-png.flaticon.com/128/13594/13594876.png', // Ton logo
+        badge: 'https://cdn-icons-png.flaticon.com/128/13594/13594876.png', // Petite icône barre d'état
+        vibrate: [100, 50, 100], // Vibration type WhatsApp
+        data: {
+            url: data.url || '/'
+        },
         actions: [
-            { action: 'open', title: 'Voir l\'appli' },
+            { action: 'open', title: 'Voir maintenant' },
             { action: 'close', title: 'Ignorer' }
         ]
     };
 
     event.waitUntil(
         self.registration.showNotification(data.title, options)
-    );
-});
-
-// Gérer le clic sur la notification
-self.addEventListener('notificationclick', function(event) {
-    event.notification.close();
-    event.waitUntil(
-        clients.openWindow(event.notification.data.url)
     );
 });
