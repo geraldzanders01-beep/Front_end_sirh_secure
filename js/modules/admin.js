@@ -11,77 +11,135 @@ import { secureFetch } from "../core/api.js";
 import { CSVManager, escapeHTML, triggerGlobalPush } from "../core/utils.js";
 
 export async function fetchLogs(page = 1) {
-  // Accepte un paramètre de page
   const tbody = document.getElementById("logs-body");
+  const typeFilter = document.getElementById("filter-log-type")?.value || "all";
+  const refreshIcon = document.getElementById("logs-refresh-icon");
+
   if (!tbody) return;
 
-  // Affiche un loader pendant le chargement
-  tbody.innerHTML =
-    '<tr><td colspan="4" class="p-6 text-center italic text-slate-400"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Chargement des logs...</td></tr>';
-
-  AppState.logsPage = page; // Met à jour la page actuelle
+  // Animation de chargement
+  if (refreshIcon) refreshIcon.classList.add("fa-spin");
+  tbody.innerHTML = `
+    <tr>
+        <td colspan="5" class="p-12 text-center">
+            <i class="fa-solid fa-circle-notch fa-spin text-blue-500 text-3xl"></i>
+            <p class="text-[10px] font-black text-slate-400 uppercase mt-4 tracking-widest">Analyse du journal...</p>
+        </td>
+    </tr>`;
 
   try {
-    const r = await secureFetch(
-      `${URL_READ_LOGS}?page=${page}&limit=20&agent=${encodeURIComponent(AppState.currentUser.nom)}`,
-    );
+    // 1. Appel API avec pagination ET filtre de type
+    const url = `${URL_READ_LOGS}?page=${page}&limit=20&type=${typeFilter}&agent=${encodeURIComponent(AppState.currentUser.nom)}`;
+    const r = await secureFetch(url);
     const result = await r.json();
 
     const raw = result.data || [];
-    const meta = result.meta || { total: raw.length, page: 1, last_page: 1 };
+    const meta = result.meta || { total: 0, last_page: 1 };
+    
+    AppState.logsTotalPages = meta.last_page;
+    AppState.logsPage = page;
 
-    AppState.logsTotalPages = meta.last_page; // Met à jour le nombre total de pages
-
-    tbody.innerHTML = ""; // Vide l'ancien contenu
+    tbody.innerHTML = "";
 
     if (raw.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Aucun log trouvé pour cette page.</td></tr>`;
+      tbody.innerHTML = `
+        <tr>
+            <td colspan="5" class="p-12 text-center text-slate-400 italic">
+                <i class="fa-solid fa-folder-open text-2xl mb-2 opacity-20"></i><br>
+                Aucun enregistrement trouvé pour cette catégorie.
+            </td>
+        </tr>`;
       return;
     }
 
+    // 2. Rendu des lignes
     raw.forEach((log) => {
-      const dateF = log.created_at
-        ? new Date(log.created_at).toLocaleString("fr-FR", {
-            day: "2-digit",
-            month: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        : "-";
+      let badgeClass = "bg-slate-100 text-slate-500 border-slate-200";
+      let icon = "fa-circle-info";
+      const action = (log.action || "INFO").toUpperCase();
+      
+      // Logique de couleurs par catégorie
+      if (action.includes("SÉCURITÉ") || action.includes("SUPPRESSION") || action.includes("ACCÈS")) {
+          badgeClass = "bg-red-50 text-red-600 border-red-100";
+          icon = "fa-shield-halved";
+      } else if (action.includes("PAIE") || action.includes("SALAIRE") || action.includes("FINANCE")) {
+          badgeClass = "bg-emerald-50 text-emerald-600 border-emerald-100";
+          icon = "fa-money-bill-transfer";
+      } else if (action.includes("RH") || action.includes("CONTRAT") || action.includes("PROFIL")) {
+          badgeClass = "bg-blue-50 text-blue-600 border-blue-100";
+          icon = "fa-user-gear";
+      } else if (action.includes("TERRAIN") || action.includes("VISITE") || action.includes("GPS")) {
+          badgeClass = "bg-amber-50 text-amber-600 border-amber-100";
+          icon = "fa-map-location-dot";
+      }
+
+      const dateF = log.created_at ? new Date(log.created_at).toLocaleString("fr-FR", {
+          day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
+      }) : "-";
+
+      const agentInitial = (log.agent || "S").charAt(0).toUpperCase();
 
       tbody.innerHTML += `
-                <tr class="border-b hover:bg-slate-50 transition-colors">
-                    <td class="p-4 text-xs font-mono">${dateF}</td>
-                    <td class="p-4 font-bold text-slate-700">${escapeHTML(log.agent || "Système")}</td>
-                    <td class="p-4"><span class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-[10px] font-black">${escapeHTML(log.action || "-")}</span></td>
-                    <td class="p-4 text-xs text-slate-500">${escapeHTML(log.details || "-")}</td>
-                </tr>`;
+        <tr class="hover:bg-slate-50/80 transition-colors group">
+            <td class="p-6 text-xs font-mono text-slate-400">${dateF}</td>
+            <td class="p-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-black text-slate-500 border border-white shadow-sm">${agentInitial}</div>
+                    <span class="font-bold text-slate-700 text-xs uppercase tracking-tight">${escapeHTML(log.agent || "Système")}</span>
+                </div>
+            </td>
+            <td class="p-6">
+                <span class="px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-widest ${badgeClass} flex items-center w-fit gap-1.5">
+                    <i class="fa-solid ${icon}"></i> ${escapeHTML(action)}
+                </span>
+            </td>
+            <td class="p-6 text-xs text-slate-500 font-medium">
+                ${escapeHTML(log.details || "-")}
+            </td>
+        </tr>`;
     });
 
-    // --- INJECTION DES BOUTONS DE PAGINATION ---
-    const logsContainer = document.getElementById("view-logs");
-    const oldPagination = document.getElementById("logs-pagination-controls");
-    if (oldPagination) oldPagination.remove(); // Supprime l'ancienne barre si elle existe
+    // 3. Mise à jour de la pagination
+    renderLogsPagination();
 
-    const paginationHtml = `
-            <div id="logs-pagination-controls" class="flex justify-between items-center mt-6 p-4 bg-white rounded-2xl border shadow-sm animate-fadeIn">
-                <button onclick="window.fetchLogs(${AppState.logsPage - 1})" ${AppState.logsPage <= 1 ? "disabled" : ""} 
-                    class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase text-slate-600 disabled:opacity-30 hover:bg-slate-100 transition-all shadow-sm">
-                    <i class="fa-solid fa-chevron-left"></i> Précédent
-                </button>
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Page ${AppState.logsPage} / ${AppState.logsTotalPages}</span>
-                <button onclick="window.fetchLogs(${AppState.logsPage + 1})" ${AppState.logsPage >= AppState.logsTotalPages ? "disabled" : ""} 
-                    class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase text-slate-600 disabled:opacity-30 hover:bg-slate-100 transition-all shadow-sm">
-                    Suivant <i class="fa-solid fa-chevron-right"></i>
-                </button>
-            </div>
-        `;
-    if (logsContainer)
-      logsContainer.insertAdjacentHTML("beforeend", paginationHtml);
   } catch (e) {
     console.error("Erreur fetchLogs:", e);
-    tbody.innerHTML = `<tr><td colspan="4" class="text-red-500 p-4 font-bold text-center">${escapeHTML(e.message || "Erreur de chargement des logs.")}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="text-red-500 p-8 font-bold text-center">${escapeHTML(e.message)}</td></tr>`;
+  } finally {
+    if (refreshIcon) refreshIcon.classList.remove("fa-spin");
   }
+}
+
+/**
+ * Fonction interne pour gérer la barre de pagination
+ */
+function renderLogsPagination() {
+    const logsContainer = document.getElementById("view-logs");
+    let paginationEl = document.getElementById("logs-pagination-controls");
+    
+    if (paginationEl) paginationEl.remove();
+
+    if (AppState.logsTotalPages <= 1) return;
+
+    const html = `
+        <div id="logs-pagination-controls" class="flex justify-between items-center mt-6 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm animate-fadeIn">
+            <button onclick="window.fetchLogs(${AppState.logsPage - 1})" ${AppState.logsPage <= 1 ? "disabled" : ""} 
+                class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase text-slate-600 disabled:opacity-30 hover:bg-slate-100 transition-all shadow-sm">
+                <i class="fa-solid fa-chevron-left"></i> Précédent
+            </button>
+            
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
+                Page ${AppState.logsPage} / ${AppState.logsTotalPages}
+            </span>
+            
+            <button onclick="window.fetchLogs(${AppState.logsPage + 1})" ${AppState.logsPage >= AppState.logsTotalPages ? "disabled" : ""} 
+                class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase text-slate-600 disabled:opacity-30 hover:bg-slate-100 transition-all shadow-sm">
+                Suivant <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+    `;
+    
+    if (logsContainer) logsContainer.insertAdjacentHTML("beforeend", html);
 }
 
 export async function fetchCompanyConfig() {
