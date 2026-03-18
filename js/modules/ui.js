@@ -547,6 +547,25 @@ export function toggleSensitiveData(element) {
   }, 10000);
 }
 
+
+export async function fetchAndApplyLabels() {
+    try {
+        const response = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/read-labels`);
+        const labels = await response.json();
+        
+        // On met à jour le dictionnaire dans le State global
+        AppState.labels = { ...AppState.labels, ...labels };
+        
+        // On applique les nouveaux mots au HTML
+        window.applyDynamicLabels();
+        
+        console.log("🏷️ Labels métier appliqués avec succès.");
+    } catch (e) {
+        console.warn("Utilisation des labels par défaut (Erreur serveur)");
+        window.applyDynamicLabels(); // On applique quand même les labels par défaut du State
+    }
+}
+
 export async function requestNotificationPermission() {
   if (!("Notification" in window)) {
     console.log("Ce navigateur ne supporte pas les notifications.");
