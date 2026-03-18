@@ -149,22 +149,21 @@ export function stopAllCameras() {
     if (video) video.srcObject = null;
 }
 
-
 export async function handleClockInOut() {
     const userId = AppState.currentUser.id;
-    const today = new Date().toLocaleDateString('fr-CA');
     const actionTime = new Date().toISOString(); 
-    const L = AppState.labels; // RACCOURCI POUR LES LABELS DYNAMIQUES
+    const L = AppState.labels || { visit_singular: "Visite", target_singular: "Contact", product_plural: "Produits" };
 
     const btn = document.getElementById('btn-clock');
     const action = btn.dataset.action; 
     
+    // Réinitialisation du State
     AppState.formResult = null; 
     AppState.outcome = null;
     AppState.report = null;
     AppState.proofBlob = null; 
     AppState.isLastExit = false;
-    AppState.presentedProducts =[]; 
+    AppState.presentedProducts = []; 
     AppState.prescripteur_id = null;
     AppState.contact_nom_libre = null;
     
@@ -195,34 +194,32 @@ export async function handleClockInOut() {
         Swal.fire({ title: 'Chargement...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
         let products = AppState.allProductsData || [];
-        let prescripteurs = AppState.allPrescripteurs ||[];
+        let prescripteurs = AppState.allPrescripteurs || [];
 
         if (navigator.onLine && (products.length === 0 || prescripteurs.length === 0)) {
             try {
-                const[prodRes, presRes] = await Promise.all([
+                const [prodRes, presRes] = await Promise.all([
                     secureFetch(`${SIRH_CONFIG.apiBaseUrl}/list-products`),
                     secureFetch(`${SIRH_CONFIG.apiBaseUrl}/list-prescripteurs`)
                 ]);
                 products = await prodRes.json();
-                AppState.allProductsData = products; 
                 prescripteurs = await presRes.json();
-                AppState.allPrescripteurs = prescripteurs; 
-            } catch (e) { console.warn("Mode hors ligne forcé", e); }
+                AppState.allProductsData = products;
+                AppState.allPrescripteurs = prescripteurs;
+            } catch (e) { console.warn("Mode hors ligne utilisé"); }
         }
-
         Swal.close();
 
-        // Label dynamique pour le choix du contact
         let presOptions = `<option value="">-- Choisir un ${L.target_singular.toLowerCase()} --</option>` + 
             prescripteurs.map(p => `<option value="${p.id}">${p.nom_complet} (${p.fonction})</option>`).join('') +
             `<option value="autre" class="font-bold text-blue-600">➕ Autre (Nouveau ${L.target_singular})</option>`;
 
         let productsHtml = products.map(p => `
-            <label class="cursor-pointer group flex-shrink-0">
+            <label class="cursor-pointer flex-shrink-0">
                 <input type="checkbox" name="presented_prods" value="${p.id}" data-name="${p.name}" class="peer sr-only">
-                <div class="flex items-center gap-2 p-1.5 pr-3 border border-slate-200 rounded-full peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 transition-all bg-white shadow-sm hover:border-blue-300">
-                    <img src="${p.photo_url || 'https://via.placeholder.com/50'}" class="w-7 h-7 object-cover rounded-full border border-slate-100">
-                    <span class="text-[10px] font-black uppercase whitespace-nowrap">${p.name}</span>
+                <div class="flex items-center gap-2 p-1.5 pr-3 border border-slate-200 rounded-full peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 transition-all bg-white shadow-sm">
+                    <img src="${p.photo_url || 'https://via.placeholder.com/50'}" class="w-7 h-7 object-cover rounded-full">
+                    <span class="text-[10px] font-black uppercase">${p.name}</span>
                 </div>
             </label>`).join('');
 
@@ -234,7 +231,7 @@ export async function handleClockInOut() {
                     <div class="space-y-6">
                         <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
                             <label class="text-[10px] font-black text-slate-400 uppercase mb-3 block">1. ${L.target_singular} concerné</label>
-                            <select id="swal-prescripteur" class="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500">${presOptions}</select>
+                            <select id="swal-prescripteur" class="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm outline-none">${presOptions}</select>
                             <div id="container-autre-nom" class="hidden mt-3">
                                 <input id="swal-nom-libre" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm" placeholder="Nom du contact...">
                             </div>
@@ -253,8 +250,8 @@ export async function handleClockInOut() {
                     </div>
                     <div class="space-y-6 flex flex-col">
                         <div class="flex p-1 bg-slate-100 rounded-xl border border-slate-200 shrink-0">
-                            <button type="button" onclick="window.switchProofMode('photo')" id="btn-mode-photo" class="flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all bg-white shadow-sm text-blue-600">📸 Photo</button>
-                            <button type="button" onclick="window.switchProofMode('sign')" id="btn-mode-sign" class="flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all text-slate-500">✍️ Signature</button>
+                            <button type="button" onclick="window.switchProofMode('photo')" id="btn-mode-photo" class="flex-1 py-2 rounded-lg text-[9px] font-black uppercase bg-white shadow-sm text-blue-600">📸 Photo</button>
+                            <button type="button" onclick="window.switchProofMode('sign')" id="btn-mode-sign" class="flex-1 py-2 rounded-lg text-[9px] font-black uppercase text-slate-500">✍️ Signature</button>
                         </div>
                         <div id="proof-photo-area" class="h-44 bg-slate-900 rounded-2xl overflow-hidden relative border-2 border-slate-200 flex-shrink-0 shadow-inner">
                             <video id="proof-video" autoplay playsinline class="w-full h-full object-cover"></video>
@@ -266,45 +263,35 @@ export async function handleClockInOut() {
                             <canvas id="visit-signature-pad" class="signature-zone w-full h-full bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200"></canvas>
                         </div>
                         <div class="flex-1 space-y-4">
-                            <textarea id="swal-report" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm h-24 resize-none outline-none focus:bg-white" placeholder="Observations et notes..."></textarea>
+                            <textarea id="swal-report" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm h-24 resize-none outline-none" placeholder="Observations..."></textarea>
                             <label class="flex items-center gap-3 p-3 bg-red-50 rounded-xl border border-red-100 cursor-pointer group">
                                 <input type="checkbox" id="last-exit-check" class="w-5 h-5 accent-red-600">
-                                <span class="text-[10px] font-black text-red-700 uppercase">Clôturer ma journée après cette ${L.visit_singular.toLowerCase()}</span>
+                                <span class="text-[10px] font-black text-red-700 uppercase">Clôturer ma journée après cela</span>
                             </label>
                         </div>
                     </div>
                 </div>
             `,
             confirmButtonText: 'Valider le rapport',
-            confirmButtonColor: '#2563eb',
             showCancelButton: true,
             cancelButtonText: 'Annuler',
-            cancelButtonColor: '#ef4444', 
             allowOutsideClick: false,
             didOpen: () => {
-                const ctxMem = localStorage.getItem('active_mission_context');
-                if (ctxMem) {
-                    const c = JSON.parse(ctxMem);
-                    if (c.prescripteurId) document.getElementById('swal-prescripteur').value = c.prescripteurId;
-                    if (c.preNotes) document.getElementById('swal-report').value = `[Objectif: ${c.preNotes}] \n`;
-                }
-                
+                const video = document.getElementById('proof-video');
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                    .then(s => { AppState.proofStream = s; if (video) video.srcObject = s; })
+                    .catch(err => console.error("Caméra bloquée"));
+
                 document.getElementById('swal-prescripteur').addEventListener('change', (e) => {
                     document.getElementById('container-autre-nom').classList.toggle('hidden', e.target.value !== 'autre');
                 });
 
-                const video = document.getElementById('proof-video');
-                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                    .then(s => { AppState.proofStream = s; if (video) video.srcObject = s; })
-                    .catch(err => console.error("Erreur Caméra:", err));
-
                 document.getElementById('btn-snap').onclick = () => {
-                    if (!video || video.videoWidth === 0) return Swal.fire('Patientez', 'La caméra s\'initialise...', 'info');
+                    if (!video || video.videoWidth === 0) return;
                     const canvas = document.getElementById('proof-canvas');
                     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                     canvas.getContext('2d').drawImage(video, 0, 0);
                     canvas.toBlob(b => { 
-                        if(!b) return;
                         AppState.proofBlob = b; 
                         const imgPreview = document.getElementById('proof-image');
                         imgPreview.src = URL.createObjectURL(b); 
@@ -313,41 +300,28 @@ export async function handleClockInOut() {
                 };
 
                 const signCanvas = document.getElementById('visit-signature-pad');
-                window.reinitVisitCanvas = () => {
-                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                    if (signCanvas.offsetWidth > 0) {
-                        signCanvas.width = signCanvas.offsetWidth * ratio;
-                        signCanvas.height = signCanvas.offsetHeight * ratio;
-                        signCanvas.getContext("2d").scale(ratio, ratio);
-                        if (window.visitSignPad) window.visitSignPad.clear();
-                    }
-                };
-
                 window.visitSignPad = new window.SignaturePad(signCanvas, { backgroundColor: 'rgba(255, 255, 255, 0)', penColor: 'rgb(0, 0, 128)' });    
 
                 window.switchProofMode = (mode) => {
                     const isPhoto = mode === 'photo';
                     if (!isPhoto) { stopAllCameras(); }
-                    else if (isPhoto && !AppState.proofStream) { 
-                        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                            .then(s => { AppState.proofStream = s; const v = document.getElementById('proof-video'); if (v) v.srcObject = s; }); 
+                    else { 
+                        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(s => { AppState.proofStream = s; const v = document.getElementById('proof-video'); if (v) v.srcObject = s; }); 
                     }
                     document.getElementById('proof-photo-area').classList.toggle('hidden', !isPhoto);
                     document.getElementById('proof-sign-area').classList.toggle('hidden', isPhoto);
-                    if (!isPhoto) { setTimeout(() => { if (typeof window.reinitVisitCanvas === 'function') window.reinitVisitCanvas(); }, 50); }
                     document.getElementById('btn-mode-photo').className = isPhoto ? 'flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase bg-white shadow-sm text-blue-600' : 'flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-slate-500';
                     document.getElementById('btn-mode-sign').className = !isPhoto ? 'flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase bg-white shadow-sm text-blue-600' : 'flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-slate-500';
-                    window.currentProofMode = mode;
                 };
-
-                window.clearVisitSignature = () => { window.visitSignPad.clear(); };
-                window.currentProofMode = 'photo';
             },
             willClose: () => { stopAllCameras(); },
             preConfirm: () => {
                 let finalProof = AppState.proofBlob;
-                if (window.currentProofMode === 'sign' && !window.visitSignPad.isEmpty()) {
-                    finalProof = dataURLtoBlob(window.visitSignPad.toDataURL('image/png'));
+                if (document.getElementById('proof-sign-area').classList.contains('hidden') === false && !window.visitSignPad.isEmpty()) {
+                    const dataUrl = window.visitSignPad.toDataURL('image/png');
+                    const arr = dataUrl.split(','), mime = arr[0].match(/:(.*?);/)[1], bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+                    while(n--) u8arr[n] = bstr.charCodeAt(n);
+                    finalProof = new Blob([u8arr], {type:mime});
                 }
                 return {
                     outcome: document.getElementById('swal-outcome').value,
@@ -363,144 +337,46 @@ export async function handleClockInOut() {
 
         if (!swalRes.isConfirmed) return; 
         AppState.formResult = swalRes.value;
-        AppState.outcome = AppState.formResult.outcome;
-        AppState.report = AppState.formResult.report;
-        AppState.isLastExit = AppState.formResult.isLastExit;
-        AppState.presentedProducts = AppState.formResult.selectedProducts;
-        AppState.prescripteur_id = AppState.formResult.prescripteur_id;
-        AppState.contact_nom_libre = AppState.formResult.contact_nom_libre;
     }
 
-    Swal.fire({ title: 'Vérification...', text: 'Analyse GPS...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+    Swal.fire({ title: 'Vérification...', text: 'GPS...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
     try {
-        let currentIp = "offline";
         let currentGps = "0,0";
-
         try {
-            const pos = await new Promise((res, rej) => {
-                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000 });
-            });
+            const pos = await new Promise((res, rej) => { navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000 }); });
             currentGps = `${pos.coords.latitude},${pos.coords.longitude}`;
-        } catch (gpsError) {
-            console.warn("GPS non disponible ou timeout.");
-            currentGps = "OFFLINE_LOC";
-        }
-
-        if (navigator.onLine) {
-            try {
-                const ipRes = await fetch('https://api.ipify.org?format=json').then(r => r.json());
-                currentIp = ipRes.ip;
-            } catch(e) {}
-        }
-
-        if (!navigator.onLine) {
-            let photoBase64 = null;
-            if (action === 'CLOCK_OUT' && isMobile && AppState.formResult && AppState.formResult.proofFile) {
-                const compressed = await compressImage(AppState.formResult.proofFile);
-                photoBase64 = await window.blobToDataURL(compressed); 
-            }
-
-            const offlinePayload = {
-                id: userId,
-                action: action,
-                gps: currentGps,
-                ip: "offline",
-                agent: AppState.currentUser.nom,
-                time: actionTime, 
-                outcome: AppState.outcome || 'VU',
-                report: AppState.report || '',
-                prescripteur_id: AppState.prescripteur_id,
-                contact_nom_libre: AppState.contact_nom_libre,
-                presentedProducts: AppState.presentedProducts,
-                schedule_id: schedule_id,
-                forced_location_id: forced_location_id,
-                proof_photo_base64: photoBase64, 
-                is_last_exit: AppState.isLastExit ? 'true' : 'false'
-            };
-
-            const queue = JSON.parse(localStorage.getItem("sirh_offline_queue") || "[]");
-            queue.push(offlinePayload);
-            localStorage.setItem("sirh_offline_queue", JSON.stringify(queue));
-
-            localStorage.removeItem('active_mission_context');
-            let nextState = (action === 'CLOCK_IN') ? 'IN' : 'OUT';
-            localStorage.setItem(`clock_status_${userId}`, nextState);
-            if (AppState.isLastExit || !isMobile) localStorage.setItem(`clock_finished_${userId}`, 'true');
-
-            stopAllCameras();
-            if(typeof window.updateClockUI === 'function') window.updateClockUI(nextState);
-
-            const nowStr = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
-            const lastActionEl = document.getElementById('clock-last-action');
-            if (lastActionEl) lastActionEl.innerText = `Sauvegardé 📶 : ${action === 'CLOCK_IN' ? 'Entrée' : 'Sortie'} à ${nowStr}`;
-
-            Swal.fire({
-                icon: 'info',
-                title: 'Sauvegarde Locale',
-                text: 'Vous êtes hors ligne. Le pointage a été enregistré localement et sera envoyé dès le retour du réseau.'
-            });
-            return; 
-        }
+        } catch (e) { currentGps = "GPS_TIMEOUT"; }
 
         const fd = new FormData();
         fd.append('id', userId);
         fd.append('action', action);
         fd.append('gps', currentGps);
-        fd.append('ip', currentIp);
         fd.append('agent', AppState.currentUser.nom);
         fd.append('time', actionTime); 
-        
-        if (action === 'CLOCK_OUT' && isMobile) {
-            fd.append('outcome', AppState.outcome || 'VU');
-            fd.append('report', AppState.report || '');
-            if (AppState.prescripteur_id) fd.append('prescripteur_id', AppState.prescripteur_id);
-            if (AppState.contact_nom_libre) fd.append('contact_nom_libre', AppState.contact_nom_libre);
-            if (AppState.presentedProducts) fd.append('presentedProducts', JSON.stringify(AppState.presentedProducts));
+
+        if (action === 'CLOCK_OUT' && isMobile && AppState.formResult) {
+            const fr = AppState.formResult;
+            fd.append('outcome', fr.outcome || 'VU');
+            fd.append('report', fr.report || '');
+            fd.append('prescripteur_id', fr.prescripteur_id !== 'autre' ? fr.prescripteur_id : '');
+            fd.append('contact_nom_libre', fr.contact_nom_libre || '');
+            fd.append('presentedProducts', JSON.stringify(fr.selectedProducts));
             if (schedule_id) fd.append('schedule_id', schedule_id);
             if (forced_location_id) fd.append('forced_location_id', forced_location_id);
-            
-            if (AppState.formResult && AppState.formResult.proofFile) {
-                Swal.update({ text: 'Compression de la preuve...' });
-                const compressed = await compressImage(AppState.formResult.proofFile);
-                fd.append('proof_photo', compressed, 'preuve_visite.jpg');
-            }
-            if (AppState.isLastExit) fd.append('is_last_exit', 'true');
+            if (fr.proofFile) fd.append('proof_photo', fr.proofFile, 'preuve.jpg');
+            if (fr.isLastExit) fd.append('is_last_exit', 'true');
         }
 
         const response = await secureFetch(URL_CLOCK_ACTION, { method: 'POST', body: fd });
         const resData = await response.json();
 
         if (response.ok) {
-            const nowStr = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
-            if (typeof PremiumUI !== 'undefined') { PremiumUI.vibrate('success'); PremiumUI.play('success'); }
-            
             localStorage.removeItem('active_mission_context');
-            let nextState = (action === 'CLOCK_IN') ? 'IN' : 'OUT';
-            localStorage.setItem(`clock_status_${userId}`, nextState);
-            if (AppState.isLastExit || !isMobile) {
-                localStorage.setItem(`clock_finished_${userId}`, 'true');
-            }
-
-            if(typeof window.fetchMobileSchedules === 'function') window.fetchMobileSchedules(); 
-            if(typeof window.updateClockUI === 'function') window.updateClockUI(nextState);
-            
-            const lastActionEl = document.getElementById('clock-last-action');
-            if (lastActionEl) {
-                lastActionEl.innerText = `Validé : ${action === 'CLOCK_IN' ? 'Entrée' : 'Sortie'} à ${nowStr}`;
-            }
-            
-            stopAllCameras(); 
-            Swal.fire('Succès', `Pointage validé : ${resData.zone}`, 'success');
             await refreshClockButton();
-
-        } else {
-            throw new Error(resData.error);
-        }
-    } catch (e) {
-        stopAllCameras(); 
-        Swal.fire('Erreur', e.message, 'error');
-    }
+            Swal.fire('Succès', `Pointage validé : ${resData.zone}`, 'success');
+        } else { throw new Error(resData.error); }
+    } catch (e) { Swal.fire('Erreur', e.message, 'error'); }
 }
 
 
