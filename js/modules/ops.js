@@ -153,7 +153,8 @@ export function stopAllCameras() {
 export async function handleClockInOut() {
     const userId = AppState.currentUser.id;
     const today = new Date().toLocaleDateString('fr-CA');
-    const actionTime = new Date().toISOString(); // On fige l'heure exacte du clic
+    const actionTime = new Date().toISOString(); 
+    const L = AppState.labels; // RACCOURCI POUR LES LABELS DYNAMIQUES
 
     const btn = document.getElementById('btn-clock');
     const action = btn.dataset.action; 
@@ -193,11 +194,9 @@ export async function handleClockInOut() {
     if (action === 'CLOCK_OUT' && isMobile) {
         Swal.fire({ title: 'Chargement...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
-        // NOUVEAU : On utilise le cache local en priorité pour le mode HORS LIGNE
         let products = AppState.allProductsData || [];
         let prescripteurs = AppState.allPrescripteurs ||[];
 
-        // Si on est en ligne mais que le cache est vide, on va chercher sur le serveur
         if (navigator.onLine && (products.length === 0 || prescripteurs.length === 0)) {
             try {
                 const[prodRes, presRes] = await Promise.all([
@@ -205,17 +204,18 @@ export async function handleClockInOut() {
                     secureFetch(`${SIRH_CONFIG.apiBaseUrl}/list-prescripteurs`)
                 ]);
                 products = await prodRes.json();
-                AppState.allProductsData = products; // On met en cache
+                AppState.allProductsData = products; 
                 prescripteurs = await presRes.json();
-                AppState.allPrescripteurs = prescripteurs; // On met en cache
+                AppState.allPrescripteurs = prescripteurs; 
             } catch (e) { console.warn("Mode hors ligne forcé", e); }
         }
 
         Swal.close();
 
-        let presOptions = `<option value="">-- Choisir un contact --</option>` + 
+        // Label dynamique pour le choix du contact
+        let presOptions = `<option value="">-- Choisir un ${L.target_singular.toLowerCase()} --</option>` + 
             prescripteurs.map(p => `<option value="${p.id}">${p.nom_complet} (${p.fonction})</option>`).join('') +
-            `<option value="autre" class="font-bold text-blue-600">➕ Autre (Nouveau Contact)</option>`;
+            `<option value="autre" class="font-bold text-blue-600">➕ Autre (Nouveau ${L.target_singular})</option>`;
 
         let productsHtml = products.map(p => `
             <label class="cursor-pointer group flex-shrink-0">
@@ -227,33 +227,33 @@ export async function handleClockInOut() {
             </label>`).join('');
 
         const swalRes = await Swal.fire({
-            title: 'Fin de visite',
+            title: `Fin de ${L.visit_singular.toLowerCase()}`,
             customClass: { popup: 'wide-modal' },
             html: `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
                     <div class="space-y-6">
                         <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                            <label class="text-[10px] font-black text-slate-400 uppercase mb-3 block">1. Identification Contact</label>
+                            <label class="text-[10px] font-black text-slate-400 uppercase mb-3 block">1. ${L.target_singular} concerné</label>
                             <select id="swal-prescripteur" class="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500">${presOptions}</select>
                             <div id="container-autre-nom" class="hidden mt-3">
                                 <input id="swal-nom-libre" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm" placeholder="Nom du contact...">
                             </div>
                         </div>
                         <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                            <label class="text-[10px] font-black text-slate-400 uppercase mb-3 block">2. Résultat de visite</label>
+                            <label class="text-[10px] font-black text-slate-400 uppercase mb-3 block">2. Résultat de l'${L.visit_singular.toLowerCase()}</label>
                             <select id="swal-outcome" class="w-full p-3 bg-white border border-slate-200 rounded-xl font-black text-blue-600 outline-none">
-                                <option value="VU">✅ Présentation effectuée</option>
-                                <option value="ABSENT">❌ Médecin Absent</option>
-                                <option value="COMMANDE">💰 Commande prise</option>
-                                <option value="RAS">👍 Visite de courtoisie</option>
+                                <option value="VU">✅ Terminée avec succès</option>
+                                <option value="ABSENT">❌ Absent / Indisponible</option>
+                                <option value="COMMANDE">💰 Transaction / Commande</option>
+                                <option value="RAS">👍 Simple passage</option>
                             </select>
-                            <p class="text-[9px] font-black text-slate-400 uppercase mt-4 mb-2">Produits présentés</p>
+                            <p class="text-[9px] font-black text-slate-400 uppercase mt-4 mb-2">${L.product_plural} présentés</p>
                             <div class="flex flex-wrap gap-2 max-h-[100px] overflow-y-auto p-1">${productsHtml}</div>
                         </div>
                     </div>
                     <div class="space-y-6 flex flex-col">
                         <div class="flex p-1 bg-slate-100 rounded-xl border border-slate-200 shrink-0">
-                            <button type="button" onclick="window.switchProofMode('photo')" id="btn-mode-photo" class="flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all bg-white shadow-sm text-blue-600">📸 Cachet</button>
+                            <button type="button" onclick="window.switchProofMode('photo')" id="btn-mode-photo" class="flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all bg-white shadow-sm text-blue-600">📸 Photo</button>
                             <button type="button" onclick="window.switchProofMode('sign')" id="btn-mode-sign" class="flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all text-slate-500">✍️ Signature</button>
                         </div>
                         <div id="proof-photo-area" class="h-44 bg-slate-900 rounded-2xl overflow-hidden relative border-2 border-slate-200 flex-shrink-0 shadow-inner">
@@ -266,10 +266,10 @@ export async function handleClockInOut() {
                             <canvas id="visit-signature-pad" class="signature-zone w-full h-full bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200"></canvas>
                         </div>
                         <div class="flex-1 space-y-4">
-                            <textarea id="swal-report" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm h-24 resize-none outline-none focus:bg-white" placeholder="Vos observations..."></textarea>
+                            <textarea id="swal-report" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm h-24 resize-none outline-none focus:bg-white" placeholder="Observations et notes..."></textarea>
                             <label class="flex items-center gap-3 p-3 bg-red-50 rounded-xl border border-red-100 cursor-pointer group">
                                 <input type="checkbox" id="last-exit-check" class="w-5 h-5 accent-red-600">
-                                <span class="text-[10px] font-black text-red-700 uppercase">Clôturer ma journée après cette visite</span>
+                                <span class="text-[10px] font-black text-red-700 uppercase">Clôturer ma journée après cette ${L.visit_singular.toLowerCase()}</span>
                             </label>
                         </div>
                     </div>
@@ -374,11 +374,9 @@ export async function handleClockInOut() {
     Swal.fire({ title: 'Vérification...', text: 'Analyse GPS...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
     try {
-        // --- NOUVEAU : GESTION INTELLIGENTE DU MODE HORS LIGNE ---
         let currentIp = "offline";
         let currentGps = "0,0";
 
-        // On essaie d'avoir le GPS (Même hors ligne, la puce GPS du tel fonctionne souvent)
         try {
             const pos = await new Promise((res, rej) => {
                 navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000 });
@@ -396,13 +394,9 @@ export async function handleClockInOut() {
             } catch(e) {}
         }
 
-        // SI L'UTILISATEUR N'A PAS INTERNET : ON MET EN FILE D'ATTENTE
         if (!navigator.onLine) {
-            console.log("🌐 HORS LIGNE : Sauvegarde locale du rapport...");
-            
             let photoBase64 = null;
             if (action === 'CLOCK_OUT' && isMobile && AppState.formResult && AppState.formResult.proofFile) {
-                // On compresse et on convertit l'image en texte pour pouvoir la stocker !
                 const compressed = await compressImage(AppState.formResult.proofFile);
                 photoBase64 = await window.blobToDataURL(compressed); 
             }
@@ -413,7 +407,7 @@ export async function handleClockInOut() {
                 gps: currentGps,
                 ip: "offline",
                 agent: AppState.currentUser.nom,
-                time: actionTime, // Très important : on sauvegarde l'heure exacte du clic
+                time: actionTime, 
                 outcome: AppState.outcome || 'VU',
                 report: AppState.report || '',
                 prescripteur_id: AppState.prescripteur_id,
@@ -421,7 +415,7 @@ export async function handleClockInOut() {
                 presentedProducts: AppState.presentedProducts,
                 schedule_id: schedule_id,
                 forced_location_id: forced_location_id,
-                proof_photo_base64: photoBase64, // L'image en texte
+                proof_photo_base64: photoBase64, 
                 is_last_exit: AppState.isLastExit ? 'true' : 'false'
             };
 
@@ -429,7 +423,6 @@ export async function handleClockInOut() {
             queue.push(offlinePayload);
             localStorage.setItem("sirh_offline_queue", JSON.stringify(queue));
 
-            // MISE À JOUR UI LOCALE
             localStorage.removeItem('active_mission_context');
             let nextState = (action === 'CLOCK_IN') ? 'IN' : 'OUT';
             localStorage.setItem(`clock_status_${userId}`, nextState);
@@ -445,19 +438,18 @@ export async function handleClockInOut() {
             Swal.fire({
                 icon: 'info',
                 title: 'Sauvegarde Locale',
-                text: 'Vous êtes hors ligne. Le pointage a été enregistré dans le téléphone et sera envoyé dès le retour de la connexion.'
+                text: 'Vous êtes hors ligne. Le pointage a été enregistré localement et sera envoyé dès le retour du réseau.'
             });
-            return; // On arrête là !
+            return; 
         }
 
-        // SI ON EST EN LIGNE (COMPORTEMENT NORMAL)
         const fd = new FormData();
         fd.append('id', userId);
         fd.append('action', action);
         fd.append('gps', currentGps);
         fd.append('ip', currentIp);
         fd.append('agent', AppState.currentUser.nom);
-        fd.append('time', actionTime); // On envoie l'heure exacte
+        fd.append('time', actionTime); 
         
         if (action === 'CLOCK_OUT' && isMobile) {
             fd.append('outcome', AppState.outcome || 'VU');
@@ -510,7 +502,6 @@ export async function handleClockInOut() {
         Swal.fire('Erreur', e.message, 'error');
     }
 }
-
 
 
 export async function syncOfflineData() {
@@ -1287,9 +1278,10 @@ export async function fetchPrescripteursManagement() {
   const container = document.getElementById("prescripteurs-grid");
   if (!container) return;
 
+  const L = AppState.labels; // RACCOURCI POUR LES LABELS DYNAMIQUES
   const mode = localStorage.getItem("sirh_view_pref_prescripteurs") || "grid";
 
-  // CORRECTION ANTI-BOUCLE : Mise à jour manuelle des boutons
+  // Mise à jour manuelle des boutons de vue
   document.querySelectorAll(`.view-toggle-prescripteurs`).forEach((btn) => {
     if (btn.dataset.mode === mode) {
       btn.classList.add("bg-blue-600", "text-white");
@@ -1320,7 +1312,7 @@ export async function fetchPrescripteursManagement() {
     if (prescripteurs.length === 0) {
       container.className = "";
       container.innerHTML =
-        '<div class="text-center text-slate-400 py-10 italic">Répertoire vide.</div>';
+        `<div class="text-center text-slate-400 py-10 italic">Aucun ${L.target_singular.toLowerCase()} enregistré.</div>`;
       return;
     }
 
@@ -1328,83 +1320,85 @@ export async function fetchPrescripteursManagement() {
 
     if (mode === "grid") {
       // --- VUE GRILLE ---
-      container.className =
-        "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+      container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
       prescripteurs.forEach((p) => {
         const lieuNom = p.location_id ? locMap[p.location_id] : "Non assigné";
         container.innerHTML += `
-                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all relative search-item-prescripteur" data-name="${p.nom_complet.toLowerCase()}">
-                        ${
-                          canManage
-                            ? `
-                        <div class="absolute top-4 right-4 flex gap-2">
-                            <button onclick="window.openEditPrescripteurModal('${p.id}')" class="text-slate-300 hover:text-blue-600 bg-slate-50 p-1.5 rounded-lg"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="window.deletePrescripteur('${p.id}')" class="text-slate-300 hover:text-red-500 bg-slate-50 p-1.5 rounded-lg"><i class="fa-solid fa-trash-can"></i></button>
-                        </div>`
-                            : ""
-                        }
-                        <div class="flex items-center gap-4 mb-3">
-                            <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold border border-blue-100">${p.nom_complet.charAt(0)}</div>
-                            <div>
-                                <h3 class="font-black text-slate-800 text-sm">${p.nom_complet}</h3>
-                                <p class="text-[10px] font-bold text-blue-500 uppercase mt-0.5">${p.fonction || "Santé"}</p>
-                            </div>
-                        </div>
-                        <div class="space-y-2 mt-4 text-xs text-slate-500">
-                            <div class="bg-slate-50 p-2 rounded-lg"><i class="fa-solid fa-hospital text-slate-400 mr-2"></i> ${lieuNom}</div>
-                            <div class="bg-slate-50 p-2 rounded-lg font-mono"><i class="fa-solid fa-phone text-slate-400 mr-2"></i> ${p.telephone || "---"}</div>
-                        </div>
-                    </div>`;
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all relative search-item-prescripteur" data-name="${p.nom_complet.toLowerCase()}">
+                ${
+                  canManage
+                    ? `
+                <div class="absolute top-4 right-4 flex gap-2">
+                    <button onclick="window.openEditPrescripteurModal('${p.id}')" class="text-slate-300 hover:text-blue-600 bg-slate-50 p-1.5 rounded-lg"><i class="fa-solid fa-pen"></i></button>
+                    <button onclick="window.deletePrescripteur('${p.id}')" class="text-slate-300 hover:text-red-500 bg-slate-50 p-1.5 rounded-lg"><i class="fa-solid fa-trash-can"></i></button>
+                </div>`
+                    : ""
+                }
+                <div class="flex items-center gap-4 mb-3">
+                    <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold border border-blue-100">${p.nom_complet.charAt(0)}</div>
+                    <div>
+                        <h3 class="font-black text-slate-800 text-sm">${p.nom_complet}</h3>
+                        <p class="text-[10px] font-bold text-blue-500 uppercase mt-0.5">${p.fonction || "Rôle standard"}</p>
+                    </div>
+                </div>
+                <div class="space-y-2 mt-4 text-xs text-slate-500">
+                    <div class="bg-slate-50 p-2 rounded-lg">
+                        <i class="fa-solid fa-location-dot text-slate-400 mr-2"></i> 
+                        <span class="font-bold">${L.location_singular} :</span> ${lieuNom}
+                    </div>
+                    <div class="bg-slate-50 p-2 rounded-lg font-mono">
+                        <i class="fa-solid fa-phone text-slate-400 mr-2"></i> ${p.telephone || "---"}
+                    </div>
+                </div>
+            </div>`;
       });
     } else {
       // --- VUE TABLEAU ---
-      container.className =
-        "bg-white rounded-xl shadow-xl border border-slate-200 overflow-x-auto";
+      container.className = "bg-white rounded-xl shadow-xl border border-slate-200 overflow-x-auto";
       let html = `
-                <table class="w-full text-left whitespace-nowrap">
-                    <thead class="bg-slate-900 text-white text-[10px] uppercase font-bold">
-                        <tr>
-                            <th class="px-6 py-4">Identité</th>
-                            <th class="px-6 py-4">Fonction</th>
-                            <th class="px-6 py-4">Lieu d'exercice</th>
-                            <th class="px-6 py-4">Contact</th>
-                            ${canManage ? '<th class="px-6 py-4 text-right">Actions</th>' : ""}
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">`;
+        <table class="w-full text-left whitespace-nowrap">
+            <thead class="bg-slate-900 text-white text-[10px] uppercase font-bold">
+                <tr>
+                    <th class="px-6 py-4">Nom du ${L.target_singular}</th>
+                    <th class="px-6 py-4">Fonction / Rôle</th>
+                    <th class="px-6 py-4">Affectation (${L.location_singular})</th>
+                    <th class="px-6 py-4">Coordonnées</th>
+                    ${canManage ? '<th class="px-6 py-4 text-right">Actions</th>' : ""}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">`;
 
       prescripteurs.forEach((p) => {
         const lieuNom = p.location_id
           ? locMap[p.location_id]
-          : '<span class="italic text-slate-300">Non assigné</span>';
+          : '<span class="italic text-slate-300">Non défini</span>';
         html += `
-                    <tr class="hover:bg-slate-50 transition-colors search-item-prescripteur" data-name="${p.nom_complet.toLowerCase()}">
-                        <td class="px-6 py-4 flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-bold">${p.nom_complet.charAt(0)}</div>
-                            <span class="font-bold text-slate-800 text-sm uppercase">${p.nom_complet}</span>
-                        </td>
-                        <td class="px-6 py-4 text-[10px] font-black text-blue-500 uppercase tracking-widest">${p.fonction || "Santé"}</td>
-                        <td class="px-6 py-4 text-xs font-medium text-slate-600">${lieuNom}</td>
-                        <td class="px-6 py-4 text-xs font-mono text-slate-500">${p.telephone || "---"}</td>
-                        ${
-                          canManage
-                            ? `
-                        <td class="px-6 py-4 text-right">
-                            <button onclick="window.openEditPrescripteurModal('${p.id}')" class="p-2 text-slate-400 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 rounded-lg mr-1"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="window.deletePrescripteur('${p.id}')" class="p-2 text-slate-400 hover:text-red-500 bg-slate-50 hover:bg-red-50 rounded-lg"><i class="fa-solid fa-trash-can"></i></button>
-                        </td>`
-                            : ""
-                        }
-                    </tr>`;
+            <tr class="hover:bg-slate-50 transition-colors search-item-prescripteur" data-name="${p.nom_complet.toLowerCase()}">
+                <td class="px-6 py-4 flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-bold">${p.nom_complet.charAt(0)}</div>
+                    <span class="font-bold text-slate-800 text-sm uppercase">${p.nom_complet}</span>
+                </td>
+                <td class="px-6 py-4 text-[10px] font-black text-blue-500 uppercase tracking-widest">${p.fonction || "---"}</td>
+                <td class="px-6 py-4 text-xs font-medium text-slate-600">${lieuNom}</td>
+                <td class="px-6 py-4 text-xs font-mono text-slate-500">${p.telephone || "---"}</td>
+                ${
+                  canManage
+                    ? `
+                <td class="px-6 py-4 text-right">
+                    <button onclick="window.openEditPrescripteurModal('${p.id}')" class="p-2 text-slate-400 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 rounded-lg mr-1"><i class="fa-solid fa-pen"></i></button>
+                    <button onclick="window.deletePrescripteur('${p.id}')" class="p-2 text-slate-400 hover:text-red-500 bg-slate-50 hover:bg-red-50 rounded-lg"><i class="fa-solid fa-trash-can"></i></button>
+                </td>`
+                    : ""
+                }
+            </tr>`;
       });
       html += `</tbody></table>`;
       container.innerHTML = html;
     }
   } catch (e) {
-    console.error(e);
+    console.error("Erreur fetchPrescripteursManagement:", e);
   }
 }
-
 
 
 /**
@@ -1714,17 +1708,18 @@ export async function fetchMobileReports(page = 1) {
 
     if (!container) return;
     
-    // Adaptation obligatoire : currentUser -> AppState.currentUser
     const isChef = AppState.currentUser.role !== 'EMPLOYEE';
+    const L = AppState.labels || {}; // RÉCUPÉRATION DU DICTIONNAIRE
     
-    // Adaptation obligatoire : reportPage -> AppState.reportPage
+    // Fallback de sécurité si le dictionnaire n'est pas chargé
+    const safeLabel = (key, defaultVal) => L[key] || defaultVal;
+    
     AppState.reportPage = page; 
     
     container.innerHTML = '<div class="col-span-full text-center p-10"><i class="fa-solid fa-circle-notch fa-spin text-blue-500 text-2xl"></i></div>';
 
     try {
         const limit = 20;
-        // Adaptation obligatoire : currentReportTab -> AppState.currentReportTab
         const endpoint = AppState.currentReportTab === 'visits' ? 'read-visit-reports' : 'read-daily-reports';
         const url = `${SIRH_CONFIG.apiBaseUrl}/${endpoint}?page=${page}&limit=${limit}&name=${encodeURIComponent(nameFilter)}&period=${periodFilter}`;
         
@@ -1732,7 +1727,6 @@ export async function fetchMobileReports(page = 1) {
         const result = await r.json();
 
         const data = result.data || result; 
-        // Adaptation obligatoire : reportTotalPages -> AppState.reportTotalPages
         AppState.reportTotalPages = result.meta?.last_page || 1;
 
         // --- 1. CALCUL DES STATISTIQUES GLOBALES POUR LES CARTES ---
@@ -1745,8 +1739,8 @@ export async function fetchMobileReports(page = 1) {
             if(empId) uniqueAgents.add(empId);
 
             if (AppState.currentReportTab === 'visits') {
-                let pList = [];
-                try { pList = typeof item.presented_products === 'string' ? JSON.parse(item.presented_products) : (item.presented_products || []); } catch(e){}
+                let pList =[];
+                try { pList = typeof item.presented_products === 'string' ? JSON.parse(item.presented_products) : (item.presented_products ||[]); } catch(e){}
                 totalProductsCount += pList.length;
             } else {
                 if (item.products_stats) {
@@ -1755,15 +1749,29 @@ export async function fetchMobileReports(page = 1) {
             }
         });
 
+        // Mise à jour des compteurs
         if(counterVisites) counterVisites.innerText = totalVisitesCount;
         if(counterProduits) counterProduits.innerText = totalProductsCount;
         if(counterAgents) counterAgents.innerText = uniqueAgents.size;
 
-        if(labelEl) labelEl.innerText = AppState.currentReportTab === 'visits' ? "VISITES IDENTIFIÉES" : "BILANS JOURNALIERS";
+        // Mise à jour des libellés (Dynamiques)
+        if(labelEl) {
+            labelEl.innerText = AppState.currentReportTab === 'visits' ? `${safeLabel('visit_plural', 'Visites').toUpperCase()} IDENTIFIÉES` : `${safeLabel('report_plural', 'Bilans').toUpperCase()} ENREGISTRÉS`;
+        }
+        
+        const prodLabelEl = document.getElementById('stat-produits-total')?.previousElementSibling;
+        if (prodLabelEl) prodLabelEl.innerText = `${safeLabel('product_plural', 'Produits').toUpperCase()} ENREGISTRÉS`;
+
+        // Mise à jour des onglets (Dynamiques)
+        const tabVisits = document.getElementById('tab-visits');
+        if (tabVisits) tabVisits.innerText = `${safeLabel('visit_plural', 'Visites')} (${safeLabel('location_plural', 'Sites')})`;
+        
+        const tabDaily = document.getElementById('tab-daily');
+        if (tabDaily) tabDaily.innerText = `${safeLabel('report_plural', 'Bilans')} Journaliers`;
 
         container.innerHTML = '';
         if (!data || data.length === 0) {
-            container.innerHTML = '<div class="col-span-full text-center text-slate-400 py-10 uppercase font-black text-[10px] tracking-widest">Aucune donnée trouvée</div>';
+            container.innerHTML = `<div class="col-span-full text-center text-slate-400 py-10 uppercase font-black text-[10px] tracking-widest">Aucune donnée trouvée</div>`;
             return;
         }
 
@@ -1788,7 +1796,7 @@ export async function fetchMobileReports(page = 1) {
                                 <span class="font-black text-white text-sm uppercase tracking-widest">${name}</span>
                             </div>
                             <div class="flex items-center gap-4">
-                                <span class="bg-white/10 text-white px-3 py-1 rounded-full text-[10px] font-bold">${visits.length} VISITES ICI</span>
+                                <span class="bg-white/10 text-white px-3 py-1 rounded-full text-[10px] font-bold">${visits.length} ${safeLabel('visit_plural', 'VISITES').toUpperCase()} ICI</span>
                                 <i id="icon-${accordionId}" class="fa-solid fa-chevron-down text-white/50 transition-transform duration-300"></i>
                             </div>
                         </div>
@@ -1797,8 +1805,8 @@ export async function fetchMobileReports(page = 1) {
                                     <table class="w-full text-left border-collapse min-w-[800px]">
                                         <thead class="bg-slate-100 border-b">
                                             <tr class="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                                <th class="p-4">👤 Contact & Lieu</th>
-                                                <th class="p-4">📦 Détails de la visite</th>
+                                                <th class="p-4">👤 ${safeLabel('target_singular', 'Contact')} & ${safeLabel('location_singular', 'Lieu')}</th>
+                                                <th class="p-4">📦 Détails de l'${safeLabel('visit_singular', 'Intervention')}</th>
                                                 <th class="p-4 text-center">📸 Preuve</th>
                                                 <th class="p-4 text-right">📝 Notes</th>
                                                 ${isChef ? '<th class="p-4 text-center">Action</th>' : ''}
@@ -1814,9 +1822,9 @@ export async function fetchMobileReports(page = 1) {
                     let prodsHtml = formatProductTags(v.presented_products);
 
                     let outcomeBadge = "";
-                    if(v.outcome === 'COMMANDE') outcomeBadge = '<span class="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-black text-[9px] uppercase border border-emerald-200">💰 Commande</span>';
-                    else if(v.outcome === 'ABSENT') outcomeBadge = '<span class="text-red-700 bg-red-100 px-2 py-0.5 rounded font-black text-[9px] uppercase border border-red-200">❌ Absent</span>';
-                    else if(v.outcome === 'VU') outcomeBadge = '<span class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded font-black text-[9px] uppercase border border-blue-200">✅ Vu</span>';
+                    if(v.outcome === 'COMMANDE') outcomeBadge = '<span class="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-black text-[9px] uppercase border border-emerald-200">💰 Achat/Action</span>';
+                    else if(v.outcome === 'ABSENT') outcomeBadge = '<span class="text-red-700 bg-red-100 px-2 py-0.5 rounded font-black text-[9px] uppercase border border-red-200">❌ Indisponible</span>';
+                    else if(v.outcome === 'VU') outcomeBadge = '<span class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded font-black text-[9px] uppercase border border-blue-200">✅ Succès</span>';
                     else outcomeBadge = `<span class="text-slate-600 bg-slate-200 px-2 py-0.5 rounded font-black text-[9px] uppercase">👍 ${v.outcome || 'RAS'}</span>`;
 
                     html += `
@@ -1824,7 +1832,7 @@ export async function fetchMobileReports(page = 1) {
                         <td class="p-4 align-top">
                             <div class="flex items-start gap-3">
                                 <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0 border border-slate-200 shadow-sm group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                                    <i class="fa-solid fa-user-doctor"></i>
+                                    <i class="fa-solid fa-user-tag"></i>
                                 </div>
                                 <div>
                                     <div class="text-sm font-black text-slate-800 uppercase tracking-tighter">${v.contact_nom}</div>
@@ -1880,10 +1888,10 @@ export async function fetchMobileReports(page = 1) {
                         <div onclick="window.toggleAccordion('${accordionId}')" class="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-slate-50 transition-colors">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm">${name.charAt(0)}</div>
-                                <div><h4 class="font-black text-slate-800 text-sm uppercase tracking-tighter">${name}</h4><p class="text-[10px] text-slate-400 font-bold uppercase">${reports.length} bilans</p></div>
+                                <div><h4 class="font-black text-slate-800 text-sm uppercase tracking-tighter">${name}</h4><p class="text-[10px] text-slate-400 font-bold uppercase">${reports.length} ${safeLabel('report_plural', 'bilans')}</p></div>
                             </div>
                             <div class="flex items-center gap-3">
-                                ${hasStockAlert ? `<span class="bg-orange-100 text-orange-600 px-2 py-1 rounded-lg text-[9px] font-black animate-pulse">ALERTE STOCK</span>` : ''}
+                                ${hasStockAlert ? `<span class="bg-orange-100 text-orange-600 px-2 py-1 rounded-lg text-[9px] font-black animate-pulse">ALERTE BESOIN</span>` : ''}
                                 <i id="icon-${accordionId}" class="fa-solid fa-chevron-down text-slate-300 transition-transform duration-300"></i>
                             </div>
                         </div>
@@ -1900,10 +1908,10 @@ export async function fetchMobileReports(page = 1) {
                     let statsHtml = "";
                     if (rep.products_stats && Object.keys(rep.products_stats).length > 0) {
                         statsHtml = `<div class="flex flex-wrap gap-1 mt-2">`;
-                        for (let [prodName, count] of Object.entries(rep.products_stats)) {
+                        for (let[prodName, count] of Object.entries(rep.products_stats)) {
                             let cleanName = prodName;
                             if (typeof prodName === 'string' && prodName.startsWith('{')) {
-                                try { cleanName = JSON.parse(prodName).name || JSON.parse(prodName).NAME || "Produit"; } catch(e){}
+                                try { cleanName = JSON.parse(prodName).name || JSON.parse(prodName).NAME || "Article"; } catch(e){}
                             }
                             statsHtml += `<span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[8px] font-black border border-indigo-100 uppercase">${cleanName} <span class="text-indigo-400">x${count}</span></span>`;
                         }
@@ -1924,7 +1932,7 @@ export async function fetchMobileReports(page = 1) {
                             </td>
                             <td class="px-6 py-4 w-1/4 align-top text-right">
                                 <div class="flex items-center justify-end gap-3">
-                                    ${rep.photo_url ? `<button onclick="window.viewDocument('${rep.photo_url}', 'Cahier')" class="text-blue-500"><i class="fa-solid fa-file-image text-lg"></i></button>` : ''}
+                                    ${rep.photo_url ? `<button onclick="window.viewDocument('${rep.photo_url}', 'Document annexé')" class="text-blue-500"><i class="fa-solid fa-file-image text-lg"></i></button>` : ''}
                                     ${isChef ? `<button onclick="window.deleteDailyReport('${rep.id}')" class="text-slate-300 hover:text-red-500 transition-all"><i class="fa-solid fa-check-double text-lg"></i></button>` : ''}
                                 </div>
                             </td>
@@ -1949,7 +1957,6 @@ export async function fetchMobileReports(page = 1) {
         container.innerHTML = '<div class="col-span-full text-center text-red-500 py-10 font-bold uppercase text-[10px]">Erreur de chargement</div>';
     }
 }
-
 
 
 
