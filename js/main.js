@@ -26,6 +26,7 @@ window.handleLogout = Auth.handleLogout;
 window.handleForgotPassword = Auth.handleForgotPassword;
 
 // --- Interface Utilisateur (UI) ---
+window.fetchAndApplyLabels = UI.fetchAndApplyLabels;
 window.switchView = UI.switchView;
 window.toggleSidebar = UI.toggleSidebar;
 window.toggleDarkMode = UI.toggleDarkMode;
