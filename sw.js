@@ -1,4 +1,4 @@
-const CACHE_NAME = "sirh-cache-v3"; // Incrémenté en V3 pour forcer le rafraîchissement
+const CACHE_NAME = "sirh-cache-v4"; // Passage en V4 pour forcer le nettoyage
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
@@ -20,57 +20,61 @@ const ASSETS_TO_CACHE = [
   "./js/modules/ui.js"
 ];
 
-// 1. INSTALLATION : Met en cache les fichiers locaux critiques
+// 1. INSTALLATION : Mise en cache initiale
 self.addEventListener("install", (e) => {
   self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log("📂 Mise en cache des assets...");
+      console.log("📂 SW: Mise en cache des assets");
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
 });
 
-// 2. ACTIVATION : Nettoie les anciens caches
+// 2. ACTIVATION : Nettoyage des anciens caches
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            console.log("🧹 Suppression de l'ancien cache:", cache);
+            console.log("🧹 SW: Suppression ancien cache", cache);
             return caches.delete(cache);
           }
         })
       );
     })
   );
-  self.clients.claim(); // Prend le contrôle immédiat des pages ouvertes
+  self.clients.claim();
 });
 
-// 3. FETCH STRATEGY
+// 3. STRATÉGIE DE FETCH
 self.addEventListener("fetch", (e) => {
-  // On laisse passer les requêtes API (elles ne doivent JAMAIS être en cache)
-  if (e.request.url.includes('/api/')) {
-    return;
-  }
+  // SÉCURITÉ 1 : On ne gère que les requêtes GET (le cache ne supporte pas POST/PUT)
+  if (e.request.method !== 'GET') return;
 
-  // Pour les fichiers statiques (JS, CSS, HTML, Images)
+  // SÉCURITÉ 2 : On laisse passer les requêtes API sans y toucher
+  if (e.request.url.includes('/api/')) return;
+
+  // STRATÉGIE : Stale-While-Revalidate (Propre)
   e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
-      // Stratégie Stale-While-Revalidate
-      const fetchPromise = fetch(e.request).then((networkResponse) => {
-        // Si on a récupéré une réponse valide du réseau, on met à jour le cache
-        if (networkResponse && networkResponse.status === 200) {
-          caches.open(CACHE_NAME).then((cache) => {
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.match(e.request).then((cachedResponse) => {
+        
+        // On lance la requête réseau en arrière-plan
+        const fetchPromise = fetch(e.request).then((networkResponse) => {
+          // On vérifie si la réponse est valide avant de la mettre en cache
+          if (networkResponse && networkResponse.status === 200) {
             cache.put(e.request, networkResponse.clone());
-          });
-        }
-        return networkResponse;
-      });
+          }
+          return networkResponse;
+        }).catch(() => {
+          // Optionnel : ici on pourrait renvoyer une page "Offline" personnalisée
+        });
 
-      // Retourne le cache s'il existe, sinon on attend le réseau
-      return cachedResponse || fetchPromise;
+        // On renvoie la version cachée immédiatement, ou la version réseau si pas en cache
+        return cachedResponse || fetchPromise;
+      });
     })
   );
 });
