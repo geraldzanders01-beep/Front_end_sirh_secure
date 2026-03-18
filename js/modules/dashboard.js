@@ -104,6 +104,37 @@ export async function updateManagementSignals() {
   }
 }
 
+
+
+export async function initUserDashboard() {
+    const isManager = AppState.currentUser.permissions?.can_see_employees === true;
+    
+    // 1. Adapter les titres
+    document.getElementById('dash-main-title').innerText = isManager ? "Analyse de l'Effectif" : "Mon Bilan Personnel";
+    document.getElementById('dash-subtitle').innerText = isManager ? "Pilotage global de l'entreprise" : `Heureux de vous revoir, ${AppState.currentUser.nom}`;
+
+    // 2. Récupérer les stats personnelles de l'employé
+    try {
+        const userId = AppState.currentUser.id;
+        // On appelle une route qui calcule le temps de travail de l'employé (à créer ou utiliser read-report)
+        const response = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/read-report?mode=PERSONAL&period=monthly&requester_id=${userId}`);
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+            const monMois = data[0]; // On prend le mois en cours
+            document.getElementById('user-stat-hours').innerText = monMois.heures || "0h 00m";
+            document.getElementById('user-stat-leaves').innerText = `${monMois.solde || '--'} Jours`;
+            
+            // Simulation de primes (Exemple: 500F par visite validée)
+            const nbVisites = parseInt(monMois.jours) || 0;
+            const primesEstimées = nbVisites * 500; 
+            document.getElementById('user-stat-primes').innerText = new Intl.NumberFormat('fr-FR').format(primesEstimées);
+        }
+    } catch (e) {
+        console.warn("Impossible de charger les stats personnelles");
+    }
+}
+
 export async function renderCharts() {
   // --- GARDE-FOU DE SÉCURITÉ (NOUVEAU) ---
   // Si l'utilisateur n'a pas le droit de voir le dashboard, on arrête tout ici.
