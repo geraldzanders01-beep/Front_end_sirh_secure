@@ -328,175 +328,175 @@
 
 
 <!-- VUE 1: DASHBOARD -->
-    <section id="view-dash" class="view-section active">  
+   <!-- VUE 1: DASHBOARD ADAPTATIF -->
+<section id="view-dash" class="view-section active">
 
-    
-    <!-- EN-TÊTE RESPONSIVE (CORRIGÉ) - GARDÉ TEL QUEL -->
+    <!-- 1. EN-TÊTE DYNAMIQUE -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h2 class="text-2xl font-extrabold text-slate-800">Analyse de l'Effectif</h2>
+        <div>
+            <!-- Le texte changera via JS : "Mon Bilan" ou "Analyse de l'Effectif" -->
+            <h2 id="dash-main-title" class="text-2xl font-extrabold text-slate-800">Tableau de Bord</h2>
+            <p id="dash-subtitle" class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Bienvenue dans votre espace</p>
+        </div>
         
-<!-- BARRE D'ACTIONS DASHBOARD RESPONSIVE -->
-<div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-    
-    <!-- Bouton Actualiser : Carré sur mobile, avec texte sur PC -->
-    <button onclick="refreshAllData(true)" 
-        class="h-10 w-10 md:w-auto md:px-4 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-600 shadow-sm hover:bg-slate-50 transition-all active:scale-95" 
-        title="Actualiser les données">
-        <i class="fa-solid fa-rotate" id="refresh-icon"></i>
-        <span class="hidden md:inline ml-2 text-[10px] font-black uppercase tracking-widest">Actualiser</span>
-    </button>
-    
-    <!-- Bouton Exporter -->
-    <button data-perm="can_see_employees" onclick="exportToCSV()" 
-        class="flex-1 md:flex-none h-10 px-4 flex items-center justify-center bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-emerald-900/10 hover:bg-emerald-700 transition-all active:scale-95">
-        <i class="fa-solid fa-file-excel md:mr-2"></i>
-        <span class="hidden sm:inline">Exporter</span>
-    </button>
+        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            <button onclick="refreshAllData(true)" class="h-10 w-10 md:w-auto md:px-4 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-600 shadow-sm hover:bg-slate-50 transition-all active:scale-95">
+                <i class="fa-solid fa-rotate" id="refresh-icon"></i>
+                <span class="hidden md:inline ml-2 text-[10px] font-black uppercase tracking-widest">Actualiser</span>
+            </button>
+            
+            <!-- Actions visibles uniquement par le Management -->
+            <button data-perm="can_see_employees" onclick="exportToCSV()" class="management-only flex-1 md:flex-none h-10 px-4 flex items-center justify-center bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-emerald-700 transition-all">
+                <i class="fa-solid fa-file-excel md:mr-2"></i> <span class="hidden sm:inline">Exporter</span>
+            </button>
 
-    <!-- Bouton Rapport Présence -->
-    <button data-perm="can_see_dashboard" onclick="openAttendancePicker()" 
-        class="flex-1 md:flex-none h-10 px-4 flex items-center justify-center bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-indigo-900/10 hover:bg-indigo-700 transition-all active:scale-95">
-        <i class="fa-solid fa-clipboard-list md:mr-2"></i>
-        <span class="hidden sm:inline">Présences</span>
-        <span class="sm:hidden">Rapport</span>
-    </button>
+            <button data-perm="can_see_dashboard" onclick="openAttendancePicker()" class="management-only flex-1 md:flex-none h-10 px-4 flex items-center justify-center bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-indigo-700 transition-all">
+                <i class="fa-solid fa-clipboard-list md:mr-2"></i> <span class="hidden sm:inline">Présences</span>
+            </button>
 
-    <!-- La Date : Transformée en badge discret -->
-    <div id="current-date" class="w-full md:w-auto h-10 px-4 flex items-center justify-center bg-slate-100 text-slate-500 rounded-xl font-mono text-[10px] font-bold border border-slate-200 uppercase tracking-tighter">
-        --
-    </div>
-</div>
-    
+            <div id="current-date" class="w-full md:w-auto h-10 px-4 flex items-center justify-center bg-slate-100 text-slate-500 rounded-xl font-mono text-[10px] font-bold border border-slate-200 uppercase">--</div>
+        </div>
     </div>
 
-<div id="signals-area" class="mb-10 animate-fadeIn">
-        <!-- Le titre est très discret -->
-        <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-1">Analyse du jour</p>
-        
-        <!-- Conteneur des signaux -->
+    <!-- 2. ZONE DE SIGNAUX (COMMUN) -->
+    <div id="signals-area" class="mb-10 animate-fadeIn">
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-1">Notifications & Alertes</p>
         <div id="signals-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- JS va injecter les cartes ici -->
+            <!-- Injecté par JS -->
         </div>
     </div>
 
-    <!-- 1. BLOC : STATS CARDS -->
+    <!-- ========================================================== -->
+    <!-- 3. BLOC EMPLOYÉ : MA PERFORMANCE (Visible par TOUS) -->
+    <!-- ========================================================== -->
     <div class="mb-8">
-        <div class="flex justify-between items-center mb-3 cursor-pointer group" onclick="toggleWidget('w-stats')">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Aperçu de l'Effectif</h3>
-            <i id="w-stats-icon" class="fa-solid fa-chevron-up text-slate-300 group-hover:text-blue-600 transition-all"></i>
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Ma Situation Personnelle</h3>
         </div>
-        <div id="w-stats-content" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div class="bg-white p-7 rounded-xl shadow-sm border border-slate-100"><p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Effectif Total</p><h3 id="stat-total" class="text-4xl font-black mt-2 text-slate-800">0</h3></div>
-            <div class="bg-white p-7 rounded-xl shadow-sm border border-slate-100"><p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Alertes Contrats</p><h3 id="stat-alert" class="text-4xl font-black mt-2 text-red-600">0</h3></div>
-            <div class="bg-white p-7 rounded-xl shadow-sm border border-slate-100"><p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Collaborateurs Actifs</p><h3 id="stat-active" class="text-4xl font-black mt-2 text-emerald-600">0</h3></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <!-- Temps de travail (Calculé depuis les pointages) -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group">
+                <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Temps travaillé (Mois)</p>
+                <h3 id="user-stat-hours" class="text-3xl font-black mt-2 text-slate-800">--h --m</h3>
+                <div class="mt-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase">Mise à jour en direct</span>
+                </div>
+                <i class="fa-solid fa-clock absolute -right-2 -bottom-2 text-5xl text-slate-50 opacity-10 group-hover:rotate-12 transition-transform"></i>
+            </div>
+
+            <!-- Salaire / Primes Estimées -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group">
+                <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Primes accumulées</p>
+                <div class="flex items-baseline gap-2">
+                    <h3 id="user-stat-primes" class="text-3xl font-black mt-2 text-emerald-600">--</h3>
+                    <span class="text-[10px] font-bold text-emerald-400 uppercase">CFA</span>
+                </div>
+                <p class="text-[9px] text-slate-400 mt-4 italic">Prochaine paie : <span id="user-next-pay-date">Fin de mois</span></p>
+                <i class="fa-solid fa-sack-dollar absolute -right-2 -bottom-2 text-5xl text-slate-50 opacity-10 group-hover:scale-110 transition-transform"></i>
+            </div>
+
+            <!-- Congés -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group">
+                <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Mon Solde Congés</p>
+                <h3 id="user-stat-leaves" class="text-3xl font-black mt-2 text-indigo-600">-- Jours</h3>
+                <button onclick="switchView('my-profile')" class="mt-4 text-[9px] font-black text-blue-600 uppercase underline">Détails de mes absences</button>
+                <i class="fa-solid fa-calendar-check absolute -right-2 -bottom-2 text-5xl text-slate-50 opacity-10 group-hover:-rotate-12 transition-transform"></i>
+            </div>
         </div>
     </div>
 
-    <!-- 2. BLOC : LIVE TRACKER WIDGET -->
-    <div class="mb-8">
-        <div class="flex justify-between items-center mb-3 cursor-pointer group" onclick="toggleWidget('w-live')">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pointage en Direct</h3>
-            <i id="w-live-icon" class="fa-solid fa-chevron-up text-slate-300 group-hover:text-blue-600 transition-all"></i>
+    <!-- ========================================================== -->
+    <!-- 4. BLOC MANAGEMENT : PILOTAGE GLOBAL (RÉSERVÉ AUX CHEFS) -->
+    <!-- ========================================================== -->
+    <div class="management-only animate-fadeIn">
+        
+        <!-- Stats d'Effectif -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-3 cursor-pointer group" onclick="toggleWidget('w-stats')">
+                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Aperçu Global (Staff)</h3>
+                <i id="w-stats-icon" class="fa-solid fa-chevron-up text-slate-300 group-hover:text-blue-600 transition-all"></i>
+            </div>
+            <div id="w-stats-content" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div class="bg-slate-900 p-7 rounded-2xl text-white"><p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Effectif Total</p><h3 id="stat-total" class="text-4xl font-black mt-2">0</h3></div>
+                <div class="bg-white p-7 rounded-2xl border border-slate-100 shadow-sm"><p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Alertes Contrats</p><h3 id="stat-alert" class="text-4xl font-black mt-2 text-red-600">0</h3></div>
+                <div class="bg-white p-7 rounded-2xl border border-slate-100 shadow-sm"><p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">En Poste Actuellement</p><h3 id="stat-active" class="text-4xl font-black mt-2 text-emerald-600">0</h3></div>
+            </div>
         </div>
-        <div id="w-live-content" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div class="bg-emerald-500 rounded-xl p-6 text-white shadow-lg shadow-emerald-200 relative overflow-hidden">
-                <div class="relative z-10">
-                    <p class="text-[10px] font-black uppercase opacity-80">En poste actuellement</p>
-                    <h3 id="live-presents-count" class="text-4xl font-black mt-1">0</h3>
+
+        <!-- Live Attendance -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-3 cursor-pointer group" onclick="toggleWidget('w-live')">
+                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tracking Temps Réel</h3>
+                <i id="w-live-icon" class="fa-solid fa-chevron-up text-slate-300"></i>
+            </div>
+            <div id="w-live-content" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div class="bg-emerald-500 rounded-2xl p-6 text-white relative overflow-hidden">
+                    <p class="text-[9px] font-black uppercase opacity-80">Présents</p>
+                    <h3 id="live-presents-count" class="text-3xl font-black mt-1">0</h3>
                     <div id="live-presents-list" class="flex -space-x-2 mt-4 overflow-hidden"></div>
                 </div>
-                <i class="fa-solid fa-house-user absolute -right-4 -bottom-4 text-6xl opacity-20"></i>
-            </div>
-            <div class="bg-blue-500 rounded-xl p-6 text-white shadow-lg shadow-blue-200 relative overflow-hidden">
-                <div class="relative z-10">
-                    <p class="text-[10px] font-black uppercase opacity-80">Journée terminée</p>
-                    <h3 id="live-partis-count" class="text-4xl font-black mt-1">0</h3>
+                <div class="bg-blue-500 rounded-2xl p-6 text-white relative overflow-hidden">
+                    <p class="text-[9px] font-black uppercase opacity-80">Journée Terminée</p>
+                    <h3 id="live-partis-count" class="text-3xl font-black mt-1">0</h3>
                     <div id="live-partis-list" class="flex -space-x-2 mt-4 overflow-hidden"></div>
                 </div>
-                <i class="fa-solid fa-car-side absolute -right-4 -bottom-4 text-6xl opacity-20"></i>
-            </div>
-            <div class="bg-slate-800 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-                <div class="relative z-10">
-                    <p class="text-[10px] font-black uppercase opacity-80">Absents / Non pointés</p>
-                    <h3 id="live-absents-count" class="text-4xl font-black mt-1">0</h3>
+                <div class="bg-slate-800 rounded-2xl p-6 text-white relative overflow-hidden">
+                    <p class="text-[9px] font-black uppercase opacity-80">Absents</p>
+                    <h3 id="live-absents-count" class="text-3xl font-black mt-1">0</h3>
                     <div id="live-absents-list" class="flex -space-x-2 mt-4 overflow-hidden"></div>
                 </div>
-                <i class="fa-solid fa-user-slash absolute -right-4 -bottom-4 text-6xl opacity-20"></i>
             </div>
         </div>
-    </div>
 
-    <!-- 3. BLOC : ZONE GRAPHIQUES -->
-    <div class="mb-8">
-        <div class="flex justify-between items-center mb-3 cursor-pointer group" onclick="toggleWidget('w-charts')">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Analyses Graphiques</h3>
-            <i id="w-charts-icon" class="fa-solid fa-chevron-up text-slate-300 group-hover:text-blue-600 transition-all"></i>
-        </div>
-        <div id="w-charts-content" class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-10">
-            <div class="bg-white p-6 rounded-xl shadow-xl border border-slate-100">
-                <p class="font-bold text-slate-700 mb-4 uppercase text-xs tracking-widest">Répartition par Statut</p>
-                <canvas id="chartStatus" height="200"></canvas>
+        <!-- Graphiques -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-3 cursor-pointer group" onclick="toggleWidget('w-charts')">
+                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Analyses RH</h3>
+                <i id="w-charts-icon" class="fa-solid fa-chevron-up text-slate-300"></i>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-xl border border-slate-100">
-                <p class="font-bold text-slate-700 mb-4 uppercase text-xs tracking-widest">Répartition par Département</p>
-                <canvas id="chartDept" height="200"></canvas>
+            <div id="w-charts-content" class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-10">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <p class="font-bold text-slate-700 mb-4 uppercase text-[10px] tracking-widest">Répartition Statuts</p>
+                    <canvas id="chartStatus" height="180"></canvas>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <p class="font-bold text-slate-700 mb-4 uppercase text-[10px] tracking-widest">Répartition Départements</p>
+                    <canvas id="chartDept" height="180"></canvas>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- 4. BLOC : SECTION VALIDATION CONGÉS -->
-    <div class="mb-8 management-only">
-        <div class="flex justify-between items-center mb-3 cursor-pointer group" onclick="toggleWidget('w-leaves')">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gestion des Absences</h3>
-            <i id="w-leaves-icon" class="fa-solid fa-chevron-up text-slate-300 group-hover:text-blue-600 transition-all"></i>
-        </div>
-    <div id="w-leaves-content" data-perm="can_see_employees">
-            <div id="manager-leave-section" class="bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden mb-10">
-                <div class="px-8 py-6 border-b border-slate-100 font-extrabold text-slate-700 flex items-center gap-2">
-                    <i class="fa-solid fa-clipboard-check text-blue-500"></i> Demandes de congés à valider
+        <!-- Tables de Validation (Congés & Contrats) -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-10">
+            <!-- Congés à valider -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 font-black text-slate-700 text-xs uppercase tracking-widest flex items-center gap-2 bg-slate-50/50">
+                    <i class="fa-solid fa-clipboard-check text-blue-500"></i> Demandes en attente
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left whitespace-nowrap">
-                            <!-- On ajoute data-perm sur le header de la colonne Action -->
-                            <thead class="bg-slate-50/80 text-[10px] uppercase font-black text-slate-400">
-                                <tr>
-                                    <th class="px-8 py-4">Nom</th>
-                                    <th class="px-8 py-4">Poste</th>
-                                    <th class="px-8 py-4">Délai</th>
-                                    <th data-perm="can_see_employees" class="px-8 py-4 text-right">Action</th>
-                                </tr>
-                            </thead>
                         <tbody id="leave-requests-body" class="divide-y divide-slate-50"></tbody>
                     </table>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- 5. BLOC : ALERT TABLE -->
-    <div class="mb-8">
-        <div class="flex justify-between items-center mb-3 cursor-pointer group" onclick="toggleWidget('w-alerts')">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Suivi des Contrats</h3>
-            <i id="w-alerts-icon" class="fa-solid fa-chevron-up text-slate-300 group-hover:text-blue-600 transition-all"></i>
-        </div>
-        <div id="w-alerts-content">
-            <div class="bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden">
-                <div class="px-8 py-6 border-b border-slate-100 font-extrabold text-slate-700 flex items-center gap-2">
-                    <i class="fa-solid fa-hourglass-half text-orange-500"></i> Alertes Fin de Contrat / Essai
+            <!-- Alertes Contrats -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 font-black text-slate-700 text-xs uppercase tracking-widest flex items-center gap-2 bg-slate-50/50">
+                    <i class="fa-solid fa-hourglass-half text-orange-500"></i> Fins de contrats imminentes
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left whitespace-nowrap">
-                        <thead class="bg-slate-50/80 text-[10px] uppercase font-black text-slate-400">
-                            <tr><th class="px-8 py-4">Nom</th><th class="px-8 py-4">Poste</th><th class="px-8 py-4">Délai</th><th class="px-8 py-4 rh-only text-right">Action</th></tr>
-                        </thead>
                         <tbody id="dashboard-body" class="divide-y divide-slate-50"></tbody>
                     </table>
                 </div>
             </div>
         </div>
-    </div>
-</section>
 
+    </div> <!-- FIN ZONE MANAGEMENT -->
+
+</section>
 
                 
 
