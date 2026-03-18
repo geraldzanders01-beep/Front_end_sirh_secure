@@ -340,6 +340,31 @@ window.addEventListener("appinstalled", () => {
   },
 );
 
+
+// Fonction pour abonner l'utilisateur aux notifs
+async function subscribeUserToPush() {
+    const registration = await navigator.serviceWorker.ready;
+    
+    // On demande au serveur la "Clé Publique VAPID" (Clé de sécurité)
+    const response = await fetch(`${SIRH_CONFIG.apiBaseUrl}/get-push-key`);
+    const { publicKey } = await response.json();
+
+    const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: publicKey
+    });
+
+    // On envoie cet abonnement à la base de données Supabase
+    // pour savoir à quel téléphone envoyer les notifs plus tard
+    await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/save-subscription`, {
+        method: 'POST',
+        body: JSON.stringify({
+            subscription: subscription,
+            user_id: AppState.currentUser.id
+        })
+    });
+}
+
 // --- Enregistrement du Service Worker ---
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
