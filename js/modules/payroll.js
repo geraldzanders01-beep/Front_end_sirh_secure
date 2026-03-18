@@ -232,11 +232,19 @@ export async function fetchPayrollConstants() {
     data.forEach((item) => {
       AppState.payrollConstants[item.key_code] = item.value_number;
     });
+
+    const inputCnss = document.getElementById("config-cnss");
+    const inputIrpp = document.getElementById("config-irpp");
+    if (inputCnss) inputCnss.value = AppState.payrollConstants["CNSS_EMPLOYEE_RATE"] || 0;
+    if (inputIrpp) inputIrpp.value = AppState.payrollConstants["IRPP_BASE_RATE"] || 0;
+    
     console.log("📊 Constantes de paie chargées :", AppState.payrollConstants); 
       } catch (e) {
         console.error("Erreur constantes paie", e);
       }
     }
+
+
 
 export async function generateAllPay() {
   const mois = document.getElementById("pay-month").value;
@@ -519,6 +527,31 @@ payrolls.forEach((p) => {
 }
 
 
+// --- SAUVEGARDER LES TAUX DE PAIE ---
+export async function savePayrollConfig(e) {
+    e.preventDefault();
+    const cnss = document.getElementById("config-cnss").value;
+    const irpp = document.getElementById("config-irpp").value;
+
+    Swal.fire({ title: "Mise à jour...", didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+
+    try {
+        const response = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/update-config-salaries`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ cnss, irpp })
+        });
+
+        if (response.ok) {
+            Swal.fire("Succès", "Les taux ont été mis à jour. Ils s'appliqueront à la prochaine paie.", "success");
+            await fetchPayrollConstants(); // On recharge les constantes en mémoire
+        } else {
+            throw new Error("Erreur serveur.");
+        }
+    } catch (err) {
+        Swal.fire("Erreur", "Impossible de mettre à jour les taux.", "error");
+    }
+}
 
 export async function viewPayroll(payrollId, fileUrl, title) {
     // 1. On ouvre le document immédiatement pour ne pas faire attendre l'utilisateur
