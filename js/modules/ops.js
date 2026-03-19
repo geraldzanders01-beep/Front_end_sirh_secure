@@ -399,11 +399,14 @@ export async function handleClockInOut() {
             return; 
         }
 
+        console.log("🔎 Préparation du pointage pour l'ID:", userId);
+
         // --- SI EN LIGNE : ENVOI DIRECT ---
         const fd = new FormData();
         fd.append('id', userId);
         fd.append('action', action);
         fd.append('gps', currentGps);
+        console.log("📦 FormData créé:", fd); // On log le contenu complet
         fd.append('ip', currentIp);
         fd.append('agent', AppState.currentUser.nom);
         fd.append('time', actionTime);
