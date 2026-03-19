@@ -339,39 +339,75 @@ export async function handleClockInOut() {
         AppState.formResult = swalRes.value;
     }
 
-    Swal.fire({ title: 'Vérification...', text: 'GPS...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+
+    Swal.fire({ title: 'Vérification...', text: 'Analyse GPS...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
     try {
-let currentGps = "0,0";
-        try {
-            // Vérification si le navigateur autorise le GPS (bloqué en HTTP)
-            if (!navigator.geolocation) {
-                throw new Error("Votre navigateur bloque le GPS (Site non sécurisé)");
-            }
+        let currentIp = "offline";
+        let currentGps = "0,0";
 
-            const pos = await new Promise((res, rej) => { 
-                navigator.geolocation.getCurrentPosition(res, rej, { 
-                    timeout: 8000,
-                    enableHighAccuracy: true 
-                }); 
+        try {
+            const pos = await new Promise((res, rej) => {
+                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000 });
             });
             currentGps = `${pos.coords.latitude},${pos.coords.longitude}`;
-        } catch (e) { 
-            console.error("Erreur GPS détaillée:", e);
-            // Si on est en HTTP, on prévient l'utilisateur
+        } catch (gpsError) {
             if (location.protocol !== 'https:') {
-                return Swal.fire("Sécurité", "Le GPS nécessite une connexion sécurisée HTTPS.", "error");
+                throw new Error("Le GPS nécessite une connexion sécurisée HTTPS.");
             }
             currentGps = "GPS_DISABLED"; 
         }
 
+        if (navigator.onLine) {
+            try {
+                const ipRes = await fetch('https://api.ipify.org?format=json').then(r => r.json());
+                currentIp = ipRes.ip;
+            } catch(e) {}
+        }
+
+        // --- SI HORS LIGNE : SAUVEGARDE LOCALE ---
+        if (!navigator.onLine) {
+            let photoBase64 = null;
+            if (action === 'CLOCK_OUT' && isMobile && AppState.formResult && AppState.formResult.proofFile) {
+                const compressed = await compressImage(AppState.formResult.proofFile);
+                photoBase64 = await window.blobToDataURL(compressed); 
+            }
+
+            const offlinePayload = {
+                id: userId,
+                action: action,
+                gps: currentGps,
+                ip: currentIp,
+                agent: AppState.currentUser.nom,
+                time: actionTime,
+                outcome: AppState.outcome || 'VU',
+                report: AppState.report || '',
+                prescripteur_id: AppState.prescripteur_id,
+                contact_nom_libre: AppState.contact_nom_libre,
+                presentedProducts: AppState.presentedProducts,
+                schedule_id: schedule_id,
+                forced_location_id: forced_location_id,
+                proof_photo_base64: photoBase64,
+                is_last_exit: AppState.isLastExit ? 'true' : 'false'
+            };
+
+            const queue = JSON.parse(localStorage.getItem("sirh_offline_queue") || "[]");
+            queue.push(offlinePayload);
+            localStorage.setItem("sirh_offline_queue", JSON.stringify(queue));
+
+            Swal.fire({ icon: 'info', title: 'Sauvegarde Locale', text: 'Hors ligne. Le pointage sera envoyé automatiquement dès le retour du réseau.' });
+            return; 
+        }
+
+        // --- SI EN LIGNE : ENVOI DIRECT ---
         const fd = new FormData();
         fd.append('id', userId);
         fd.append('action', action);
         fd.append('gps', currentGps);
+        fd.append('ip', currentIp);
         fd.append('agent', AppState.currentUser.nom);
-        fd.append('time', actionTime); 
-
+        fd.append('time', actionTime);
+        
         if (action === 'CLOCK_OUT' && isMobile && AppState.formResult) {
             const fr = AppState.formResult;
             fd.append('outcome', fr.outcome || 'VU');
@@ -381,7 +417,12 @@ let currentGps = "0,0";
             fd.append('presentedProducts', JSON.stringify(fr.selectedProducts));
             if (schedule_id) fd.append('schedule_id', schedule_id);
             if (forced_location_id) fd.append('forced_location_id', forced_location_id);
-            if (fr.proofFile) fd.append('proof_photo', fr.proofFile, 'preuve.jpg');
+            
+            if (fr.proofFile) {
+                Swal.update({ text: 'Compression...' });
+                const compressed = await compressImage(fr.proofFile);
+                fd.append('proof_photo', compressed, 'preuve.jpg');
+            }
             if (fr.isLastExit) fd.append('is_last_exit', 'true');
         }
 
@@ -389,85 +430,16 @@ let currentGps = "0,0";
         const resData = await response.json();
 
         if (response.ok) {
-            localStorage.removeItem('active_mission_context');
             await refreshClockButton();
             Swal.fire('Succès', `Pointage validé : ${resData.zone}`, 'success');
-        } else { throw new Error(resData.error); }
-    } catch (e) { Swal.fire('Erreur', e.message, 'error'); }
-}
-
-
-export async function syncOfflineData() {
-    const queue = JSON.parse(localStorage.getItem("sirh_offline_queue") || "[]");
-
-    if (queue.length === 0) return; // Rien à faire
-
-    const Toast = Swal.mixin({
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-    });
-    Toast.fire({
-        icon: "info",
-        title: `Réseau détecté. Synchronisation de ${queue.length} action(s)...`,
-    });
-
-    const remainingQueue =[];
-
-    for (const item of queue) {
-        try {
-            // On reconstruit le FormData (Simule exactement un envoi normal)
-            const fd = new FormData();
-            
-            // On injecte toutes les clés (sauf la photo qui a un format spécial)
-            Object.keys(item).forEach(key => {
-                if (key !== 'proof_photo_base64' && item[key] !== null && item[key] !== undefined) {
-                    if (typeof item[key] === 'object') {
-                        fd.append(key, JSON.stringify(item[key]));
-                    } else {
-                        fd.append(key, item[key]);
-                    }
-                }
-            });
-
-            // Si le rapport contenait une photo hors ligne (Base64), on la re-transforme en fichier
-            if (item.proof_photo_base64) {
-                const blob = dataURLtoBlob(item.proof_photo_base64);
-                fd.append('proof_photo', blob, 'preuve_visite_offline.jpg');
-            }
-
-            // On envoie
-            await secureFetch(URL_CLOCK_ACTION, {
-                method: "POST",
-                body: fd, // Pas de Content-Type ici, le navigateur gère le multipart/form-data
-            });
-            
-        } catch (e) {
-            console.error("Echec synchro item", item, e);
-            remainingQueue.push(item); // Si ça rate encore (serveur down), on le garde pour plus tard
+        } else {
+            throw new Error(resData.error);
         }
-    }
-
-    // Mise à jour de la file d'attente (on ne garde que les échecs)
-    localStorage.setItem("sirh_offline_queue", JSON.stringify(remainingQueue));
-
-    if (remainingQueue.length === 0) {
-        Toast.fire({
-            icon: "success",
-            title: "Toutes les visites hors-ligne ont été synchronisées !",
-        });
-        
-        // On actualise le bouton pour être sûr que l'état correspond au serveur
-        if (typeof window.refreshClockButton === 'function') window.refreshClockButton();
-        
-    } else {
-        Toast.fire({
-            icon: "warning",
-            title: `Reste ${remainingQueue.length} action(s) à envoyer.`,
-        });
+    } catch (e) {
+        stopAllCameras();
+        Swal.fire('Erreur', e.message, 'error');
     }
 }
-
 
 
 export async function fetchMobileLocations() {
