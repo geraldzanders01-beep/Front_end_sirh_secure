@@ -287,7 +287,7 @@ export async function handleClockInOut() {
                 });
 
                 document.getElementById('btn-snap').onclick = () => {
-                    if (!video || video.videoWidth === 0) return;
+                    if (!video || video.videoWidth === 0) return Swal.fire('Patientez', 'La caméra s\'initialise...', 'info');
                     const canvas = document.getElementById('proof-canvas');
                     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                     canvas.getContext('2d').drawImage(video, 0, 0);
@@ -420,10 +420,10 @@ export async function handleClockInOut() {
         }
 
         console.log("🔎 Préparation du pointage pour l'ID:", userId);
-
         let response;
-        // Objet contenant les données de base pour tous les pointages
-        const basePayload = {
+
+        // Objet de base contenant les données texte pour un envoi propre
+        const payloadObj = {
             id: userId,
             action: action,
             gps: currentGps,
@@ -434,11 +434,11 @@ export async function handleClockInOut() {
 
         // --- SI EN LIGNE ET SORTIE MOBILE (AVEC PHOTO/FORMULAIRE) -> FORMDATA ---
         if (action === 'CLOCK_OUT' && isMobile && AppState.formResult) {
-            console.log("📦 Envoi FormData (Sortie avec photo)");
+            console.log("📦 Envoi via FormData (Contient un fichier)");
             const fd = new FormData();
             
-            // Injection des données de base
-            Object.keys(basePayload).forEach(key => fd.append(key, basePayload[key]));
+            // Injection propre des données de base
+            Object.keys(payloadObj).forEach(key => fd.append(key, payloadObj[key]));
             
             const fr = AppState.formResult;
             fd.append('outcome', fr.outcome || 'VU');
@@ -460,10 +460,10 @@ export async function handleClockInOut() {
         } 
         // --- SI EN LIGNE ET ENTRÉE (OU BUREAU) -> JSON PUR (Fiable à 100%) ---
         else {
-            console.log("📦 Envoi JSON pur (Entrée) :", basePayload);
+            console.log("📦 Envoi via JSON pur (Entrée)");
             response = await secureFetch(URL_CLOCK_ACTION, { 
                 method: 'POST', 
-                body: JSON.stringify(basePayload) 
+                body: JSON.stringify(payloadObj) 
             });
         }
 
@@ -481,7 +481,6 @@ export async function handleClockInOut() {
         Swal.fire('Erreur', e.message, 'error');
     }
 }
-
 
 
 
