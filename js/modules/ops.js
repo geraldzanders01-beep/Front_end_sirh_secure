@@ -403,23 +403,43 @@ export async function handleClockInOut() {
             queue.push(offlinePayload);
             localStorage.setItem("sirh_offline_queue", JSON.stringify(queue));
 
+            localStorage.removeItem('active_mission_context');
+            let nextState = (action === 'CLOCK_IN') ? 'IN' : 'OUT';
+            localStorage.setItem(`clock_status_${userId}`, nextState);
+            if (AppState.isLastExit || !isMobile) localStorage.setItem(`clock_finished_${userId}`, 'true');
+
+            stopAllCameras();
+            if(typeof window.updateClockUI === 'function') window.updateClockUI(nextState);
+
+            const nowStr = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+            const lastActionEl = document.getElementById('clock-last-action');
+            if (lastActionEl) lastActionEl.innerText = `Sauvegardé 📶 : ${action === 'CLOCK_IN' ? 'Entrée' : 'Sortie'} à ${nowStr}`;
+
             Swal.fire({ icon: 'info', title: 'Sauvegarde Locale', text: 'Hors ligne. Le pointage sera envoyé automatiquement dès le retour du réseau.' });
             return; 
         }
 
         console.log("🔎 Préparation du pointage pour l'ID:", userId);
 
-        // --- SI EN LIGNE : ENVOI DIRECT ---
-        const fd = new FormData();
-        fd.append('id', userId);
-        fd.append('action', action);
-        fd.append('gps', currentGps);
-        console.log("📦 FormData créé:", fd); // On log le contenu complet
-        fd.append('ip', currentIp);
-        fd.append('agent', AppState.currentUser.nom);
-        fd.append('time', actionTime);
-        
+        let response;
+        // Objet contenant les données de base pour tous les pointages
+        const basePayload = {
+            id: userId,
+            action: action,
+            gps: currentGps,
+            ip: currentIp,
+            agent: AppState.currentUser.nom,
+            time: actionTime
+        };
+
+        // --- SI EN LIGNE ET SORTIE MOBILE (AVEC PHOTO/FORMULAIRE) -> FORMDATA ---
         if (action === 'CLOCK_OUT' && isMobile && AppState.formResult) {
+            console.log("📦 Envoi FormData (Sortie avec photo)");
+            const fd = new FormData();
+            
+            // Injection des données de base
+            Object.keys(basePayload).forEach(key => fd.append(key, basePayload[key]));
+            
             const fr = AppState.formResult;
             fd.append('outcome', fr.outcome || 'VU');
             fd.append('report', fr.report || '');
@@ -435,12 +455,22 @@ export async function handleClockInOut() {
                 fd.append('proof_photo', compressed, 'preuve.jpg');
             }
             if (fr.isLastExit) fd.append('is_last_exit', 'true');
+
+            response = await secureFetch(URL_CLOCK_ACTION, { method: 'POST', body: fd });
+        } 
+        // --- SI EN LIGNE ET ENTRÉE (OU BUREAU) -> JSON PUR (Fiable à 100%) ---
+        else {
+            console.log("📦 Envoi JSON pur (Entrée) :", basePayload);
+            response = await secureFetch(URL_CLOCK_ACTION, { 
+                method: 'POST', 
+                body: JSON.stringify(basePayload) 
+            });
         }
 
-        const response = await secureFetch(URL_CLOCK_ACTION, { method: 'POST', body: fd });
         const resData = await response.json();
 
         if (response.ok) {
+            localStorage.removeItem('active_mission_context');
             await refreshClockButton();
             Swal.fire('Succès', `Pointage validé : ${resData.zone}`, 'success');
         } else {
@@ -451,6 +481,8 @@ export async function handleClockInOut() {
         Swal.fire('Erreur', e.message, 'error');
     }
 }
+
+
 
 
 export async function fetchMobileLocations() {
