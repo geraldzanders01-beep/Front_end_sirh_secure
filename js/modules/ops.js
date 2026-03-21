@@ -163,7 +163,7 @@ export async function handleClockInOut() {
     AppState.report = null;
     AppState.proofBlob = null; 
     AppState.isLastExit = false;
-    AppState.presentedProducts = []; 
+    AppState.presentedProducts =[]; 
     AppState.prescripteur_id = null;
     AppState.contact_nom_libre = null;
     
@@ -193,8 +193,8 @@ export async function handleClockInOut() {
     if (action === 'CLOCK_OUT' && isMobile) {
         Swal.fire({ title: 'Chargement...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
-        let products = AppState.allProductsData || [];
-        let prescripteurs = AppState.allPrescripteurs || [];
+        let products = AppState.allProductsData ||[];
+        let prescripteurs = AppState.allPrescripteurs ||[];
 
         if (navigator.onLine && (products.length === 0 || prescripteurs.length === 0)) {
             try {
@@ -339,7 +339,6 @@ export async function handleClockInOut() {
         AppState.formResult = swalRes.value;
     }
 
-
     Swal.fire({ title: 'Vérification...', text: 'Analyse GPS...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
     try {
@@ -347,13 +346,22 @@ export async function handleClockInOut() {
         let currentGps = "0,0";
 
         try {
-            const pos = await new Promise((res, rej) => {
-                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000 });
+            // Vérification si le navigateur autorise le GPS (bloqué en HTTP)
+            if (!navigator.geolocation) {
+                throw new Error("Votre navigateur bloque le GPS (Site non sécurisé)");
+            }
+
+            const pos = await new Promise((res, rej) => { 
+                navigator.geolocation.getCurrentPosition(res, rej, { 
+                    timeout: 8000,
+                    enableHighAccuracy: true 
+                }); 
             });
             currentGps = `${pos.coords.latitude},${pos.coords.longitude}`;
-        } catch (gpsError) {
+        } catch (e) { 
+            console.error("Erreur GPS détaillée:", e);
             if (location.protocol !== 'https:') {
-                throw new Error("Le GPS nécessite une connexion sécurisée HTTPS.");
+                return Swal.fire("Sécurité", "Le GPS nécessite une connexion sécurisée HTTPS.", "error");
             }
             currentGps = "GPS_DISABLED"; 
         }
