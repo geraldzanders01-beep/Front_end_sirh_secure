@@ -35,35 +35,57 @@ export function showLeaveDetailFromSafeData(
 export async function submitLeaveRequest(e) {
   e.preventDefault();
 
-  const fd = new FormData();
-  // Utilisation stricte de AppState
-  fd.append("employee_id", AppState.currentUser.id);
-  fd.append("nom", AppState.currentUser.nom);
-  fd.append("type", document.querySelector('input[name="leave_type"]:checked').value);
-  fd.append("date_debut", document.getElementById("leave-start").value);
-  fd.append("date_fin", document.getElementById("leave-end").value);
-  fd.append("motif", document.getElementById("leave-reason").value);
-  fd.append("agent", AppState.currentUser.nom);
+  // 1. Récupération des valeurs avec sécurité
+  const typeEl = document.querySelector('input[name="leave_type"]:checked');
+  const startEl = document.getElementById("leave-start");
+  const endEl = document.getElementById("leave-end");
+  const reasonEl = document.getElementById("leave-reason");
 
-  // CORRECTION ICI : AppState.docBlobs
-  if (AppState.docBlobs.leave_justif) {
-    fd.append("justificatif", AppState.docBlobs.leave_justif, "justificatif_conge.jpg");
+  if (!startEl.value || !endEl.value || !reasonEl.value) {
+    return Swal.fire("Champs manquants", "Veuillez remplir les dates et le motif.", "warning");
   }
 
-  Swal.fire({ title: "Envoi...", didOpen: () => Swal.showLoading() });
+  const fd = new FormData();
+  // On utilise des clés simples pour faciliter la lecture du serveur
+  fd.append("employee_id", AppState.currentUser.id);
+  fd.append("nom", AppState.currentUser.nom);
+  fd.append("type", typeEl ? typeEl.value : "Congé");
+  fd.append("date_debut", startEl.value);
+  fd.append("date_fin", endEl.value);
+  fd.append("motif", reasonEl.value);
+  fd.append("agent", AppState.currentUser.nom);
+
+  // Fichier justificatif
+  if (AppState.docBlobs && AppState.docBlobs.leave_justif) {
+    fd.append("justificatif", AppState.docBlobs.leave_justif, "justif_conge.jpg");
+  }
+
+  Swal.fire({ title: "Envoi en cours...", didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
   try {
-    const response = await secureFetch(URL_LEAVE_REQUEST, { method: "POST", body: fd });
+    // ⚠️ Rappel : secureFetch ne doit PAS forcer de Content-Type si body est FormData
+    const response = await secureFetch(URL_LEAVE_REQUEST, { 
+      method: "POST", 
+      body: fd 
+    });
+
     if (response.ok) {
       document.getElementById("leave-modal").classList.add("hidden");
-      e.target.reset();
-      AppState.docBlobs.leave_justif = null; // Reset AppState
-      Swal.fire("Succès", "Demande envoyée.", "success");
+      e.target.reset(); // Vide le formulaire
+      if (AppState.docBlobs) AppState.docBlobs.leave_justif = null;
+      
+      await Swal.fire("Succès", "Votre demande a été envoyée avec succès.", "success");
+      
+      // On rafraîchit la liste pour voir la nouvelle demande
+      if (typeof fetchLeaveRequests === "function") fetchLeaveRequests();
     }
   } catch (error) {
+    console.error("Erreur submitLeaveRequest:", error);
     Swal.fire("Erreur", error.message, "error");
   }
 }
+
+
 
 export async function fetchLeaveRequests() {
   if (!AppState.currentUser) return;
