@@ -439,7 +439,9 @@ export async function handleClockInOut() {
         Swal.fire('Erreur', e.message, 'error');
     }
 
+}
 
+  
 export async function fetchMobileLocations() {
   const container = document.getElementById("locations-grid");
   if (!container) return;
