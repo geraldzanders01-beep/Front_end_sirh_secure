@@ -339,33 +339,26 @@ export async function handleClockInOut() {
         AppState.formResult = swalRes.value;
     }
 
-    Swal.fire({ title: 'Vérification...', text: 'Analyse GPS...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+// --- 3. POINTAGE GPS & ENVOI ---
+    Swal.fire({ title: 'Vérification...', text: 'Traitement du pointage...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
     try {
         let currentIp = "offline";
         let currentGps = "0,0";
 
+        // Récupération GPS
         try {
-            // Vérification si le navigateur autorise le GPS (bloqué en HTTP)
-            if (!navigator.geolocation) {
-                throw new Error("Votre navigateur bloque le GPS (Site non sécurisé)");
-            }
-
+            if (!navigator.geolocation) throw new Error("Navigateur non compatible GPS");
             const pos = await new Promise((res, rej) => { 
-                navigator.geolocation.getCurrentPosition(res, rej, { 
-                    timeout: 8000,
-                    enableHighAccuracy: true 
-                }); 
+                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000, enableHighAccuracy: true }); 
             });
             currentGps = `${pos.coords.latitude},${pos.coords.longitude}`;
         } catch (e) { 
-            console.error("Erreur GPS détaillée:", e);
-            if (location.protocol !== 'https:') {
-                return Swal.fire("Sécurité", "Le GPS nécessite une connexion sécurisée HTTPS.", "error");
-            }
+            console.warn("GPS non disponible");
             currentGps = "GPS_DISABLED"; 
         }
 
+        // Récupération IP
         if (navigator.onLine) {
             try {
                 const ipRes = await fetch('https://api.ipify.org?format=json').then(r => r.json());
@@ -373,56 +366,7 @@ export async function handleClockInOut() {
             } catch(e) {}
         }
 
-        // --- SI HORS LIGNE : SAUVEGARDE LOCALE ---
-        if (!navigator.onLine) {
-            let photoBase64 = null;
-            if (action === 'CLOCK_OUT' && isMobile && AppState.formResult && AppState.formResult.proofFile) {
-                const compressed = await compressImage(AppState.formResult.proofFile);
-                photoBase64 = await window.blobToDataURL(compressed); 
-            }
-
-            const offlinePayload = {
-                id: userId,
-                action: action,
-                gps: currentGps,
-                ip: currentIp,
-                agent: AppState.currentUser.nom,
-                time: actionTime,
-                outcome: AppState.outcome || 'VU',
-                report: AppState.report || '',
-                prescripteur_id: AppState.prescripteur_id,
-                contact_nom_libre: AppState.contact_nom_libre,
-                presentedProducts: AppState.presentedProducts,
-                schedule_id: schedule_id,
-                forced_location_id: forced_location_id,
-                proof_photo_base64: photoBase64,
-                is_last_exit: AppState.isLastExit ? 'true' : 'false'
-            };
-
-            const queue = JSON.parse(localStorage.getItem("sirh_offline_queue") || "[]");
-            queue.push(offlinePayload);
-            localStorage.setItem("sirh_offline_queue", JSON.stringify(queue));
-
-            localStorage.removeItem('active_mission_context');
-            let nextState = (action === 'CLOCK_IN') ? 'IN' : 'OUT';
-            localStorage.setItem(`clock_status_${userId}`, nextState);
-            if (AppState.isLastExit || !isMobile) localStorage.setItem(`clock_finished_${userId}`, 'true');
-
-            stopAllCameras();
-            if(typeof window.updateClockUI === 'function') window.updateClockUI(nextState);
-
-            const nowStr = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
-            const lastActionEl = document.getElementById('clock-last-action');
-            if (lastActionEl) lastActionEl.innerText = `Sauvegardé 📶 : ${action === 'CLOCK_IN' ? 'Entrée' : 'Sortie'} à ${nowStr}`;
-
-            Swal.fire({ icon: 'info', title: 'Sauvegarde Locale', text: 'Hors ligne. Le pointage sera envoyé automatiquement dès le retour du réseau.' });
-            return; 
-        }
-
-        console.log("🔎 Préparation du pointage pour l'ID:", userId);
-        let response;
-
-        // Objet de base contenant les données texte pour un envoi propre
+        // 1. CRÉATION DU PAYLOAD UNIQUE (JSON)
         const payloadObj = {
             id: userId,
             action: action,
@@ -432,56 +376,68 @@ export async function handleClockInOut() {
             time: actionTime
         };
 
-        // --- SI EN LIGNE ET SORTIE MOBILE (AVEC PHOTO/FORMULAIRE) -> FORMDATA ---
+        // 2. SI SORTIE MOBILE : ON AJOUTE LES INFOS DU BILAN ET LA PHOTO EN TEXTE
         if (action === 'CLOCK_OUT' && isMobile && AppState.formResult) {
-            console.log("📦 Envoi via FormData (Contient un fichier)");
-            const fd = new FormData();
-            
-            // Injection propre des données de base
-            Object.keys(payloadObj).forEach(key => fd.append(key, payloadObj[key]));
-            
             const fr = AppState.formResult;
-            fd.append('outcome', fr.outcome || 'VU');
-            fd.append('report', fr.report || '');
-            fd.append('prescripteur_id', fr.prescripteur_id !== 'autre' ? fr.prescripteur_id : '');
-            fd.append('contact_nom_libre', fr.contact_nom_libre || '');
-            fd.append('presentedProducts', JSON.stringify(fr.selectedProducts));
-            if (schedule_id) fd.append('schedule_id', schedule_id);
-            if (forced_location_id) fd.append('forced_location_id', forced_location_id);
-            
-            if (fr.proofFile) {
-                Swal.update({ text: 'Compression...' });
-                const compressed = await compressImage(fr.proofFile);
-                fd.append('proof_photo', compressed, 'preuve.jpg');
-            }
-            if (fr.isLastExit) fd.append('is_last_exit', 'true');
+            payloadObj.outcome = fr.outcome || 'VU';
+            payloadObj.report = fr.report || '';
+            payloadObj.prescripteur_id = (fr.prescripteur_id && fr.prescripteur_id !== 'autre') ? fr.prescripteur_id : null;
+            payloadObj.contact_nom_libre = fr.contact_nom_libre || null;
+            payloadObj.presentedProducts = fr.selectedProducts || [];
+            payloadObj.schedule_id = schedule_id;
+            payloadObj.forced_location_id = forced_location_id;
+            payloadObj.is_last_exit = fr.isLastExit ? 'true' : 'false';
 
-            response = await secureFetch(URL_CLOCK_ACTION, { method: 'POST', body: fd });
-        } 
-        // --- SI EN LIGNE ET ENTRÉE (OU BUREAU) -> JSON PUR (Fiable à 100%) ---
-        else {
-            console.log("📦 Envoi via JSON pur (Entrée)");
-            response = await secureFetch(URL_CLOCK_ACTION, { 
-                method: 'POST', 
-                body: JSON.stringify(payloadObj) 
-            });
+            // 🔥 TRANSFORMATION DE LA PHOTO EN TEXTE (BASE64)
+            if (fr.proofFile) {
+                Swal.update({ text: 'Optimisation de la photo...' });
+                const compressed = await compressImage(fr.proofFile);
+                // On transforme le fichier en texte pour l'envoyer dans le JSON
+                payloadObj.proof_photo_base64 = await window.blobToDataURL(compressed);
+            }
         }
+
+        // 3. --- GESTION HORS LIGNE : SAUVEGARDE LOCALE ---
+        if (!navigator.onLine) {
+            const queue = JSON.parse(localStorage.getItem("sirh_offline_queue") || "[]");
+            queue.push(payloadObj);
+            localStorage.setItem("sirh_offline_queue", JSON.stringify(queue));
+
+            localStorage.removeItem('active_mission_context');
+            let nextState = (action === 'CLOCK_IN') ? 'IN' : 'OUT';
+            localStorage.setItem(`clock_status_${userId}`, nextState);
+            if (payloadObj.is_last_exit === 'true' || !isMobile) localStorage.setItem(`clock_finished_${userId}`, 'true');
+
+            stopAllCameras();
+            if(typeof window.updateClockUI === 'function') window.updateClockUI(nextState);
+
+            Swal.fire({ icon: 'info', title: 'Mode Hors Ligne', text: 'Pointage enregistré dans le téléphone. Il sera transmis au retour de la connexion.' });
+            return; 
+        }
+
+        // 4. --- SI EN LIGNE : ENVOI JSON (Beaucoup plus fiable que FormData) ---
+        console.log(`🔎 Envoi pointage JSON pour [${userId}] - Action: [${action}]`);
+        
+        const response = await secureFetch(URL_CLOCK_ACTION, { 
+            method: 'POST', 
+            body: JSON.stringify(payloadObj) 
+        });
 
         const resData = await response.json();
 
         if (response.ok) {
             localStorage.removeItem('active_mission_context');
-            await refreshClockButton();
+            await refreshClockButton(); // Met à jour l'interface
             Swal.fire('Succès', `Pointage validé : ${resData.zone}`, 'success');
         } else {
-            throw new Error(resData.error);
+            throw new Error(resData.error || "Erreur serveur");
         }
+
     } catch (e) {
         stopAllCameras();
+        console.error("Erreur handleClockInOut:", e);
         Swal.fire('Erreur', e.message, 'error');
     }
-}
-
 
 
 export async function fetchMobileLocations() {
