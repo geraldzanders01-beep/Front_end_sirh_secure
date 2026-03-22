@@ -1,8 +1,9 @@
 export const SIRH_CONFIG = {
   company: {
     name: "SIRH-SECURE",
-    logo: "https://cdn-icons-png.flaticon.com/128/13594/13594876.png",
-    supportEmail: "rh@entreprise.com",
+    // LOGO UNIQUE POUR TOUTE L'APP
+    logo: "https://cdn-icons-png.flaticon.com/512/9752/9752284.png", 
+    supportEmail: "rh@cataria-systems.com",
   },
   theme: {
     primary: "#0f172a",
