@@ -26,6 +26,7 @@ window.handleLogout = Auth.handleLogout;
 window.handleForgotPassword = Auth.handleForgotPassword;
 
 // --- Interface Utilisateur (UI) ---
+window.initLiveMap = Dash.initLiveMap;
 window.fetchAndApplyLabels = UI.fetchAndApplyLabels;
 window.switchView = UI.switchView;
 window.toggleSidebar = UI.toggleSidebar;
