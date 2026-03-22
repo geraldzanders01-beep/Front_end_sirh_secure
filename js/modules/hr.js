@@ -2421,89 +2421,64 @@ export async function handleCandidateAction(id, action) {
   }
 }
 
-export function showCandidateDocs(safeNom, poste, cv, lm, dip, att, idCard) {
-  const nom = decodeURIComponent(safeNom);
+export function showCandidateDocs(id) {
+  // 1. Récupération du candidat complet depuis la mémoire de l'app
+  const c = AppState.currentCandidates.find((cand) => String(cand.id) === String(id));
+  if (!c) return Swal.fire('Erreur', 'Dossier introuvable', 'error');
 
+  // 2. Préparation des données textuelles
+  const nom = c.nom_complet || "Candidat";
+  const poste = c.poste_vise || "Non précisé";
+  const email = c.email || "Non renseigné";
+  const tel = c.telephone || "Non renseigné";
+  const adresse = c.adresse || "Non renseignée";
+  const exp = c.experience || "Non précisée";
+  const dispo = c.disponibilite || "Non précisée";
+  const pretentions = c.pretentions ? new Intl.NumberFormat('fr-FR').format(c.pretentions) + ' CFA' : "Non précisées";
+  const dateN = c.date_naissance ? new Date(c.date_naissance).toLocaleDateString('fr-FR') : "Non renseignée";
+
+  // 3. Extraction sécurisée des URLs de documents
+  const getUrl = (u) => (u && u !== "null" && u.length > 5) ? u : null;
+  
   const docs = [
-    {
-      id: "cv",
-      label: "CV",
-      url: cv ? decodeURIComponent(cv) : null,
-      icon: "fa-file-user",
-      color: "blue",
-    },
-    {
-      id: "lm",
-      label: "Lettre Motiv.",
-      url: lm ? decodeURIComponent(lm) : null,
-      icon: "fa-envelope-open-text",
-      color: "pink",
-    },
-    {
-      id: "id_card",
-      label: "Pièce Identité",
-      url: idCard ? decodeURIComponent(idCard) : null,
-      icon: "fa-id-card",
-      color: "purple",
-    },
-    {
-      id: "dip",
-      label: "Diplôme",
-      url: dip ? decodeURIComponent(dip) : null,
-      icon: "fa-graduation-cap",
-      color: "emerald",
-    },
-    {
-      id: "att",
-      label: "Attestation",
-      url: att ? decodeURIComponent(att) : null,
-      icon: "fa-file-invoice",
-      color: "orange",
-    },
+    { id: "cv", label: "CV / Parcours", url: getUrl(c.cv_url), icon: "fa-file-user", color: "blue" },
+    { id: "lm", label: "Lettre Motiv.", url: getUrl(c.lm_url), icon: "fa-envelope-open-text", color: "pink" },
+    { id: "id_card", label: "Pièce Identité", url: getUrl(c.id_card_url), icon: "fa-id-card", color: "purple" },
+    { id: "dip", label: "Diplôme", url: getUrl(c.diploma_url), icon: "fa-graduation-cap", color: "emerald" },
+    { id: "att", label: "Attestation", url: getUrl(c.attestation_url), icon: "fa-file-invoice", color: "orange" },
   ];
 
   // --- COLONNE GAUCHE (Menu) ---
-  let buttonsHtml =
-    '<div class="flex flex-col gap-2 overflow-y-auto pr-1 custom-scroll" style="max-height: 350px;">';
+  let buttonsHtml = '<div class="flex flex-col gap-2">';
   let firstDocUrl = null;
   let hasDocs = false;
 
   docs.forEach((d) => {
-    if (d.url && d.url !== "null" && d.url.length > 5) {
+    if (d.url) {
       hasDocs = true;
       if (!firstDocUrl) firstDocUrl = d.url;
-
       buttonsHtml += `
-                <button onclick="changePreview('${d.url}', this)" 
-                    class="doc-btn w-full flex items-center gap-2 p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-all text-left group shadow-sm">
-                    <div class="w-8 h-8 shrink-0 rounded-lg bg-${d.color}-50 flex items-center justify-center text-${d.color}-600 group-hover:scale-110 transition-transform">
-                        <i class="fa-solid ${d.icon} text-sm"></i>
-                    </div>
-                    <div class="overflow-hidden flex-1 min-w-0">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-wide truncate">DOC</p>
-                        <p class="text-xs font-bold text-slate-700 truncate">${d.label}</p>
-                    </div>
-                </button>
-            `;
+            <button onclick="changePreview('${d.url}', this)" 
+                class="doc-btn w-full flex items-center gap-3 p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-all text-left group shadow-sm">
+                <div class="w-8 h-8 shrink-0 rounded-lg bg-${d.color}-50 flex items-center justify-center text-${d.color}-600 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid ${d.icon} text-sm"></i>
+                </div>
+                <div class="overflow-hidden flex-1 min-w-0">
+                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-wide">DOCUMENT</p>
+                    <p class="text-xs font-bold text-slate-700 truncate">${d.label}</p>
+                </div>
+            </button>`;
     }
   });
   buttonsHtml += "</div>";
 
-  if (!hasDocs) {
-    buttonsHtml = `<div class="p-4 bg-slate-50 border border-dashed border-slate-300 rounded-xl text-center text-slate-400 text-xs italic">Aucun document</div>`;
-  }
-
   // --- LOGIQUE D'AFFICHAGE ---
   window.changePreview = function (url, btn) {
-    // 1. Style des boutons
     document.querySelectorAll(".doc-btn").forEach((b) => {
       b.classList.remove("ring-2", "ring-blue-500", "bg-blue-50/50");
       b.classList.add("bg-white", "border-slate-200");
     });
-    if (btn) {
-      btn.classList.remove("bg-white", "border-slate-200");
-      btn.classList.add("ring-2", "ring-blue-500", "bg-blue-50/50");
-    }
+    if (btn) btn.classList.add("ring-2", "ring-blue-500", "bg-blue-50/50");
 
     const viewerFrame = document.getElementById("doc-viewer-frame");
     const viewerImg = document.getElementById("doc-viewer-img");
@@ -2512,46 +2487,29 @@ export function showCandidateDocs(safeNom, poste, cv, lm, dip, att, idCard) {
 
     if (extLink) extLink.href = url;
 
-    // 2. Détection IMAGE vs AUTRE (PDF)
-    // On considère comme image : les extensions classiques OU les liens Airtable hébergeant des images
-    // Les liens Airtable ressemblent souvent à v5.airtableusercontent...
     const isImageExtension = url.match(/\.(jpeg|jpg|gif|png|webp|bmp)$/i);
-    const isAirtableImage =
-      url.includes("airtableusercontent") &&
-      !url.toLowerCase().includes(".pdf");
-
-    // SÉCURITÉ : Google Drive ID
-    const driveMatch =
-      url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+    const isAirtableImage = url.includes("airtableusercontent") && !url.toLowerCase().includes(".pdf");
+    const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+    
     let finalUrl = url;
 
     if (driveMatch) {
-      // Conversion Drive -> Image directe
       finalUrl = `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
       viewerFrame.classList.add("hidden");
       viewerImg.classList.remove("hidden");
       viewerImg.src = finalUrl;
     } else if (isImageExtension || isAirtableImage) {
-      // C'EST UNE IMAGE (Airtable ou autre)
       viewerFrame.classList.add("hidden");
       viewerImg.classList.remove("hidden");
       viewerImg.src = url;
-
-      // Réglage du conteneur pour le scroll
       container.classList.remove("overflow-hidden");
       container.classList.add("overflow-y-auto", "overflow-x-hidden");
     } else {
-      // C'EST UN PDF (ou autre fichier) -> IFRAME
       viewerImg.classList.add("hidden");
       viewerFrame.classList.remove("hidden");
-
-      // Ajustement URL Drive pour PDF
       if (url.includes("drive.google.com") && url.includes("/view"))
         finalUrl = url.replace("/view", "/preview");
-
       viewerFrame.src = finalUrl;
-
-      // Pour l'iframe, on laisse le conteneur hidden car l'iframe a son propre scroll
       container.classList.add("overflow-hidden");
       container.classList.remove("overflow-y-auto");
     }
@@ -2560,101 +2518,106 @@ export function showCandidateDocs(safeNom, poste, cv, lm, dip, att, idCard) {
   // --- HTML SWEETALERT ---
   Swal.fire({
     title: null,
+    width: "1150px",
+    padding: "0",
+    showConfirmButton: false,
+    showCloseButton: true,
+    customClass: { popup: "rounded-[2rem] overflow-hidden viewer-modal", htmlContainer: "!m-0" },
     html: `
-            <div class="flex flex-col md:flex-row h-[500px] gap-4 text-left">
-                
-                <!-- GAUCHE : MENU (25%) -->
-                <div class="w-full md:w-[25%] flex flex-col h-full border-r border-slate-100 pr-2">
-                    <div class="mb-4">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Candidat</p>
-                        <h2 class="text-xl font-extrabold text-slate-800 leading-tight mb-1 truncate">${nom}</h2>
-                        <span class="inline-block bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide">
-                            ${poste}
-                        </span>
-                    </div>
-                    
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Fichiers</p>
-                    ${buttonsHtml}
+        <div class="flex flex-col md:flex-row h-[650px] text-left">
+            
+            <!-- GAUCHE : INFOS DOSSIER (35%) -->
+            <div class="w-full md:w-[35%] p-8 border-r border-slate-100 overflow-y-auto custom-scroll bg-white">
+                <div class="mb-6">
+                    <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Candidat</p>
+                    <h2 class="text-2xl font-black text-slate-800 leading-tight mb-2">${nom}</h2>
+                    <span class="inline-block bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-lg uppercase tracking-wide">
+                        ${poste}
+                    </span>
+                </div>
 
-                    <div class="mt-auto pt-2">
-                        <button onclick="Swal.close()" class="w-full py-2.5 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200 transition-colors uppercase">
-                            Fermer
-                        </button>
+                <!-- BLOC COORDONNÉES -->
+                <div class="space-y-3 mb-8">
+                    <div class="flex items-center gap-3 text-xs text-slate-600">
+                        <i class="fa-solid fa-envelope w-4 text-slate-400"></i> <span class="truncate">${email}</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs text-slate-600">
+                        <i class="fa-solid fa-phone w-4 text-slate-400"></i> <b>${tel}</b>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs text-slate-600">
+                        <i class="fa-solid fa-location-dot w-4 text-slate-400"></i> ${adresse}
+                    </div>
+                    <div class="flex items-center gap-3 text-xs text-slate-600">
+                        <i class="fa-solid fa-cake-candles w-4 text-slate-400"></i> Né(e) le ${dateN}
                     </div>
                 </div>
 
-                <!-- DROITE : APERÇU (75%) -->
-                <!-- 
-                     id="preview-container" : C'est lui qui gère le scroll.
-                     overflow-x-hidden : TUE le scroll horizontal.
-                     overflow-y-auto : ACTIVE le scroll vertical si l'image est grande.
-                -->
-                <div id="preview-container" class="w-full md:w-[75%] h-full bg-slate-900 rounded-xl border border-slate-200 relative flex flex-col items-center shadow-inner overflow-x-hidden overflow-y-auto custom-scroll">
-                    
-                    ${
-                      hasDocs
-                        ? `
-                        <div class="absolute top-3 right-3 z-10 sticky">
-                            <a id="external-link-btn" href="${firstDocUrl || "#"}" target="_blank" class="bg-white/90 backdrop-blur text-slate-700 px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm border hover:text-blue-600 transition-all flex items-center gap-1">
-                                <i class="fa-solid fa-up-right-from-square"></i> Ouvrir
-                            </a>
-                        </div>
-                        
-                        <!-- IFRAME (PDF) : Prend 100% hauteur -->
-                        <iframe id="doc-viewer-frame" src="" class="w-full h-full bg-white hidden" frameborder="0"></iframe>
-                        
-                        <!-- IMG : Largeur 100% (w-full) et Hauteur Auto (h-auto) 
-                             Cela force l'image à toucher les bords gauche/droite (pas de scroll H)
-                             mais à s'allonger vers le bas (scroll V) -->
-                        <img id="doc-viewer-img" class="w-full h-auto min-h-full bg-black/5 hidden object-top">
+                <!-- BLOC CRITÈRES PRO -->
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-4 mb-8">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Évaluation Profil</p>
+                    <div class="flex justify-between border-b border-slate-200 pb-2">
+                        <span class="text-xs text-slate-500">Expérience</span>
+                        <span class="text-xs font-bold text-slate-800">${exp}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-200 pb-2">
+                        <span class="text-xs text-slate-500">Disponibilité</span>
+                        <span class="text-xs font-bold text-slate-800">${dispo}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-xs text-slate-500">Prétentions</span>
+                        <span class="text-xs font-black text-emerald-600">${pretentions}</span>
+                    </div>
+                </div>
 
-                    `
-                        : `
-                        <div class="w-full h-full flex flex-col items-center justify-center text-slate-500">
-                            <i class="fa-solid fa-file-circle-xmark text-5xl opacity-20 mb-3"></i>
-                            <p class="text-xs font-medium">Aucun aperçu</p>
-                        </div>
-                    `
-                    }
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Documents joints</p>
+                ${buttonsHtml}
+
+                <div class="mt-8">
+                    <button onclick="Swal.close()" class="w-full py-3 rounded-xl bg-slate-100 text-slate-500 font-bold text-xs hover:bg-slate-200 transition-all uppercase tracking-widest">
+                        Fermer le dossier
+                    </button>
                 </div>
             </div>
-        `,
-    width: "1000px",
-    showConfirmButton: false,
-    showCloseButton: false,
-    padding: "1.5rem",
-    customClass: {
-      popup: "rounded-[1.5rem] viewer-modal",
-      htmlContainer: "!m-0",
-    },
+
+            <!-- DROITE : APERÇU (65%) -->
+            <div id="preview-container" class="flex-1 bg-slate-900 relative flex flex-col items-center shadow-inner overflow-x-hidden">
+                ${hasDocs ? `
+                    <div class="absolute top-4 right-4 z-10 sticky">
+                        <a id="external-link-btn" href="${firstDocUrl}" target="_blank" class="bg-white/90 backdrop-blur text-slate-700 px-4 py-2 rounded-xl text-[10px] font-black shadow-xl hover:text-blue-600 transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-up-right-from-square"></i> Plein écran
+                        </a>
+                    </div>
+                    <iframe id="doc-viewer-frame" src="" class="w-full h-full bg-white hidden" frameborder="0"></iframe>
+                    <img id="doc-viewer-img" class="w-full h-auto min-h-full bg-black/5 hidden object-top">
+                ` : `
+                    <div class="h-full flex flex-col items-center justify-center text-slate-500">
+                        <i class="fa-solid fa-folder-open text-6xl opacity-20 mb-4"></i>
+                        <p class="text-sm font-bold uppercase tracking-widest">Dossier vide</p>
+                    </div>
+                `}
+            </div>
+        </div>`,
     didOpen: () => {
       const firstBtn = document.querySelector(".doc-btn");
-      if (firstBtn) {
-        const onclickStr = firstBtn.getAttribute("onclick");
-        const url = onclickStr.split("'")[1];
-        window.changePreview(url, firstBtn);
-      }
+      if (firstBtn && firstDocUrl) window.changePreview(firstDocUrl, firstBtn);
     },
   });
 }
 
 export async function fetchCandidates() {
   const body = document.getElementById("candidates-body");
-  body.innerHTML =
-    '<tr><td colspan="4" class="p-8 text-center"><i class="fa-solid fa-circle-notch fa-spin text-blue-600 text-2xl"></i><p class="text-xs text-slate-400 mt-2 font-bold uppercase">Chargement des talents...</p></td></tr>';
+  body.innerHTML = '<tr><td colspan="4" class="p-8 text-center"><i class="fa-solid fa-circle-notch fa-spin text-blue-600 text-2xl"></i><p class="text-xs text-slate-400 mt-2 font-bold uppercase">Chargement des talents...</p></td></tr>';
 
   try {
-    const r = await secureFetch(
-      `${URL_READ_CANDIDATES}?agent=${encodeURIComponent(AppState.currentUser.nom)}`,
-    );
+    const r = await secureFetch(`${URL_READ_CANDIDATES}?agent=${encodeURIComponent(AppState.currentUser.nom)}`);
     let rawData = await r.json();
 
     let candidates = [];
-    if (Array.isArray(rawData)) {
-      candidates = rawData;
-    } else if (typeof rawData === "object" && rawData !== null) {
-      candidates = rawData.data || rawData.items || [rawData];
-    }
+    if (Array.isArray(rawData)) { candidates = rawData; } 
+    else if (typeof rawData === "object" && rawData !== null) { candidates = rawData.data || rawData.items || [rawData]; }
+
+    // 💥 AJOUTE CETTE LIGNE ICI POUR GARDER LES INFOS EN MÉMOIRE
+    AppState.currentCandidates = candidates; 
 
     body.innerHTML = "";
 
@@ -2707,8 +2670,8 @@ export async function fetchCandidates() {
         badgeClass = "bg-yellow-50 text-yellow-700";
 
       const btnDocs = `
-                <button onclick="window.showCandidateDocs('${safeNom}', '${c.poste_vise || "Candidat"}', '${safeCv}', '${safeLm}', '${safeDip}', '${safeAtt}', '${safeIdCard}')" 
-                        class="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:text-blue-600 hover:border-blue-200 shadow-sm transition-all mr-2" title="Ouvrir le dossier">
+                <button onclick="window.showCandidateDocs('${c.id}')" 
+                        class="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:text-blue-600 hover:border-blue-200 shadow-sm transition-all mr-2" title="Ouvrir le dossier complet">
                     <i class="fa-solid fa-folder-open"></i>
                 </button>
             `;
