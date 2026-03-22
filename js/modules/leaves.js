@@ -106,6 +106,9 @@ export async function fetchLeaveRequests() {
     );
     const rawLeaves = await r.json();
 
+    // 🔥 LE LOG MAGIQUE : On affiche EXACTEMENT ce qui est reçu de la base de données
+    console.log("📥 Congés bruts reçus de la DB:", rawLeaves);
+
     AppState.allLeaves = rawLeaves.map((l) => {
       if (!l) return null; 
       const clean = (v) => (Array.isArray(v) ? v[0] : v);
@@ -113,88 +116,90 @@ export async function fetchLeaveRequests() {
       
       return {
         id: l.record_id || l.id || "",
-        employee_id: l.employee_id || "", // 👈 Indispensable pour le filtrage
+        employee_id: l.employee_id || "", // 👈 Crucial pour que le filtrage perso marche
         nom: rawNom ? String(rawNom).trim() : "Inconnu",
         nomIndex: normalize(rawNom),
         statut: normalize(clean(l.Statut || l.statut || "")),
         statutOriginal: clean(l.Statut || l.statut || "En attente"),
         type: clean(l.Type || l.type || "Congé"),
-        debut: clean(l["Date Début"] || l["Date de début"] || l.debut)
-          ? parseDateSmart(clean(l["Date Début"] || l["Date de début"] || l.debut))
+        debut: clean(l["Date Début"] || l["Date de début"] || l.date_debut || l.debut)
+          ? parseDateSmart(clean(l["Date Début"] || l["Date de début"] || l.date_debut || l.debut))
           : null,
-        fin: clean(l["Date Fin"] || l["Date de fin"] || l.fin)
-          ? parseDateSmart(clean(l["Date Fin"] || l["Date de fin"] || l.fin))
+        fin: clean(l["Date Fin"] || l["Date de fin"] || l.date_fin || l.fin)
+          ? parseDateSmart(clean(l["Date Fin"] || l["Date de fin"] || l.date_fin || l.fin))
           : null,
         motif: clean(l.motif || l.Motif || "Aucun motif"),
-        doc: clean(l.justificatif_link || l.Justificatif || l.doc || null),
+        doc: clean(l.justificatif_link || l.justificatif_url || l.Justificatif || l.doc || null),
         solde: l.solde_actuel || 0,
       };
     }).filter(item => item !== null);
+
+    console.log("🧩 Congés après formatage (AppState.allLeaves):", AppState.allLeaves);
 
 
     // ============================================================
     // PARTIE 1 : TABLEAU DE VALIDATION (POUR MANAGER / ADMIN / RH)
     // ============================================================
     if (AppState.currentUser.role !== "EMPLOYEE" && body) {
-      // On filtre de manière plus souple avec .includes
+      // 💡 On filtre de manière très large pour "attente" (majuscule, minuscule, espace...)
       const pending = AppState.allLeaves.filter(
-        (l) => l.statut.includes("attente")
+        (l) => l.statut.includes("attente") || l.statutOriginal.toLowerCase().includes("attente")
       );
+      
+      console.log("👀 Congés 'En attente' trouvés pour l'Admin:", pending);
 
-      if (body && section) {
-        section.classList.remove("hidden");
-        body.innerHTML = "";
+      if (section) section.classList.remove("hidden");
+      body.innerHTML = "";
 
-        const canValidate = AppState.currentUser.permissions?.can_validate_leaves;
+      const canValidate = AppState.currentUser.permissions?.can_validate_leaves;
 
-        if (pending.length > 0) {
-          pending.forEach((l) => {
-            const cleanNom = l.nom.replace(/"/g, "&quot;");
-            const cleanType = l.type.replace(/"/g, "&quot;");
-            const cleanMotif = l.motif.replace(/"/g, "&quot;");
-            const cleanDoc = (l.doc || "").replace(/"/g, "&quot;");
+      if (pending.length > 0) {
+        pending.forEach((l) => {
+          const cleanNom = l.nom.replace(/"/g, "&quot;");
+          const cleanType = l.type.replace(/"/g, "&quot;");
+          const cleanMotif = l.motif.replace(/"/g, "&quot;");
+          const cleanDoc = (l.doc || "").replace(/"/g, "&quot;");
 
-            const dStart = l.debut ? l.debut.toLocaleDateString("fr-FR") : "?";
-            const dEnd = l.fin ? l.fin.toLocaleDateString("fr-FR") : "?";
+          const dStart = l.debut ? l.debut.toLocaleDateString("fr-FR") : "?";
+          const dEnd = l.fin ? l.fin.toLocaleDateString("fr-FR") : "?";
 
-            const diffTime = l.fin && l.debut ? Math.abs(l.fin - l.debut) : 0;
-            const daysDifference = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+          const diffTime = l.fin && l.debut ? Math.abs(l.fin - l.debut) : 0;
+          const daysDifference = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-            const soldeColor = l.solde <= 5 ? "text-orange-600" : "text-emerald-600";
+          const soldeColor = l.solde <= 5 ? "text-orange-600" : "text-emerald-600";
 
-            body.innerHTML += `
-                <tr class="border-b hover:bg-slate-50 transition-colors">
-                    <td class="px-8 py-4">
-                        <div class="font-bold text-sm text-slate-700">${l.nom}</div>
-                        <div class="text-[9px] font-black uppercase ${soldeColor} mb-1">
-                            Solde actuel : ${l.solde} JOURS
-                        </div>
-                        <div class="text-[10px] text-slate-400 font-normal uppercase">${l.type}</div>
-                    </td>
-                    <td class="px-8 py-4 text-xs text-slate-500">${dStart} ➔ ${dEnd}</td>
-                    <td class="px-8 py-4 text-right flex justify-end items-center gap-2">
-                        <button onclick="showLeaveDetail(this)" 
-                                data-nom="${cleanNom}"
-                                data-type="${cleanType}"
-                                data-start="${dStart}"
-                                data-end="${dEnd}"
-                                data-motif="${cleanMotif}"
-                                data-doc="${cleanDoc}"
-                                class="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm mr-2">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
-                        ${canValidate ? `
-                            <button onclick="processLeave('${l.id}', 'Validé', ${daysDifference})" class="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-md shadow-emerald-200">OUI</button>
-                            <button onclick="processLeave('${l.id}', 'Refusé', 0)" class="bg-white text-red-500 border border-red-100 px-4 py-2 rounded-xl text-[10px] font-black uppercase">NON</button>
-                        ` : `
-                            <div class="px-3 py-1.5 bg-slate-100 text-slate-400 rounded-lg text-[9px] font-black uppercase tracking-tighter">Lecture seule</div>
-                        `}
-                    </td>
-                </tr>`;
-          });
-        } else {
-          body.innerHTML = `<tr><td colspan="3" class="px-8 py-10 text-center text-slate-400 italic text-xs uppercase tracking-widest font-black opacity-20">Aucune demande en attente</td></tr>`;
-        }
+          body.innerHTML += `
+              <tr class="border-b hover:bg-slate-50 transition-colors">
+                  <td class="px-8 py-4">
+                      <div class="font-bold text-sm text-slate-700">${l.nom}</div>
+                      <div class="text-[9px] font-black uppercase ${soldeColor} mb-1">
+                          Solde actuel : ${l.solde} JOURS
+                      </div>
+                      <div class="text-[10px] text-slate-400 font-normal uppercase">${l.type}</div>
+                  </td>
+                  <td class="px-8 py-4 text-xs text-slate-500">${dStart} ➔ ${dEnd}</td>
+                  <td class="px-8 py-4 text-right flex justify-end items-center gap-2">
+                      <button onclick="showLeaveDetail(this)" 
+                              data-nom="${cleanNom}"
+                              data-type="${cleanType}"
+                              data-start="${dStart}"
+                              data-end="${dEnd}"
+                              data-motif="${cleanMotif}"
+                              data-doc="${cleanDoc}"
+                              class="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm mr-2">
+                          <i class="fa-solid fa-eye"></i>
+                      </button>
+                      ${canValidate ? `
+                          <button onclick="processLeave('${l.id}', 'Validé', ${daysDifference})" class="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-md shadow-emerald-200">OUI</button>
+                          <button onclick="processLeave('${l.id}', 'Refusé', 0)" class="bg-white text-red-500 border border-red-100 px-4 py-2 rounded-xl text-[10px] font-black uppercase">NON</button>
+                      ` : `
+                          <div class="px-3 py-1.5 bg-slate-100 text-slate-400 rounded-lg text-[9px] font-black uppercase tracking-tighter">Lecture seule</div>
+                      `}
+                  </td>
+              </tr>`;
+        });
+      } else {
+        body.innerHTML = `<tr><td colspan="3" class="px-8 py-10 text-center text-slate-400 italic text-xs uppercase tracking-widest font-black opacity-20">Aucune demande en attente</td></tr>`;
       }
     }
 
@@ -204,10 +209,12 @@ export async function fetchLeaveRequests() {
     if (myBody) {
       myBody.innerHTML = "";
       
-      // 👈 On filtre par ID Employé au lieu du Nom pour éviter les erreurs de texte
+      // On filtre en comparant l'ID exact
       const myRequests = AppState.allLeaves.filter(
         (l) => String(l.employee_id) === String(AppState.currentUser.id)
       );
+      
+      console.log("👀 Congés personnels trouvés:", myRequests);
 
       if (myRequests.length === 0) {
         myBody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400 italic text-xs">Aucune demande soumise.</td></tr>';
@@ -243,7 +250,6 @@ export async function fetchLeaveRequests() {
     if (myBody) myBody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-400">Erreur de chargement des congés.</td></tr>';
   }
 }
-
 
 export function showLeaveDetail(btn) {
   // 1. RÉCUPÉRATION DES DONNÉES
