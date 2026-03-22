@@ -87,8 +87,8 @@
         
         <!-- En-tête -->
         <div class="flex flex-col items-center text-center">
-            <div class="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-blue-600 rounded-2xl sm:rounded-[1.5rem] shadow-xl shadow-blue-500/30 mb-4 text-white transition-transform hover:scale-105 duration-300">
-                <i class="fa-solid fa-fingerprint text-3xl sm:text-4xl"></i>
+            <div class="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-slate-900 rounded-2xl sm:rounded-[1.5rem] shadow-xl shadow-blue-500/20 mb-4 overflow-hidden transition-transform hover:scale-105 duration-300 border border-slate-800">
+                <img src="https://cdn-icons-png.flaticon.com/512/9752/9752284.png" class="w-10 h-10 sm:w-12 sm:h-12 object-contain">
             </div>
             <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">SIRH-SECURE</h1>
             <p class="text-slate-500 mt-1.5 text-sm sm:text-base font-medium">Connectez-vous à votre espace</p>
@@ -141,8 +141,8 @@
                 <div class="p-5 flex-1 overflow-y-auto">
                     <div class="flex items-center justify-between mb-10 text-white">
     <div class="flex items-center gap-3">
-        <div class="p-1.5 rounded-xl shadow-lg flex items-center justify-center" style="background-color: var(--accent); min-width: 40px; height: 40px;">
-            <img src="" class="app-logo-display w-7 h-7 object-contain">
+        <div class="p-1.5 rounded-xl shadow-lg flex items-center justify-center bg-slate-800 border border-slate-700" style="min-width: 40px; height: 40px;">
+            <img src="https://cdn-icons-png.flaticon.com/512/9752/9752284.png" class="app-logo-display w-7 h-7 object-contain">
         </div>
         <span class="font-black text-lg tracking-tighter company-name-display">SIRH SECURE</span>
     </div>
@@ -331,7 +331,10 @@
                     <button onclick="toggleDarkMode()" class="p-2.5 bg-slate-100 dark-toggle-btn text-slate-600 rounded-xl hover:bg-slate-200 transition-all active:scale-95 mr-2">
                     <i class="fa-solid fa-moon text-lg" id="dark-icon"></i>
                     </button>
-                    <button onclick="startScanner()" class="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold ml-4 transition-all hover:scale-105 shadow-lg active:scale-95"><i class="fa-solid fa-qrcode mr-2"></i> SCANNER</button>
+                    <button onclick="startScanner()" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold ml-4 transition-all hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-95 flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved"></i> 
+                        <span>SCANNER ACCÈS</span>
+                    </button>
                 </header>
 
     <div id="main-scroll-container" class="flex-1 overflow-y-auto p-3 md:p-5 scroll-smooth no-scrollbar">             
