@@ -62,8 +62,8 @@ export async function triggerGlobalPush(title, message) {
     const reg = await navigator.serviceWorker.ready;
     reg.showNotification(title, {
       body: message,
-      icon: "https://cdn-icons-png.flaticon.com/512/13594/13594876.png",
-      badge: "https://cdn-icons-png.flaticon.com/512/13594/13594876.png",
+      icon: "https://cdn-icons-png.flaticon.com/512/9752/9752284.png", 
+      badge: "https://cdn-icons-png.flaticon.com/512/9752/9752284.png",
       vibrate: [100, 50, 100],
       data: { url: window.location.href },
       actions: [{ action: "open", title: "Voir maintenant" }],
