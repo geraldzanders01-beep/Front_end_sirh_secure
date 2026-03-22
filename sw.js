@@ -96,8 +96,8 @@ self.addEventListener('push', (event) => {
 
     const options = {
         body: data.body,
-        icon: 'https://cdn-icons-png.flaticon.com/128/13594/13594876.png', // Ton logo
-        badge: 'https://cdn-icons-png.flaticon.com/128/13594/13594876.png', // Petite icône barre d'état
+        icon: 'https://cdn-icons-png.flaticon.com/512/9752/9752284.png',
+        badge: 'https://cdn-icons-png.flaticon.com/512/9752/9752284.png',
         vibrate: [100, 50, 100], // Vibration type WhatsApp
         data: {
             url: data.url || '/'
