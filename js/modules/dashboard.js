@@ -318,3 +318,45 @@ export async function fetchLiveAttendance() {
     console.error("Erreur Live Tracker", e);
   }
 }
+
+
+
+
+export async function initLiveMap() {
+    const mapEl = document.getElementById('map');
+    if (!mapEl) return;
+
+    // 1. Initialisation de la carte (Centrée sur Cotonou par défaut)
+    const map = L.map('map').setView([6.3654, 2.4183], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: 'SIRH SECURE © 2026'
+    }).addTo(map);
+
+    try {
+        const r = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/get-live-positions`);
+        const positions = await r.json();
+
+        positions.forEach(p => {
+            const iconColor = p.action === 'CLOCK_IN' ? 'green' : 'red';
+            
+            // Personnalisation des marqueurs
+            const marker = L.circleMarker([p.gps_lat, p.gps_lon], {
+                radius: 8,
+                fillColor: iconColor,
+                color: "#fff",
+                weight: 2,
+                fillOpacity: 0.8
+            }).addTo(map);
+
+            marker.bindPopup(`
+                <div style="font-family:sans-serif; font-size:11px;">
+                    <b>${p.employees.nom}</b><br>
+                    ${p.zone_detectee}<br>
+                    <i>${new Date(p.heure).toLocaleTimeString()}</i>
+                </div>
+            `);
+        });
+    } catch (e) {
+        console.error("Erreur chargement carte:", e);
+    }
+}
