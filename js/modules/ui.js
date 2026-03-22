@@ -233,6 +233,10 @@ export function switchView(v) {
   if (v === "dash") {
     window.renderCharts();
     window.fetchLiveAttendance();
+    if (typeof window.initLiveMap === 'function') {
+        window.initLiveMap(); 
+    }
+    
   }
 
   // 2. Collaborateurs (Affichage de la liste)
