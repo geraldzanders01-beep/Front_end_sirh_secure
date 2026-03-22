@@ -685,3 +685,42 @@ export async function viewPayroll(payrollId, fileUrl, title) {
     }
 }
 
+
+
+
+export async function saveRule() {
+    // 1. Récupération des valeurs du formulaire HTML
+    const field = document.getElementById('r-field').value;
+    const operator = document.getElementById('r-op').value;
+    const val = document.getElementById('r-val').value;
+    const actionValue = prompt("Quel est le montant de la prime/déduction en CFA ? (ex: 15000)");
+
+    if (!val || !actionValue) return Swal.fire("Erreur", "Tous les champs sont requis", "warning");
+
+    Swal.fire({ title: 'Enregistrement...', didOpen: () => Swal.showLoading() });
+
+    try {
+        // 2. Envoi au serveur
+        const response = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/save-payroll-rule`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                rule_name: `Règle Auto (${val})`,
+                condition_field: field,
+                condition_operator: operator,
+                condition_value: val,
+                action_type: 'ADD_FIXED', // On simplifie : Ajout fixe par défaut
+                action_value: actionValue
+            })
+        });
+
+        if (response.ok) {
+            Swal.fire("Succès", "La règle a été ajoutée. Elle s'appliquera automatiquement au prochain calcul de paie.", "success");
+            // Optionnel : Recharger la liste des règles ici
+        } else {
+            throw new Error("Erreur serveur");
+        }
+    } catch (e) {
+        Swal.fire("Erreur", e.message, "error");
+    }
+}
