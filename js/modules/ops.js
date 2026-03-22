@@ -355,7 +355,12 @@ export async function handleClockInOut() {
             
             const pos = await new Promise((res, rej) => { 
                 // J'ai augmenté le timeout à 15s pour les mauvaises connexions
-                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000, enableHighAccuracy: true }); 
+            navigator.geolocation.getCurrentPosition(res, rej, { 
+                timeout: 15000, 
+                enableHighAccuracy: true,
+                maximumAge: 0 // <-- FORCE LE TEL À PRENDRE UNE NOUVELLE MESURE, PAS LE CACHE
+            });
+              
             });
             currentGps = `${pos.coords.latitude},${pos.coords.longitude}`;
         } catch (e) { 
