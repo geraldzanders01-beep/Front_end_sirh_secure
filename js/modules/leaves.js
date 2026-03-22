@@ -112,7 +112,7 @@ export async function fetchLeaveRequests() {
     AppState.allLeaves = rawLeaves.map((l) => {
       if (!l) return null; 
       const clean = (v) => (Array.isArray(v) ? v[0] : v);
-      const rawNom = clean(l.employees_nom || l.nom || l["Employé"] || "Inconnu");
+      const rawNom = clean(l.Employees_nom || l.employees_nom || l.nom || l["Employé"] || "Inconnu");
       
       return {
         id: l.record_id || l.id || "",
