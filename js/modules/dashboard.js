@@ -321,42 +321,68 @@ export async function fetchLiveAttendance() {
 
 
 
+// On crée une variable hors de la fonction pour garder la carte en mémoire
+let leafletMap = null;
 
 export async function initLiveMap() {
-    const mapEl = document.getElementById('map');
-    if (!mapEl) return;
+    const mapContainer = document.getElementById('map');
+    if (!mapContainer) return;
 
-    // 1. Initialisation de la carte (Centrée sur Cotonou par défaut)
-    const map = L.map('map').setView([6.3654, 2.4183], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: 'SIRH SECURE © 2026'
-    }).addTo(map);
+    // 1. SI LA CARTE EXISTE DÉJÀ : On la rafraîchit simplement
+    if (leafletMap) {
+        // Cette ligne est cruciale pour corriger les bugs d'affichage après un switch de vue
+        setTimeout(() => { leafletMap.invalidateSize(); }, 200);
+    } else {
+        // 2. INITIALISATION UNIQUE
+        leafletMap = L.map('map').setView([6.3654, 2.4183], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'SIRH SECURE'
+        }).addTo(leafletMap);
+    }
+
+    // 3. NETTOYAGE DES ANCIENS MARQUEURS
+    // On crée un groupe de calques pour pouvoir les effacer facilement
+    if (!window.mapMarkersGroup) {
+        window.mapMarkersGroup = L.layerGroup().addTo(leafletMap);
+    }
+    window.mapMarkersGroup.clearLayers();
 
     try {
         const r = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/get-live-positions`);
         const positions = await r.json();
 
+        if (positions.length === 0) return;
+
         positions.forEach(p => {
-            const iconColor = p.action === 'CLOCK_IN' ? 'green' : 'red';
+            if (!p.gps_lat || !p.gps_lon) return;
+
+            const iconColor = p.action === 'CLOCK_IN' ? '#10b981' : '#ef4444'; // Vert ou Rouge
             
-            // Personnalisation des marqueurs
             const marker = L.circleMarker([p.gps_lat, p.gps_lon], {
-                radius: 8,
+                radius: 10,
                 fillColor: iconColor,
                 color: "#fff",
-                weight: 2,
-                fillOpacity: 0.8
-            }).addTo(map);
+                weight: 3,
+                fillOpacity: 0.9
+            });
 
             marker.bindPopup(`
-                <div style="font-family:sans-serif; font-size:11px;">
-                    <b>${p.employees.nom}</b><br>
-                    ${p.zone_detectee}<br>
-                    <i>${new Date(p.heure).toLocaleTimeString()}</i>
+                <div style="text-align:center;">
+                    <img src="${p.employees.photo_url || ''}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;"><br>
+                    <b style="text-transform:uppercase;">${p.employees.nom}</b><br>
+                    <span style="font-size:10px;">${p.zone_detectee}</span><br>
+                    <small>${new Date(p.heure).toLocaleTimeString()}</small>
                 </div>
             `);
+            
+            window.mapMarkersGroup.addLayer(marker);
         });
+
+        // Optionnel : Ajuster la vue pour voir tout le monde
+        const group = new L.featureGroup(window.mapMarkersGroup.getLayers());
+        leafletMap.fitBounds(group.getBounds());
+
     } catch (e) {
-        console.error("Erreur chargement carte:", e);
+        console.error("Erreur chargement positions:", e);
     }
 }
