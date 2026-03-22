@@ -13,7 +13,6 @@ export async function fetchMessages() {
     );
     const messages = await response.json();
 
-    // Petite optimisation : si le nombre de messages n'a pas changé, on ne redessine pas tout
     if (container.dataset.msgCount == messages.length) return;
     container.dataset.msgCount = messages.length;
 
@@ -21,7 +20,6 @@ export async function fetchMessages() {
     let lastDate = null;
 
     messages.forEach((msg) => {
-      // Gestion de la date (Afficher "Aujourd'hui" ou la date si ça change)
       const msgDate = new Date(msg.date);
       const dateStr = msgDate.toLocaleDateString();
       if (dateStr !== lastDate) {
@@ -35,55 +33,59 @@ export async function fetchMessages() {
         minute: "2-digit",
       });
 
-      // Design différent pour MOI (Droite/Bleu) et les AUTRES (Gauche/Gris)
       const align = isMe ? "justify-end" : "justify-start";
       const bg = isMe
-        ? "bg-blue-600 text-white rounded-tr-none"
-        : "bg-white border border-slate-100 text-slate-600 rounded-tl-none";
+        ? "bg-blue-600 text-white rounded-tr-none shadow-blue-100"
+        : "bg-white border border-slate-100 text-slate-600 rounded-tl-none shadow-sm";
       const metaAlign = isMe ? "text-right" : "text-left";
 
       let mediaHtml = "";
       if (msg.file && msg.file !== "null" && msg.file !== "") {
         const isImg = /\.(jpg|jpeg|png|gif|webp)$/i.test(msg.file);
-
         if (isImg) {
           mediaHtml = `
-                        <div class="mt-2 rounded-xl overflow-hidden border border-black/5 shadow-sm bg-white">
-                            <img src="${msg.file}" class="w-full h-auto max-h-64 object-cover cursor-pointer hover:opacity-90 transition-all" onclick="window.open('${msg.file}', '_blank')">
-                        </div>`;
+            <div class="mt-2 rounded-xl overflow-hidden border border-black/5 shadow-sm bg-white">
+                <img src="${msg.file}" class="w-full h-auto max-h-64 object-cover cursor-pointer hover:opacity-90 transition-all" onclick="window.open('${msg.file}', '_blank')">
+            </div>`;
         } else {
-          // Design pour les fichiers (PDF, DOC, etc.)
           mediaHtml = `
-                        <a href="${msg.file}" target="_blank" class="flex items-center gap-3 mt-2 p-3 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-all group">
-                            <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm text-blue-600 group-hover:scale-110 transition-transform">
-                                <i class="fa-solid fa-file-lines text-lg"></i>
-                            </div>
-                            <div class="flex-1 overflow-hidden">
-                                <p class="text-[11px] font-bold text-slate-700 truncate">${msg.file.split("/").pop().substring(13)}</p>
-                                <p class="text-[9px] text-blue-500 font-black uppercase">Cliquez pour télécharger</p>
-                            </div>
-                        </a>`;
+            <a href="${msg.file}" target="_blank" class="flex items-center gap-3 mt-2 p-3 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-all group">
+                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm text-blue-600 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-file-lines text-lg"></i>
+                </div>
+                <div class="flex-1 overflow-hidden">
+                    <p class="text-[11px] font-bold text-slate-700 truncate">${msg.file.split("/").pop().substring(13)}</p>
+                    <p class="text-[9px] text-blue-500 font-black uppercase">Télécharger</p>
+                </div>
+            </a>`;
         }
       }
 
+      // --- LE CHANGEMENT EST ICI : AVATAR COHÉRENT ---
+      const avatarHtml = !isMe ? `
+        <div class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700 shadow-md overflow-hidden group-hover:scale-110 transition-transform">
+            <img src="${msg.sender_photo || 'https://cdn-icons-png.flaticon.com/512/9752/9752284.png'}" 
+                 class="w-full h-full object-cover ${!msg.sender_photo ? 'p-1.5' : ''}" 
+                 onerror="this.src='https://cdn-icons-png.flaticon.com/512/9752/9752284.png'; this.classList.add('p-1.5')">
+        </div>` : "";
+
       container.innerHTML += `
-                <div class="flex ${align} gap-3 mb-2 animate-fadeIn">
-                    ${!isMe ? `<div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0 border border-indigo-200 shadow-sm">${msg.sender_name ? msg.sender_name.charAt(0) : "?"}</div>` : ""}
+                <div class="flex ${align} gap-3 mb-4 animate-fadeIn group">
+                    ${avatarHtml}
                     
                     <div class="max-w-[75%]">
-                        ${!isMe ? `<p class="text-[9px] font-bold text-slate-400 ml-1 mb-1">${msg.sender_name || "Inconnu"}</p>` : ""}
+                        ${!isMe ? `<p class="text-[9px] font-black text-slate-400 ml-1 mb-1 uppercase tracking-tighter">${msg.sender_name || "Inconnu"}</p>` : ""}
                         
-                        <div class="p-4 rounded-2xl shadow-sm ${bg} text-sm font-medium leading-relaxed">
+                        <div class="p-4 rounded-2xl ${bg} text-sm font-medium leading-relaxed">
                             ${msg.message}
                             ${mediaHtml}
                         </div>
-                        <p class="text-[9px] text-slate-300 mt-1 ${metaAlign} opacity-70">${time}</p>
+                        <p class="text-[9px] text-slate-300 mt-1 ${metaAlign} opacity-70 font-bold font-mono">${time}</p>
                     </div>
                 </div>
             `;
     });
 
-    // Scroll tout en bas
     container.scrollTop = container.scrollHeight;
   } catch (e) {
     console.error("Chat Error", e);
