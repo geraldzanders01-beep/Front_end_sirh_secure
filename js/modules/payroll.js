@@ -7,12 +7,14 @@ export async function loadAccountingView() {
   const body = document.getElementById("accounting-table-body");
   if (!body) return;
 
-  // 0. Charger les taux fiscaux si pas encore fait
+  // On récupère la période sélectionnée pour le calcul intelligent
+  const mois = document.getElementById("pay-month").value;
+  const annee = document.getElementById("pay-year").value;
+
   if (typeof window.fetchPayrollConstants === "function" && Object.keys(AppState.payrollConstants).length === 0) {
     await fetchPayrollConstants();
   }
 
-  // 1. Récupération des valeurs de TOUS les filtres
   const filters = {
     type: document.getElementById("filter-accounting-type").value,
     dept: document.getElementById("filter-accounting-dept").value,
@@ -21,122 +23,124 @@ export async function loadAccountingView() {
     agent: AppState.currentUser.nom,
   };
 
-  body.innerHTML = '<tr><td colspan="6" class="p-12 text-center"><i class="fa-solid fa-circle-notch fa-spin text-blue-600 text-3xl"></i><p class="text-[10px] font-black text-slate-400 uppercase mt-4">Filtrage des données en cours...</p></td></tr>';
+  body.innerHTML = '<tr><td colspan="7" class="p-12 text-center"><i class="fa-solid fa-robot fa-bounce text-blue-600 text-3xl"></i><p class="text-[10px] font-black text-slate-400 uppercase mt-4">Analyse intelligente de la période en cours...</p></td></tr>';
 
   try {
-    // 2. Construction de l'URL de recherche
-    let url = `${SIRH_CONFIG.apiBaseUrl}/read-payroll-full?agent=${encodeURIComponent(filters.agent)}`;
+    // 1. APPELS EN PARALLÈLE (Employés + Calculs du Robot)
+    const [resEmp, resRules, resAuto] = await Promise.all([
+      secureFetch(`${SIRH_CONFIG.apiBaseUrl}/read-payroll-full?agent=${encodeURIComponent(filters.agent)}&type=${filters.type}&dept=${encodeURIComponent(filters.dept)}&status=${filters.status}&role=${encodeURIComponent(filters.role)}`),
+      secureFetch(`${SIRH_CONFIG.apiBaseUrl}/list-payroll-rules`),
+      secureFetch(`${SIRH_CONFIG.apiBaseUrl}/compute-automated-payroll?month=${mois}&year=${annee}`) // Le moteur qu'on a créé au point précédent
+    ]);
 
-    if (filters.type !== "all") url += `&type=${filters.type}`;
-    if (filters.dept !== "all") url += `&dept=${encodeURIComponent(filters.dept)}`;
-    if (filters.status !== "all") url += `&status=${filters.status}`;
-    if (filters.role !== "all") url += `&role=${encodeURIComponent(filters.role)}`;
-
-    const r = await secureFetch(url);
-    const employeesToPay = await r.json();
-
-    // Récupération des règles dynamiques
-    const rulesRes = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/list-payroll-rules`);
-    const dynamicRules = await rulesRes.json();
+    const employeesToPay = await resEmp.json();
+    const dynamicRules = await resRules.json();
+    const autoPerformanceData = await resAuto.json();
 
     body.innerHTML = "";
     if (employeesToPay.length === 0) {
-      body.innerHTML = '<tr><td colspan="6" class="p-20 text-center text-slate-300 italic">Aucun collaborateur ne correspond à ces critères.</td></tr>';
+      body.innerHTML = '<tr><td colspan="7" class="p-20 text-center text-slate-300 italic">Aucun collaborateur trouvé.</td></tr>';
       return;
     }
 
-    // 3. Rendu du tableau
+    // 2. Rendu du tableau avec fusion des intelligences
     employeesToPay.forEach((emp, index) => {
       const safeNom = emp.nom || "Inconnu";
       const safeMatricule = emp.matricule || "N/A";
-      const safePoste = emp.poste || "Non défini";
-      const initial = safeNom !== "Inconnu" ? safeNom.charAt(0).toUpperCase() : "?";
-      const searchString = `${safeNom.toLowerCase()} ${safeMatricule.toLowerCase()}`;
+      const initial = safeNom.charAt(0).toUpperCase();
       
-      // A. Calcul de base (Transport + Logement de la fiche employé)
-      let totalIndemnites = (parseFloat(emp.indemnite_transport) || 0) + (parseFloat(emp.indemnite_logement) || 0);
+      // A. PERFORMANCE RÉELLE (Visites, Heures...)
+      const perf = autoPerformanceData.find(a => a.employee_id === emp.id) || { computed_bonus: 0, explanation: "Aucune activité détectée" };
 
-      // 💥 B. APPLICATION DES RÈGLES DYNAMIQUES (Le moteur No-Code)
-      let primesAutoParRegles = 0;
-      if (dynamicRules && Array.isArray(dynamicRules)) {
-          dynamicRules.forEach(rule => {
-              let isMatch = false;
-              const valEmploye = emp[rule.condition_field]; // ex: emp['employee_type']
-              
-              if (rule.condition_operator === '==' && valEmploye == rule.condition_value) isMatch = true;
-              if (rule.condition_operator === '>' && parseFloat(valEmploye) > parseFloat(rule.condition_value)) isMatch = true;
+      // B. INDEMNITÉS FIXES (Fiche employé)
+      let fixeRH = (parseFloat(emp.indemnite_transport) || 0) + (parseFloat(emp.indemnite_logement) || 0);
 
-              if (isMatch) {
-                  primesAutoParRegles += parseFloat(rule.action_value || 0);
-              }
-          });
-      }
+      // C. RÈGLES STATIQUES (Type, Dept...)
+      let primesReglesStatiques = 0;
+      dynamicRules.forEach(rule => {
+          if (rule.data_source === 'PROFILE') { // On n'applique ici que les règles de profil
+              const val = emp[rule.condition_field];
+              if (rule.condition_operator === '==' && val == rule.condition_value) primesReglesStatiques += parseFloat(rule.action_value);
+          }
+      });
       
-      // On additionne les primes automatiques au total des indemnités fixes de la ligne
-      totalIndemnites += primesAutoParRegles;
+      // TOTAL AUTOMATISÉ (Fixe + Règles de Profil + Performance Robot)
+      const totalAutomatique = fixeRH + primesReglesStatiques + perf.computed_bonus;
 
       body.innerHTML += `
-        <tr class="hover:bg-blue-50/50 transition-all accounting-row animate-fadeIn" data-search="${searchString}">
+        <tr class="hover:bg-blue-50/50 transition-all accounting-row animate-fadeIn" data-search="${safeNom.toLowerCase()}">
             <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400">${initial}</div>
                     <div>
                         <div class="font-black text-slate-800 text-[11px] uppercase">${safeNom}</div>
-                        <div class="text-[9px] text-slate-400 font-bold">${safeMatricule} • ${safePoste}</div>
+                        <div class="text-[9px] text-slate-400 font-bold">${safeMatricule} • ${emp.poste}</div>
                     </div>
                 </div>
             </td>
+            
+            <!-- SALAIRE DE BASE -->
             <td class="px-2 py-4 text-center">
                 <input type="number" oninput="window.calculateRow(${index})" id="base-${index}" 
-                       class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-center font-black text-xs focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition-all" 
+                       class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-center font-black text-xs shadow-sm" 
                        value="${emp.salaire_brut_fixe || 0}">
             </td>
+
+            <!-- INDEMNITÉS & RÈGLES (FIXE + AUTO) -->
             <td class="px-2 py-4 text-center">
-                <div class="bg-indigo-50/50 border border-indigo-100 rounded-xl py-2 shadow-sm">
-                    <span id="indem-constante-${index}" class="text-indigo-700 font-black text-xs">${totalIndemnites}</span>
-                    <p class="text-[7px] text-indigo-400 font-bold uppercase tracking-tighter">Fixe + Règles</p>
+                <div class="relative group bg-indigo-50/50 border border-indigo-100 rounded-xl py-2 shadow-sm cursor-help" title="${perf.explanation}">
+                    <span id="indem-constante-${index}" class="text-indigo-700 font-black text-xs">${totalAutomatique}</span>
+                    <p class="text-[7px] text-indigo-400 font-bold uppercase tracking-tighter">Automatisé</p>
+                    
+                    <!-- Indicateur si le robot a travaillé -->
+                    ${perf.computed_bonus > 0 ? '<div class="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>' : ''}
                 </div>
             </td>
+            
+            <!-- PRIMES MANUELLES (Pour les bonus exceptionnels du mois) -->
             <td class="px-2 py-4 text-center">
                 <input type="number" oninput="window.calculateRow(${index})" id="prime-${index}" 
-                       class="w-full p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-center font-black text-xs text-emerald-700 focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm transition-all placeholder-emerald-300" 
+                       class="w-full p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-center font-black text-xs text-emerald-700" 
                        placeholder="0">
             </td>
+
+            <!-- ACOMPTES -->
             <td class="px-2 py-4 text-center">
                 <input type="number" oninput="window.calculateRow(${index})" id="acompte-${index}" 
-                       class="w-full p-2.5 bg-orange-50 border border-orange-200 rounded-xl text-center font-black text-xs text-orange-700 focus:ring-2 focus:ring-orange-500 outline-none shadow-sm transition-all placeholder-orange-300" 
+                       class="w-full p-2.5 bg-orange-50 border border-orange-200 rounded-xl text-center font-black text-xs text-orange-700" 
                        placeholder="0">
             </td>
+
+            <!-- RETENUES (TAXES AUTO) -->
             <td class="px-2 py-4 text-center">
-                <div class="relative flex items-center group">
+                <div class="relative flex items-center">
                     <input type="number" oninput="window.calculateRow(${index})" id="tax-${index}" data-auto="true" readonly
-                           class="w-full pl-2 pr-8 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-center font-black text-xs text-red-600 outline-none shadow-inner transition-all">
-                    <button onclick="window.toggleTaxLock(${index})" id="tax-lock-${index}" class="absolute right-2 text-slate-400 hover:text-blue-600 transition-colors" title="Déverrouiller la saisie manuelle">
+                           class="w-full pl-2 pr-8 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-center font-black text-xs text-red-600">
+                    <button onclick="window.toggleTaxLock(${index})" id="tax-lock-${index}" class="absolute right-2 text-slate-400">
                         <i class="fa-solid fa-lock text-[10px]"></i>
                     </button>
                 </div>
-                <p class="text-[7px] text-slate-400 font-bold uppercase tracking-tighter mt-1" id="tax-label-${index}">Calcul Auto</p>
             </td>
+
+            <!-- NET À PAYER FINAL -->
             <td class="px-6 py-4 text-right">
                 <div class="text-sm font-black text-blue-600 bg-blue-50 px-3 py-2 rounded-xl inline-block shadow-sm border border-blue-100 sensitive-value" 
                      onclick="window.toggleSensitiveData(this)" 
                      id="net-${index}" 
                      data-id="${emp.id}" 
                      data-nom="${safeNom}" 
-                     data-poste="${safePoste}" 
                      data-matricule="${safeMatricule}">0 CFA</div>
             </td>
         </tr>`;
     });
 
-    // 4. Calcul immédiat à l'affichage
     employeesToPay.forEach((_, i) => window.calculateRow(i));
+
   } catch (e) {
     console.error("Erreur de rendu paie:", e);
-    body.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-red-500 font-bold uppercase text-xs">Erreur d\'affichage des données</td></tr>';
+    body.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold uppercase text-xs">Erreur de connexion au moteur de règles</td></tr>';
   }
 }
-
 export function resetAccountingFilters() {
   document.getElementById("search-accounting").value = "";
   document.getElementById("filter-accounting-type").value = "all";
