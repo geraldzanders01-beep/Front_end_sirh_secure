@@ -348,13 +348,24 @@ export async function handleClockInOut() {
 
         // Récupération GPS
         try {
-            if (!navigator.geolocation) throw new Error("Navigateur non compatible GPS");
+            if (!navigator.geolocation) throw new Error("GPS bloqué (HTTPS requis ou non supporté)");
+            
+            // On affiche un petit message pour faire patienter
+            Swal.update({ text: 'Recherche du signal GPS...' });
+            
             const pos = await new Promise((res, rej) => { 
-                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000, enableHighAccuracy: true }); 
+                // J'ai augmenté le timeout à 15s pour les mauvaises connexions
+                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000, enableHighAccuracy: true }); 
             });
             currentGps = `${pos.coords.latitude},${pos.coords.longitude}`;
         } catch (e) { 
-            console.warn("GPS non disponible");
+            console.warn("Détail de l'échec GPS :", e.message);
+            // On prévient l'utilisateur avec un Toast pour qu'il sache que le GPS a échoué
+            Swal.fire({
+                toast: true, position: 'top-end', icon: 'warning',
+                title: 'Alerte GPS', text: e.message || "Impossible de vous localiser",
+                showConfirmButton: false, timer: 5000
+            });
             currentGps = "GPS_DISABLED"; 
         }
 
