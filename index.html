@@ -1410,6 +1410,23 @@
     </div>
 
 
+            <!-- Panneau de configuration des règles -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 mt-10">
+            <h3 class="font-black text-slate-800 uppercase text-sm mb-4">Créer une nouvelle règle de Paie</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <select id="r-field" class="p-3 bg-slate-50 rounded-xl text-xs">
+                    <option value="employee_type">Si le type d'employé est...</option>
+                    <option value="total_hours">Si les heures cumulées >...</option>
+                </select>
+                <select id="r-op" class="p-3 bg-slate-50 rounded-xl text-xs">
+                    <option value="==">Est égal à</option>
+                    <option value=">">Supérieur à</option>
+                </select>
+                <input id="r-val" class="p-3 bg-slate-50 rounded-xl text-xs" placeholder="Valeur (ex: MOBILE)">
+                <button onclick="window.saveRule()" class="bg-blue-600 text-white rounded-xl font-bold text-xs uppercase shadow-lg">Enregistrer Règle</button>
+            </div>
+        </div>
+
 
     <!-- NOUVEAU BLOC : CONFIGURATION PAIE -->
     <div class="mt-12 mb-6">
