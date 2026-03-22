@@ -62,10 +62,9 @@ export async function secureFetch(url, options = {}) {
         throw new Error("Session expirée.");
       }
 
-      if (response.status === 403) {
-        throw new Error(
-          "Accès refusé. Vous n'avez pas les droits nécessaires.",
-        );
+if (response.status === 403) {
+        // On affiche le message spécifique du serveur s'il existe (ex: erreur de zone GPS)
+        throw new Error(errorMessage || "Accès refusé. Vous n'avez pas les droits nécessaires.");
       }
       throw new Error(errorMessage);
     }
