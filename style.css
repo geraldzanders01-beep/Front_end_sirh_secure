@@ -537,3 +537,13 @@ button i {
 #view-accounting .bg-white.rounded-xl.shadow-2xl {
     overflow: visible !important;
 }
+
+
+.app-logo-display {
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.4));
+    transition: transform 0.3s ease;
+}
+
+.app-logo-display:hover {
+    transform: rotate(10deg) scale(1.1);
+}
