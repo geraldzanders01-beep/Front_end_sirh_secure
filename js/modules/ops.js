@@ -438,7 +438,7 @@ export async function handleClockInOut() {
             method: 'POST', 
             body: JSON.stringify(payloadObj) 
         });
-
+        console.log("📤 Payload envoyé au serveur :", payloadObj);
         const resData = await response.json();
 
         if (response.ok) {
