@@ -106,6 +106,7 @@ window.fetchLeaveRequests = Leaves.fetchLeaveRequests;
 
 
 // --- Comptabilité & Paie (Payroll) ---
+window.saveRule = Payroll.saveRule; 
 window.simulateMoMoPayment = Payroll.simulateMoMoPayment;
 window.savePayrollConfig = Payroll.savePayrollConfig;
 window.toggleTaxLock = Payroll.toggleTaxLock;
