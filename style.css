@@ -547,3 +547,20 @@ button i {
 .app-logo-display:hover {
     transform: rotate(10deg) scale(1.1);
 }
+
+
+.sensitive-value {
+    filter: blur(6px);
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+    background-color: rgba(226, 232, 240, 0.4);
+    padding: 2px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    user-select: none; /* Empêche de copier-coller sans révéler */
+}
+
+.sensitive-value.revealed {
+    filter: blur(0);
+    background-color: transparent;
+}
