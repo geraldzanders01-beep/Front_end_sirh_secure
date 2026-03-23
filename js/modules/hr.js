@@ -918,7 +918,7 @@ export function openFullFolder(id) {
     <div id="folder-salary-block" class="mt-4 pt-4 border-t border-white/10">
         <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Salaire de Base Fixe</p>
         <div class="flex items-center gap-2">
-            <p class="text-sm font-black text-blue-400 sensitive-value" onclick="toggleSensitiveData(this)">
+            <p class="text-sm font-black text-blue-400 sensitive-value" onclick="window.toggleSensitiveData(this)">
                 ${new Intl.NumberFormat("fr-FR").format(e.salaire_base_fixe || 0)} CFA
             </p>
             <i class="fa-solid fa-eye-slash text-[9px] text-slate-600"></i>
