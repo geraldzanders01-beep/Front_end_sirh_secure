@@ -17,8 +17,7 @@ export async function handleLogin(e) {
   const btn = document.getElementById("btn-login");
   const originalBtnText = btn.innerHTML;
 
-  btn.innerHTML =
-    '<i class="fa-solid fa-circle-notch fa-spin"></i> Connexion...';
+  btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Connexion...';
   btn.disabled = true;
   btn.classList.add("opacity-50", "cursor-not-allowed");
 
@@ -34,46 +33,54 @@ export async function handleLogin(e) {
 
     const d = await response.json();
 
-    // --- CAS 1 : CONNEXION RÉUSSIE ---
+    // --- CAS 1 : CONNEXION RÉUSSIE (Simple employé) ---
     if (d.status === "success") {
-      if (d.token) localStorage.setItem("sirh_token", d.token);
+      await finalizeLogin(d);
+    }
 
-      let r = d.role || "EMPLOYEE";
-      if (Array.isArray(r)) r = r[0];
-
-      const userData = {
-        nom: d.nom || u,
-        role: String(r).toUpperCase(),
-        id: d.id,
-        employee_type: d.employee_type || "OFFICE",
-        permissions: d.permissions || {},
-      };
-
-      localStorage.setItem("sirh_user_session", JSON.stringify(userData));
-
-      const Toast = Swal.mixin({
-        toast: true,
-        position: "top",
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-        background: "#ffffff",
-        color: "#1e293b",
+    // --- 💥 NOUVEAU CAS : DOUBLE AUTHENTIFICATION REQUISE (Admin / RH) ---
+    else if (d.status === "require_2fa") {
+      const { value: otpCode } = await Swal.fire({
+        title: '🔐 Vérification de sécurité',
+        html: `Un code de sécurité a été envoyé à : <br><b>${d.email}</b>`,
+        input: 'text',
+        inputPlaceholder: 'Entrez les 6 chiffres',
+        inputAttributes: {
+          maxlength: 6,
+          autocapitalize: 'off',
+          autocorrect: 'off',
+          style: 'text-align: center; font-size: 2rem; font-weight: 900; letter-spacing: 0.5rem; height: 70px;'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Vérifier le code',
+        confirmButtonColor: '#2563eb',
+        cancelButtonText: 'Annuler',
+        preConfirm: (code) => {
+          if (!code || code.length !== 6 || isNaN(code)) {
+            Swal.showValidationMessage('Veuillez entrer les 6 chiffres du code');
+          }
+          return code;
+        }
       });
 
-      Toast.fire({
-        icon: "success",
-        title: "Connexion réussie",
-        text: "Bienvenue " + userData.nom,
-      });
+      if (otpCode) {
+        Swal.fire({ title: 'Vérification du code...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-      await setSession(
-        userData.nom,
-        userData.role,
-        userData.id,
-        d.permissions,
-        userData.employee_type,
-      );
+        // Appel à la nouvelle route de vérification OTP
+        const resFinal = await fetch(`${SIRH_CONFIG.apiBaseUrl}/verify-2fa`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ u: d.email, code: otpCode })
+        });
+        
+        const dFinal = await resFinal.json();
+
+        if (dFinal.status === "success") {
+          await finalizeLogin(dFinal);
+        } else {
+          Swal.fire('Erreur', dFinal.message || 'Code incorrect ou expiré', 'error');
+        }
+      }
     }
 
     // --- CAS 2 : COMPTE RÉVOQUÉ (Employé Sorti) ---
@@ -88,28 +95,17 @@ export async function handleLogin(e) {
 
     // --- CAS 3 : IDENTIFIANTS INCORRECTS ---
     else {
-      Swal.fire(
-        "Refusé",
-        d.message || "Identifiant ou mot de passe incorrect",
-        "error",
-      );
+      Swal.fire("Refusé", d.message || "Identifiant ou mot de passe incorrect", "error");
     }
+
   } catch (error) {
     console.error(error);
     if (error.name === "AbortError") {
-      Swal.fire(
-        "Délai dépassé",
-        "Le serveur démarre. Cela peut prendre 30 à 60 secondes. Veuillez réessayer.",
-        "warning",
-      );
+      Swal.fire("Délai dépassé", "Le serveur met trop de temps à répondre. Réessayez.", "warning");
     } else if (!navigator.onLine) {
       Swal.fire("Hors Ligne", "Vous semblez déconnecté d'internet.", "error");
     } else {
-      Swal.fire(
-        "Erreur Système",
-        "Impossible de contacter le serveur. Réessayez.",
-        "error",
-      );
+      Swal.fire("Erreur Système", "Impossible de contacter le serveur.", "error");
     }
   } finally {
     btn.innerHTML = originalBtnText;
@@ -117,6 +113,50 @@ export async function handleLogin(e) {
     btn.classList.remove("opacity-50", "cursor-not-allowed");
   }
 }
+
+/**
+ * Fonction interne pour finaliser la mise en session (évite de répéter le code)
+ */
+async function finalizeLogin(data) {
+  if (data.token) localStorage.setItem("sirh_token", data.token);
+
+  let r = data.role || "EMPLOYEE";
+  if (Array.isArray(r)) r = r[0];
+
+  const userData = {
+    nom: data.nom,
+    role: String(r).toUpperCase(),
+    id: data.id,
+    employee_type: data.employee_type || "OFFICE",
+    permissions: data.permissions || {},
+  };
+
+  localStorage.setItem("sirh_user_session", JSON.stringify(userData));
+
+  const Toast = Swal.mixin({
+    toast: true,
+    position: "top",
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  });
+
+  Toast.fire({
+    icon: "success",
+    title: "Connexion réussie",
+    text: "Bienvenue " + userData.nom,
+  });
+
+  // Appel de la fonction globale pour monter l'interface
+  await setSession(
+    userData.nom,
+    userData.role,
+    userData.id,
+    data.permissions,
+    userData.employee_type,
+  );
+}
+
 
 export async function setSession(n, r, id, perms, type) {
   AppState.currentUser = {
