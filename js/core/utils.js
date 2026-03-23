@@ -384,3 +384,19 @@ export function calculateAutoClose(startMs, isSecurity) {
             }
         }
 
+
+
+export function toggleSensitiveData(element) {
+    if (element.classList.contains('revealed')) {
+        element.classList.remove('revealed');
+    } else {
+        element.classList.add('revealed');
+        // Optionnel : Vibration sur mobile
+        if ("vibrate" in navigator) navigator.vibrate(10);
+        
+        // Sécurité : Re-flouter automatiquement après 15 secondes
+        setTimeout(() => {
+            element.classList.remove('revealed');
+        }, 15000);
+    }
+}
