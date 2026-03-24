@@ -345,7 +345,7 @@ export async function handleClockInOut() {
                         isLastExit: lastExitEl ? lastExitEl.checked : false,
                         prescripteur_id: prescripteurEl ? prescripteurEl.value : null,
                         contact_nom_libre: nomLibreEl ? nomLibreEl.value : null,
-                        selectedProducts: Array.from(document.querySelectorAll('input[name="presented_prods"]:checked')).map(i => ({id: i.value, name: i.dataset.name})),
+                        presentedProducts: Array.from(document.querySelectorAll('input[name="presented_prods"]:checked')).map(i => i.dataset.name),
                         proofFile: finalProof 
                     };
                 } catch (error) {
