@@ -382,9 +382,10 @@ export async function generateAllPay() {
 
 
 
-
+// ============================================================
+// EXPORT EXCEL (MODÈLE DE SAISIE)
+// ============================================================
 export function exportPayrollTemplate() {
-  // 1. On récupère toutes les lignes affichées dans le tableau de comptabilité
   const rows = document.querySelectorAll(".accounting-row");
 
   if (rows.length === 0) {
@@ -395,33 +396,29 @@ export function exportPayrollTemplate() {
     );
   }
 
-  // 2. Définition des entêtes (7 colonnes au total)
-  let csvContent =
-    "\ufeffMATRICULE;NOM;POSTE;SALAIRE_BASE;INDEMNITES_FIXES;TOTAL_PRIMES;TOTAL_RETENUES\n";
+  // 1. NOUVEAU : Ajout de la colonne ACOMPTES dans l'en-tête
+  let csvContent = "\ufeffMATRICULE;NOM;POSTE;SALAIRE_BASE;INDEMNITES_FIXES;TOTAL_PRIMES;ACOMPTES;TOTAL_RETENUES\n";
 
   rows.forEach((row) => {
-    // On identifie l'index de la ligne via l'ID du div NET
     const netDisplay = row.querySelector('[id^="net-"]');
     if (!netDisplay) return;
     const index = netDisplay.id.split("-")[1];
 
-    // 3. RÉCUPÉRATION DES INFOS "TÉLLES QU'ELLES SONT" À L'ÉCRAN
     const matricule = netDisplay.dataset.matricule || "";
     const nom = netDisplay.dataset.nom || "";
     const poste = netDisplay.dataset.poste || "";
 
-    // On récupère les valeurs des champs (Base, Primes, Retenues)
+    // 2. NOUVEAU : On récupère aussi la valeur de l'Acompte
     const baseCurrent = document.getElementById(`base-${index}`).value || 0;
-    const indemCurrent =
-      document.getElementById(`indem-constante-${index}`).innerText || 0;
+    const indemCurrent = document.getElementById(`indem-constante-${index}`).innerText || 0;
     const primeCurrent = document.getElementById(`prime-${index}`).value || 0;
-    const taxCurrent = document.getElementById(`tax-${index}`).value || 0; // On récupère la taxe calculée auto !
+    const acompteCurrent = document.getElementById(`acompte-${index}`).value || 0; // <-- ICIII
+    const taxCurrent = document.getElementById(`tax-${index}`).value || 0; 
 
-    // 4. Génération de la ligne avec les 7 colonnes remplies
-    csvContent += `\t${matricule};${nom};${poste};${baseCurrent};${indemCurrent};${primeCurrent};${taxCurrent}\n`;
+    // 3. NOUVEAU : On insère l'acompte dans la ligne CSV
+    csvContent += `\t${matricule};${nom};${poste};${baseCurrent};${indemCurrent};${primeCurrent};${acompteCurrent};${taxCurrent}\n`;
   });
 
-  // 5. Téléchargement du fichier
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -429,10 +426,10 @@ export function exportPayrollTemplate() {
   link.click();
 }
 
-export function triggerPayrollImport() {
-  document.getElementById("payroll-csv-file").click();
-}
 
+// ============================================================
+// IMPORT EXCEL (LECTURE ET MISE À JOUR)
+// ============================================================
 export async function handlePayrollImport(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -444,39 +441,28 @@ export async function handlePayrollImport(event) {
   });
 
   try {
-    // 1. On exige uniquement la colonne MATRICULE (les autres sont optionnelles pour la mise à jour)
     const requiredColumns = ["matricule"];
-
-    // 2. Le moteur fait le nettoyage (gère les guillemets, les virgules dans les chiffres, etc.)
     const parsedData = await CSVManager.parseAndValidate(file, requiredColumns);
 
     let updateCount = 0;
 
-    // 3. Traitement des données
     parsedData.forEach((row) => {
-      const matricule = row["matricule"]
-        ? row["matricule"].replace(/\t/g, "").trim()
-        : null;
-      if (!matricule) return; // Passe à la ligne suivante si vide
+      const matricule = row["matricule"] ? row["matricule"].replace(/\t/g, "").trim() : null;
+      if (!matricule) return;
 
-      // On cherche l'élément HTML correspondant à cet employé
-      const netDisplay = document.querySelector(
-        `div[data-matricule="${matricule}"]`,
-      );
+      const netDisplay = document.querySelector(`div[data-matricule="${matricule}"]`);
 
       if (netDisplay) {
         const index = netDisplay.id.split("-")[1];
 
         const inputBase = document.getElementById(`base-${index}`);
-        const displayIndem = document.getElementById(
-          `indem-constante-${index}`,
-        );
+        const displayIndem = document.getElementById(`indem-constante-${index}`);
         const inputPrime = document.getElementById(`prime-${index}`);
+        const inputAcompte = document.getElementById(`acompte-${index}`); // <-- NOUVEAU
         const inputTax = document.getElementById(`tax-${index}`);
 
         let hasChanged = false;
 
-        // On met à jour uniquement si la colonne existe dans le fichier Excel
         if (row["salaire_base"] !== undefined && inputBase) {
           inputBase.value = parseInt(row["salaire_base"]) || 0;
           hasChanged = true;
@@ -492,39 +478,48 @@ export async function handlePayrollImport(event) {
           hasChanged = true;
         }
 
-        if (row["total_retenues"] !== undefined && inputTax) {
-          inputTax.value = parseInt(row["total_retenues"]) || 0;
-          inputTax.dataset.auto = "false"; // Désactive le calcul auto
+        // 💥 NOUVEAU : Traitement de la colonne ACOMPTES
+        if (row["acomptes"] !== undefined && inputAcompte) {
+          inputAcompte.value = parseInt(row["acomptes"]) || 0;
           hasChanged = true;
         }
 
-        // Si on a modifié au moins un chiffre, on recalcule le net en temps réel
+        if (row["total_retenues"] !== undefined && inputTax) {
+          inputTax.value = parseInt(row["total_retenues"]) || 0;
+          inputTax.dataset.auto = "false"; 
+          hasChanged = true;
+        }
+
         if (hasChanged) {
-          calculateRow(index);
+          window.calculateRow(index); // Met à jour le net à payer
           updateCount++;
         }
       }
     });
 
     if (updateCount > 0) {
-      Swal.fire(
-        "Succès",
-        `${updateCount} bulletin(s) mis à jour depuis le fichier.`,
-        "success",
-      );
+      Swal.fire("Succès", `${updateCount} bulletin(s) mis à jour depuis le fichier.`, "success");
     } else {
-      Swal.fire(
-        "Info",
-        "Aucun matricule correspondant trouvé à l'écran.",
-        "warning",
-      );
+      Swal.fire("Info", "Aucun matricule correspondant trouvé à l'écran.", "warning");
     }
   } catch (errMsg) {
     Swal.fire("Erreur de format", errMsg, "error");
   } finally {
-    event.target.value = ""; // Réinitialise l'input
+    event.target.value = ""; 
   }
 }
+
+
+
+
+
+
+
+export function triggerPayrollImport() {
+  document.getElementById("payroll-csv-file").click();
+}
+
+
 
 export async function fetchPayrollData() {
   const container = document.getElementById("payroll-container");
