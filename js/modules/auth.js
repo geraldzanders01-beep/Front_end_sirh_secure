@@ -247,16 +247,53 @@ export async function setSession(n, r, id, perms, type) {
     if (el) el.innerHTML = skeletonRow.repeat(6);
   });
 
-  try {
+try {
     // 3. CHARGEMENT DES DONNÉES CRITIQUES
-    // Le logo et la barre de chargement restent ici tant que le serveur n'a pas répondu
-  await Promise.all([
+    // On ajoute l'aspiration des zones GPS pour le mode Hors-Ligne
+    await Promise.all([
       window.refreshAllData(false),
       window.refreshClockButton(),
       window.fetchAndApplyLabels(), 
       window.fetchAndPopulateDepartments(),
       window.syncAllRoleSelects(),
       window.fetchContractTemplatesForSelection(),
+      
+      // 💥 NOUVEAU : ASPIRATION DU PERIMETRE GPS (POUR LE MODE HORS-LIGNE)
+      (async () => {
+          try {
+              // On récupère les Sièges (zones) et les Lieux Terrain (mobile_locations)
+              const [resZones, resLocs] = await Promise.all([
+                  secureFetch(`${SIRH_CONFIG.apiBaseUrl}/read-config`),
+                  secureFetch(`${SIRH_CONFIG.apiBaseUrl}/list-mobile-locations`)
+              ]);
+              
+              const zones = await resZones.json();
+              const locations = await resLocs.json();
+
+              // On normalise les données pour que le téléphone puisse calculer les distances
+              const gpsCache = [
+                  ...zones.map(z => ({ 
+                      nom: z.Nom, 
+                      lat: parseFloat(z.Latitude), 
+                      lon: parseFloat(z.Longitude), 
+                      rayon: parseInt(z.Rayon || 1000), 
+                      isOffice: true 
+                  })),
+                  ...locations.map(l => ({ 
+                      nom: l.name, 
+                      lat: parseFloat(l.latitude), 
+                      lon: parseFloat(l.longitude), 
+                      rayon: parseInt(l.radius || 100), 
+                      isOffice: false 
+                  }))
+              ];
+
+              localStorage.setItem("sirh_gps_offline_cache", JSON.stringify(gpsCache));
+              console.log("💾 Cache GPS Hors-ligne :", gpsCache.length, "points mémorisés.");
+          } catch (err) {
+              console.warn("⚠️ Échec de mise à jour du cache GPS (Usage du dernier cache connu)");
+          }
+      })()
     ]);
 
     await window.applyModulesUI();
@@ -324,7 +361,11 @@ export async function setSession(n, r, id, perms, type) {
     window.initDarkMode();
     window.subscribeUserToPush(); 
 
-  } catch (e) {
+  } 
+  
+  
+  
+  catch (e) {
     console.error("Erreur critique au démarrage de l'app:", e);
     if (loader) loader.classList.add("hidden");
     if (appLayout) appLayout.classList.remove("hidden");
