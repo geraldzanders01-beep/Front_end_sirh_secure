@@ -2155,44 +2155,37 @@ export async function openDailyReportModal() {
   }
 }
 
-export function toggleDictation(targetId, btn) {
-  // 1. Vérification de compatibilité (si le téléphone ne peut pas, on prévient)
-  if (
-    !("webkitSpeechRecognition" in window) &&
-    !("SpeechRecognition" in window)
-  ) {
-    return Swal.fire(
-      "Info",
-      "La dictée vocale n'est pas disponible sur ce navigateur.",
-      "info",
-    );
+ export function toggleDictation(targetId, btn) {
+  // 1. Vérification de compatibilité
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    return Swal.fire("Info", "La dictée vocale n'est pas disponible sur ce navigateur.", "info");
   }
 
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const target = document.getElementById(targetId);
 
   // 2. Si on clique pour arrêter
   if (AppState.recognition && AppState.recognition.started) {
-    recognition.stop();
+    AppState.recognition.stop(); // Utiliser AppState.recognition
     return;
   }
 
   // 3. Configuration
-  AppState.recognition = new SpeechRecognition();
-  recognition.lang = "fr-FR"; // Français
-  recognition.interimResults = false;
+  const rec = new SpeechRecognition(); // Créer une instance locale
+  AppState.recognition = rec;
+  rec.lang = "fr-FR";
+  rec.interimResults = false;
 
   // 4. Démarrage (Feedback visuel)
-  AppState.recognition.onstart = () => {
+  rec.onstart = () => {
     AppState.recognition.started = true;
     btn.classList.remove("text-slate-400", "bg-white");
-    btn.classList.add("text-white", "bg-red-500", "animate-pulse"); // Devient rouge et pulse
+    btn.classList.add("text-white", "bg-red-500", "animate-pulse");
     btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i>';
   };
 
   // 5. Fin (Retour à la normale)
-  AppState.recognition.onend = () => {
+  rec.onend = () => {
     AppState.recognition.started = false;
     btn.classList.remove("text-white", "bg-red-500", "animate-pulse");
     btn.classList.add("text-slate-400", "bg-white");
@@ -2200,16 +2193,15 @@ export function toggleDictation(targetId, btn) {
   };
 
   // 6. Résultat (On AJOUTE le texte au lieu de remplacer)
-  AppState.recognition.onresult = (event) => {
+  rec.onresult = (event) => {
     const transcript = event.results[0][0].transcript;
-    // On ajoute un espace si le champ n'est pas vide
     const prefix = target.value ? " " : "";
     target.value += prefix + transcript;
   };
 
-  AppState.recognition.start();
+  rec.start();
 }
-
+  
 export async function deleteVisitReport(id) {
   const confirm = await Swal.fire({
     title: "Supprimer ?",
