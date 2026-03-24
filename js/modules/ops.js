@@ -413,22 +413,73 @@ export async function handleClockInOut() {
             }
         }
 
-        // 3. --- GESTION HORS LIGNE : SAUVEGARDE LOCALE ---
+        // 3. --- 📡 GESTION HORS LIGNE INTELLIGENTE ---
         if (!navigator.onLine) {
+            console.log("📴 Mode Hors-ligne détecté. Lancement de la validation locale...");
+
+            // A. RÉCUPÉRATION DU CACHE DES ZONES (créé lors du login)
+            const cachedZones = JSON.parse(localStorage.getItem("sirh_gps_offline_cache") || "[]");
+            let detectedZone = "Zone Mobile";
+            let isInsideAuthorizedZone = false;
+
+            // B. ALGORITHME DE DÉCISION LOCAL
+            if (currentGps !== "GPS_DISABLED") {
+                const [uLat, uLon] = currentGps.split(',').map(parseFloat);
+                
+                for (let z of cachedZones) {
+                    // Utilisation de la fonction getDistance (importée de utils.js)
+                    const d = getDistance(uLat, uLon, z.lat, z.lon);
+                    
+                    // On applique la règle du Rayon Intelligent (1500m bureau / rayon base terrain)
+                    let effectiveRadius = z.isOffice ? 1500 : z.rayon;
+
+                    if (d <= effectiveRadius) {
+                        isInsideAuthorizedZone = true;
+                        detectedZone = z.nom;
+                        break; // On a trouvé la zone, on arrête la boucle
+                    }
+                }
+            }
+
+            // C. VÉRIFICATION DES DROITS (Sédentaire vs Mobile)
+            // Si c'est un agent de bureau (OFFICE) et qu'il n'est dans aucune zone -> REFUS
+            if (!isInsideAuthorizedZone && !isMobile) {
+                stopAllCameras();
+                return Swal.fire({
+                    icon: 'error',
+                    title: 'Position Refusée',
+                    text: 'Même hors-ligne, vous devez être sur un site autorisé pour pointer.'
+                });
+            }
+
+            // D. ENRICHISSEMENT DU PAYLOAD
+            payloadObj.zone_detectee = detectedZone; // Le serveur recevra la zone trouvée par le tel
+            payloadObj.is_offline = true;            // Marqueur pour l'audit sécurité
+
+            // E. STOCKAGE DANS LA FILE D'ATTENTE (QUEUE)
             const queue = JSON.parse(localStorage.getItem("sirh_offline_queue") || "[]");
             queue.push(payloadObj);
             localStorage.setItem("sirh_offline_queue", JSON.stringify(queue));
 
+            // F. MISE À JOUR DE L'INTERFACE (IMMÉDIATE)
             localStorage.removeItem('active_mission_context');
             let nextState = (action === 'CLOCK_IN') ? 'IN' : 'OUT';
+            
+            // On trompe l'interface pour qu'elle croie que le serveur a dit OK
             localStorage.setItem(`clock_status_${userId}`, nextState);
-            if (payloadObj.is_last_exit === 'true' || !isMobile) localStorage.setItem(`clock_finished_${userId}`, 'true');
+            if (payloadObj.is_last_exit === 'true' || !isMobile) {
+                localStorage.setItem(`clock_finished_${userId}`, 'true');
+            }
 
             stopAllCameras();
             if(typeof window.updateClockUI === 'function') window.updateClockUI(nextState);
 
-            Swal.fire({ icon: 'info', title: 'Mode Hors Ligne', text: 'Pointage enregistré dans le téléphone. Il sera transmis au retour de la connexion.' });
-            return; 
+            return Swal.fire({
+                icon: 'info',
+                title: 'Pointage mis en attente',
+                text: `Vous êtes hors-ligne. Votre position (${detectedZone}) a été validée localement. Le pointage sera transmis automatiquement dès le retour du réseau.`,
+                confirmButtonColor: '#2563eb'
+            });
         }
 
         // 4. --- SI EN LIGNE : ENVOI JSON (Beaucoup plus fiable que FormData) ---
@@ -449,7 +500,10 @@ export async function handleClockInOut() {
             throw new Error(resData.error || "Erreur serveur");
         }
 
-    } catch (e) {
+    } 
+    
+    
+    catch (e) {
         stopAllCameras();
         console.error("Erreur handleClockInOut:", e);
         Swal.fire('Erreur', e.message, 'error');
@@ -2619,4 +2673,70 @@ export function downloadReportCSV(period = "monthly") {
     timer: 3000,
   });
   Toast.fire({ icon: "success", title: "Exportation réussie !" });
+}
+
+
+
+
+/**
+ * Synchronise les pointages stockés localement vers le serveur
+ */
+export async function syncOfflineData() {
+    const queue = JSON.parse(localStorage.getItem("sirh_offline_queue") || "[]");
+    
+    if (queue.length === 0) return;
+
+    console.log(`📡 [SYNC] Tentative de transmission de ${queue.length} pointage(s) en attente...`);
+
+    // On prévient l'utilisateur avec un petit message de chargement discret
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000
+    });
+
+    let successCount = 0;
+    const remainingQueue = [];
+
+    for (const action of queue) {
+        try {
+            // On utilise secureFetch pour envoyer le pointage stocké
+            // Note : le serveur recevra le marqueur is_offline: true
+            const response = await secureFetch(URL_CLOCK_ACTION, {
+                method: 'POST',
+                body: JSON.stringify(action)
+            });
+
+            if (response.ok) {
+                successCount++;
+            } else {
+                // Si le serveur rejette pour une raison autre que la connexion (ex: erreur de donnée), 
+                // on pourrait décider de l'enlever, mais par sécurité on le garde.
+                remainingQueue.push(action);
+            }
+        } catch (e) {
+            console.error("❌ [SYNC ERROR] Échec pour un pointage :", e.message);
+            remainingQueue.push(action); // On garde en file d'attente pour le prochain essai
+        }
+    }
+
+    // Mise à jour de la file d'attente (vide ou avec les échecs)
+    if (remainingQueue.length > 0) {
+        localStorage.setItem("sirh_offline_queue", JSON.stringify(remainingQueue));
+    } else {
+        localStorage.removeItem("sirh_offline_queue");
+    }
+
+    if (successCount > 0) {
+        Toast.fire({
+            icon: 'success',
+            title: 'Synchronisation terminée',
+            text: `${successCount} pointage(s) transmis avec succès.`
+        });
+        
+        // On rafraîchit l'interface pour synchroniser l'état réel avec le serveur
+        await refreshClockButton();
+        if (AppState.currentView === 'dash') window.fetchLiveAttendance();
+    }
 }
