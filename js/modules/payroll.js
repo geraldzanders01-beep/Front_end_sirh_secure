@@ -7,7 +7,6 @@ export async function loadAccountingView() {
   const body = document.getElementById("accounting-table-body");
   if (!body) return;
 
-  // 1. CONVERSION DU MOIS EN CHIFFRE (Pour le moteur de calcul backend)
   const monthMap = {
     "Janvier": "01", "Février": "02", "Mars": "03", "Avril": "04",
     "Mai": "05", "Juin": "06", "Juillet": "07", "Août": "08",
@@ -18,12 +17,10 @@ export async function loadAccountingView() {
   const moisChiffre = monthMap[monthName] || "01"; 
   const annee = document.getElementById("pay-year").value;
 
-  // 2. CHARGEMENT DES CONSTANTES (CNSS, IRPP)
   if (typeof window.fetchPayrollConstants === "function" && Object.keys(AppState.payrollConstants).length === 0) {
     await fetchPayrollConstants();
   }
 
-  // 3. RÉCUPÉRATION DES FILTRES UI
   const filters = {
     type: document.getElementById("filter-accounting-type").value,
     dept: document.getElementById("filter-accounting-dept").value,
@@ -32,23 +29,12 @@ export async function loadAccountingView() {
     agent: AppState.currentUser.nom,
   };
 
-  // Affichage du loader intelligent
-  body.innerHTML = `
-    <tr>
-        <td colspan="7" class="p-12 text-center">
-            <i class="fa-solid fa-robot fa-bounce text-blue-600 text-3xl"></i>
-            <p class="text-[10px] font-black text-slate-400 uppercase mt-4 tracking-widest">Analyse intelligente de la période : ${monthName} ${annee}...</p>
-        </td>
-    </tr>`;
+  body.innerHTML = `<tr><td colspan="7" class="p-12 text-center"><i class="fa-solid fa-robot fa-bounce text-blue-600 text-3xl"></i><p class="text-[10px] font-black text-slate-400 uppercase mt-4 tracking-widest">Analyse segmentée : ${monthName} ${annee}...</p></td></tr>`;
 
   try {
-    // 4. APPELS EN PARALLÈLE (Optimisation SaaS)
     const [resEmp, resRules, resAuto] = await Promise.all([
-      // A. Liste des employés filtrés
       secureFetch(`${SIRH_CONFIG.apiBaseUrl}/read-payroll-full?agent=${encodeURIComponent(filters.agent)}&type=${filters.type}&dept=${encodeURIComponent(filters.dept)}&status=${filters.status}&role=${encodeURIComponent(filters.role)}`),
-      // B. Liste des règles No-Code
       secureFetch(`${SIRH_CONFIG.apiBaseUrl}/list-payroll-rules`),
-      // C. Calcul de performance (Visites, heures) - On utilise bien moisChiffre ici
       secureFetch(`${SIRH_CONFIG.apiBaseUrl}/compute-automated-payroll?month=${moisChiffre}&year=${annee}`)
     ]);
 
@@ -58,37 +44,57 @@ export async function loadAccountingView() {
 
     body.innerHTML = "";
     if (employeesToPay.length === 0) {
-      body.innerHTML = '<tr><td colspan="7" class="p-20 text-center text-slate-300 italic">Aucun collaborateur ne correspond à ces critères.</td></tr>';
+      body.innerHTML = '<tr><td colspan="7" class="p-20 text-center text-slate-300 italic">Aucun collaborateur trouvé.</td></tr>';
       return;
     }
 
-    // 5. RENDU DU TABLEAU
     employeesToPay.forEach((emp, index) => {
       const safeNom = emp.nom || "Inconnu";
       const safeMatricule = emp.matricule || "N/A";
       const initial = safeNom.charAt(0).toUpperCase();
       
-      // I. Récupérer le calcul de performance du Robot (s'il existe)
-      const perf = autoPerformanceData.find(a => String(a.employee_id) === String(emp.id)) || { computed_bonus: 0, explanation: "Aucune activité terrain/pointage détectée" };
+      // 1. PERFORMANCE RÉELLE DU MOIS (Calculée par le Backend / Robot)
+      const perf = autoPerformanceData.find(a => String(a.employee_id) === String(emp.id)) || { computed_bonus: 0, explanation: "" };
 
-      // II. Somme des indemnités fixes (Fiche employé)
+      // 2. INDEMNITÉS FIXES DE LA FICHE (Transport + Logement)
       let fixeRH = (parseFloat(emp.indemnite_transport) || 0) + (parseFloat(emp.indemnite_logement) || 0);
 
-      // III. Application des règles No-Code (Profil uniquement)
+      // 3. APPLICATION DES RÈGLES STATIQUES AVEC CIBLAGE (Rôle / Dept)
       let primesReglesStatiques = 0;
+      let staticDetails = [];
+
       if (Array.isArray(dynamicRules)) {
           dynamicRules.forEach(rule => {
-              if (rule.data_source === 'PROFILE') {
+              // --- VÉRIFICATION DU CIBLAGE (TARGETING) ---
+              let appliesToThisEmployee = false;
+
+              if (rule.target_type === 'GLOBAL') {
+                  appliesToThisEmployee = true;
+              } else if (rule.target_type === 'ROLE' && emp.role === rule.target_value) {
+                  appliesToThisEmployee = true;
+              } else if (rule.target_type === 'DEPARTMENT' && emp.departement === rule.target_value) {
+                  appliesToThisEmployee = true;
+              }
+
+              // --- APPLICATION DE LA CONDITION SI LE CIBLAGE MATCH ---
+              if (appliesToThisEmployee && rule.data_source === 'PROFILE') {
                   const valEmploye = emp[rule.condition_field];
-                  if (rule.condition_operator === '==' && valEmploye == rule.condition_value) {
-                      primesReglesStatiques += parseFloat(rule.action_value || 0);
+                  // Comparaison simple (==) pour les règles de profil
+                  if (valEmploye == rule.condition_value) {
+                      const amount = parseFloat(rule.action_value || 0);
+                      primesReglesStatiques += amount;
+                      staticDetails.push(`${rule.rule_name}: +${amount}`);
                   }
               }
           });
       }
       
-      // IV. TOTAL AUTOMATISÉ POUR CETTE LIGNE
       const totalAutomatique = Math.round(fixeRH + primesReglesStatiques + perf.computed_bonus);
+      const explanationComplete = [
+          fixeRH > 0 ? `Fixes (Fiche): ${fixeRH}` : "",
+          ...staticDetails,
+          perf.explanation
+      ].filter(t => t).join(" | ");
 
       body.innerHTML += `
         <tr class="hover:bg-blue-50/50 transition-all accounting-row animate-fadeIn" data-search="${safeNom.toLowerCase()}">
@@ -102,39 +108,34 @@ export async function loadAccountingView() {
                 </div>
             </td>
             
-            <!-- BASE (Editable) -->
             <td class="px-2 py-4 text-center">
                 <input type="number" oninput="window.calculateRow(${index})" id="base-${index}" 
                        class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-center font-black text-xs shadow-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
                        value="${emp.salaire_brut_fixe || 0}">
             </td>
 
-            <!-- INDEMNITÉS (Automatisé) -->
             <td class="px-2 py-4 text-center">
                 <div class="relative group bg-indigo-50/50 border border-indigo-100 rounded-xl py-2 shadow-sm cursor-help" 
-                     title="${perf.explanation || 'Calcul basé sur les règles et pointages'}">
+                     title="${explanationComplete || 'Calcul automatique standard'}">
                     <span id="indem-constante-${index}" class="text-indigo-700 font-black text-xs">${totalAutomatique}</span>
                     <p class="text-[7px] text-indigo-400 font-bold uppercase tracking-tighter">Automatisé</p>
                     
-                    ${perf.computed_bonus > 0 ? '<div class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-white animate-pulse"></div>' : ''}
+                    ${(perf.computed_bonus > 0 || staticDetails.length > 0) ? '<div class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-white animate-pulse"></div>' : ''}
                 </div>
             </td>
             
-            <!-- PRIMES MANUELLES -->
             <td class="px-2 py-4 text-center">
                 <input type="number" oninput="window.calculateRow(${index})" id="prime-${index}" 
                        class="w-full p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-center font-black text-xs text-emerald-700 focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm transition-all" 
                        placeholder="0">
             </td>
 
-            <!-- ACOMPTES -->
             <td class="px-2 py-4 text-center">
                 <input type="number" oninput="window.calculateRow(${index})" id="acompte-${index}" 
                        class="w-full p-2.5 bg-orange-50 border border-orange-200 rounded-xl text-center font-black text-xs text-orange-700 focus:ring-2 focus:ring-orange-500 outline-none shadow-sm transition-all" 
                        placeholder="0">
             </td>
 
-            <!-- RETENUES / TAXES -->
             <td class="px-2 py-4 text-center">
                 <div class="relative flex items-center group">
                     <input type="number" oninput="window.calculateRow(${index})" id="tax-${index}" data-auto="true" readonly
@@ -145,7 +146,6 @@ export async function loadAccountingView() {
                 </div>
             </td>
 
-            <!-- NET À PAYER -->
             <td class="px-6 py-4 text-right">
                 <div class="text-sm font-black text-blue-600 bg-blue-50 px-3 py-2 rounded-xl inline-block shadow-sm border border-blue-100 sensitive-value" 
                      onclick="window.toggleSensitiveData(this)" 
@@ -158,22 +158,13 @@ export async function loadAccountingView() {
         </tr>`;
     });
 
-    // Recalcul final de toutes les lignes
     employeesToPay.forEach((_, i) => window.calculateRow(i));
 
   } catch (e) {
     console.error("Erreur de rendu paie:", e);
-    body.innerHTML = `
-        <tr>
-            <td colspan="7" class="p-10 text-center">
-                <p class="text-red-500 font-bold uppercase text-xs">Erreur de connexion au moteur de règles</p>
-                <button onclick="loadAccountingView()" class="mt-4 text-[10px] font-black text-blue-600 uppercase underline">Réessayer</button>
-            </td>
-        </tr>`;
+    body.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold uppercase text-xs">Erreur de connexion au moteur de règles</td></tr>`;
   }
 }
-
-
 
 
 export function resetAccountingFilters() {
