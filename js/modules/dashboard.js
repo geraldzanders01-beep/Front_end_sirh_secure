@@ -2,6 +2,9 @@ import { AppState } from "../core/state.js";
 import { SIRH_CONFIG } from "../core/config.js";
 import { secureFetch } from "../core/api.js";
 
+let mapAgentsRegistry = []; // Pour stocker les données des agents présents sur la map
+
+
 export async function updateManagementSignals() {
   const container = document.getElementById("signals-container");
   if (!container || !AppState.currentUser || AppState.currentUser.role === "EMPLOYEE") return;
@@ -420,6 +423,9 @@ export async function initLiveMap() {
             
             clusterGroup.addLayer(marker);
             markers.push(marker);
+
+            mapAgentsRegistry.push({ nom: p.employees.nom.toLowerCase(), marker: marker, data: p });
+
         });
 
 
@@ -434,5 +440,53 @@ export async function initLiveMap() {
 
     } catch (e) {
         console.error("Erreur chargement carte haute capacité:", e);
+    }
+}
+
+
+
+
+
+export function searchAgentOnMap() {
+    const input = document.getElementById('map-search-input');
+    const resultsContainer = document.getElementById('map-search-results');
+    const query = input.value.toLowerCase().trim();
+
+    if (query.length < 2) {
+        resultsContainer.classList.add('hidden');
+        return;
+    }
+
+    // Filtrer les agents correspondants
+    const matches = mapAgentsRegistry.filter(a => a.nom.includes(query));
+
+    if (matches.length > 0) {
+        resultsContainer.innerHTML = '';
+        resultsContainer.classList.remove('hidden');
+
+        matches.forEach(match => {
+            const div = document.createElement('div');
+            div.className = "p-3 hover:bg-blue-50 cursor-pointer flex items-center gap-3 border-b border-slate-50 last:border-0";
+            div.innerHTML = `
+                <img src="${match.data.employees.photo_url || ''}" class="w-6 h-6 rounded-full object-cover bg-slate-200">
+                <div>
+                    <p class="text-[11px] font-black text-slate-800 uppercase">${match.data.employees.nom}</p>
+                    <p class="text-[9px] text-slate-400">${match.data.zone_detectee}</p>
+                </div>
+            `;
+            
+            // AU CLIC SUR UN RÉSULTAT
+            div.onclick = () => {
+                // 1. On utilise le plugin Cluster pour zoomer et montrer l'agent même s'il est dans un groupe
+                clusterGroup.zoomToShowLayer(match.marker, () => {
+                    match.marker.openPopup(); // Ouvre la bulle d'info
+                });
+                resultsContainer.classList.add('hidden');
+                input.value = match.data.employees.nom;
+            };
+            resultsContainer.appendChild(div);
+        });
+    } else {
+        resultsContainer.classList.add('hidden');
     }
 }
