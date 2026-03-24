@@ -172,7 +172,6 @@ window.renderPersonalReport = Ops.renderPersonalReport;
 window.downloadReportCSV = Ops.downloadReportCSV;
 window.fetchMobileSchedules = Ops.fetchMobileSchedules;
 window.updateClockUI = Ops.updateClockUI;
-window.exportAuditToExcel = Ops.exportAuditToExcel;
 
 
 
