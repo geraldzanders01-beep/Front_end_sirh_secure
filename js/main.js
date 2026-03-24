@@ -26,9 +26,6 @@ window.handleLogout = Auth.handleLogout;
 window.handleForgotPassword = Auth.handleForgotPassword;
 
 // --- Interface Utilisateur (UI) ---
-window.syncOfflineData = Ops.syncOfflineData;
-window.searchAgentOnMap = Dash.searchAgentOnMap;
-window.initLiveMap = Dash.initLiveMap;
 window.fetchAndApplyLabels = UI.fetchAndApplyLabels;
 window.switchView = UI.switchView;
 window.toggleSidebar = UI.toggleSidebar;
@@ -109,6 +106,8 @@ window.fetchLeaveRequests = Leaves.fetchLeaveRequests;
 
 
 // --- Comptabilité & Paie (Payroll) ---
+window.toggleTargetValues = Admin.toggleTargetValues;
+window.saveSegmentedRule = Admin.saveSegmentedRule;
 window.saveRule = Payroll.saveRule; 
 window.simulateMoMoPayment = Payroll.simulateMoMoPayment;
 window.savePayrollConfig = Payroll.savePayrollConfig;
@@ -129,8 +128,11 @@ window.fetchPayrollConstants = Payroll.fetchPayrollConstants;
 window.updateManagementSignals = Dash.updateManagementSignals;
 window.renderCharts = Dash.renderCharts;
 window.fetchLiveAttendance = Dash.fetchLiveAttendance;
+window.searchAgentOnMap = Dash.searchAgentOnMap;
+window.initLiveMap = Dash.initLiveMap;
 
 // --- Opérations & Mobile (Ops) ---
+window.syncOfflineData = Ops.syncOfflineData;
 window.refreshClockButton = Ops.refreshClockButton;
 window.stopAllCameras = Ops.stopAllCameras;
 window.fetchGlobalAudit = Ops.fetchGlobalAudit;
