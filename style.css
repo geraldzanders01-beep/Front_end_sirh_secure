@@ -564,3 +564,25 @@ button i {
     filter: blur(0);
     background-color: transparent;
 }
+
+/* Quand on est hors ligne, on affiche un bandeau discret ou on change la couleur du header */
+body.offline-mode header {
+    border-bottom: 3px solid #f59e0b !important; /* Orange alerte */
+}
+
+body.offline-mode::after {
+    content: "MODE HORS-LIGNE ACTIF";
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #f59e0b;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 900;
+    z-index: 9999;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    letter-spacing: 1px;
+}😒😒
