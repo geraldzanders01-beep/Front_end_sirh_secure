@@ -454,7 +454,20 @@
             <h3 class="text-[10px] font-black text-slate-400 uppercase mb-6 tracking-widest flex items-center gap-2">
                 <i class="fa-solid fa-map-location-dot text-blue-500"></i> Carte des Agents en Temps Réel
             </h3>
-            <div id="map" style="height: 400px; border-radius: 1.5rem; width: 100%;"></div>
+                        <!-- RECHERCHE SUR CARTE -->
+            <div class="relative mb-4 animate-fadeIn">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="map-search-input" onkeyup="window.searchAgentOnMap()" 
+                       placeholder="Rechercher un agent par son nom (ex: Gerald...)" 
+                       class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all">
+                
+                <!-- Liste de suggestions (Dropdown) -->
+                <div id="map-search-results" class="absolute z-[1000] left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 hidden max-h-48 overflow-y-auto custom-scroll">
+                    <!-- Rempli par JS -->
+                </div>
+            </div>
+            
+            <div id="map" style="height: 450px; border-radius: 1.5rem; width: 100%; border: 1px solid #e2e8f0;"></div>
         </div>
                 
         <!-- Tables de Validation -->
