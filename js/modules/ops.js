@@ -510,11 +510,14 @@ export async function handleClockInOut() {
             });
         }
 
-        // 4. --- SI EN LIGNE : ENVOI JSON (Beaucoup plus fiable que FormData) ---
+         // 4. --- SI EN LIGNE : ENVOI JSON ---
         console.log(`🔎 Envoi pointage JSON pour [${userId}] - Action: [${action}]`);
         
+        // 💥 CORRECTION : Ton backend attend "presentedProducts" (nommé presented_products dans la DB)
+        // Mais assure-toi que le payload contient bien cette clé.
         const response = await secureFetch(URL_CLOCK_ACTION, { 
             method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, // IMPORTANT
             body: JSON.stringify(payloadObj) 
         });
         console.log("📤 Payload envoyé au serveur :", payloadObj);
