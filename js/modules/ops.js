@@ -2679,64 +2679,56 @@ export function downloadReportCSV(period = "monthly") {
 
 
 /**
- * Synchronise les pointages stockés localement vers le serveur
+ * Envoie les pointages stockés localement dès que le réseau revient
  */
 export async function syncOfflineData() {
     const queue = JSON.parse(localStorage.getItem("sirh_offline_queue") || "[]");
     
     if (queue.length === 0) return;
 
-    console.log(`📡 [SYNC] Tentative de transmission de ${queue.length} pointage(s) en attente...`);
-
-    // On prévient l'utilisateur avec un petit message de chargement discret
-    const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000
-    });
+    console.log(`📡 [SYNCHRO] Tentative d'envoi de ${queue.length} pointage(s) en attente...`);
 
     let successCount = 0;
-    const remainingQueue = [];
+    const failedItems = [];
 
     for (const action of queue) {
         try {
-            // On utilise secureFetch pour envoyer le pointage stocké
-            // Note : le serveur recevra le marqueur is_offline: true
-            const response = await secureFetch(URL_CLOCK_ACTION, {
-                method: 'POST',
+            // On tente l'envoi au serveur
+            const response = await secureFetch(SIRH_CONFIG.apiBaseUrl + "/clock", {
+                method: "POST",
                 body: JSON.stringify(action)
             });
 
             if (response.ok) {
                 successCount++;
             } else {
-                // Si le serveur rejette pour une raison autre que la connexion (ex: erreur de donnée), 
-                // on pourrait décider de l'enlever, mais par sécurité on le garde.
-                remainingQueue.push(action);
+                failedItems.push(action);
             }
         } catch (e) {
-            console.error("❌ [SYNC ERROR] Échec pour un pointage :", e.message);
-            remainingQueue.push(action); // On garde en file d'attente pour le prochain essai
+            console.error("❌ Échec de synchronisation pour un item :", e);
+            failedItems.push(action); // On le garde pour plus tard
         }
     }
 
-    // Mise à jour de la file d'attente (vide ou avec les échecs)
-    if (remainingQueue.length > 0) {
-        localStorage.setItem("sirh_offline_queue", JSON.stringify(remainingQueue));
+    // Mise à jour du stockage : on ne garde que ce qui a échoué
+    if (failedItems.length > 0) {
+        localStorage.setItem("sirh_offline_queue", JSON.stringify(failedItems));
     } else {
         localStorage.removeItem("sirh_offline_queue");
     }
 
     if (successCount > 0) {
-        Toast.fire({
-            icon: 'success',
-            title: 'Synchronisation terminée',
-            text: `${successCount} pointage(s) transmis avec succès.`
-        });
+        // Rafraîchir l'interface pour être raccord avec le serveur
+        await refreshClockButton(); 
         
-        // On rafraîchit l'interface pour synchroniser l'état réel avec le serveur
-        await refreshClockButton();
-        if (AppState.currentView === 'dash') window.fetchLiveAttendance();
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Synchro réussie',
+            text: `${successCount} pointage(s) transmis au serveur.`,
+            showConfirmButton: false,
+            timer: 4000
+        });
     }
 }
