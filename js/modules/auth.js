@@ -41,32 +41,63 @@ export async function handleLogin(e) {
     // --- 💥 NOUVEAU CAS : DOUBLE AUTHENTIFICATION REQUISE (Admin / RH) ---
     else if (d.status === "require_2fa") {
       const { value: otpCode } = await Swal.fire({
-        title: '🔐 Vérification de sécurité',
-        html: `Un code de sécurité a été envoyé à : <br><b>${d.email}</b>`,
-        input: 'text',
-        inputPlaceholder: 'Entrez les 6 chiffres',
-        inputAttributes: {
-          maxlength: 6,
-          autocapitalize: 'off',
-          autocorrect: 'off',
-          style: 'text-align: center; font-size: 2rem; font-weight: 900; letter-spacing: 0.5rem; height: 70px;'
-        },
+        title: null, // On cache le titre par défaut pour le faire nous-mêmes en HTML
+        html: `
+          <div class="text-center p-2">
+            <!-- LOGO HARMONISÉ -->
+            <div class="flex justify-center mb-6">
+                <div class="p-4 bg-slate-900 rounded-[2rem] border border-blue-500/30 shadow-xl shadow-blue-500/10">
+                    <img src="https://cdn-icons-png.flaticon.com/512/9752/9752284.png" class="w-12 h-12 object-contain">
+                </div>
+            </div>
+
+            <h2 class="text-xl font-black text-slate-800 uppercase tracking-tighter mb-2">Vérification de sécurité</h2>
+            <p class="text-xs text-slate-500 leading-relaxed mb-8">
+                Un protocole de sécurité a été activé. Veuillez saisir le code à 6 chiffres envoyé à :<br>
+                <b class="text-blue-600 font-bold">${d.email}</b>
+            </p>
+
+            <!-- CHAMP OTP STYLISÉ -->
+            <div class="relative mb-8">
+                <input id="otp-input" type="text" maxlength="6" 
+                    placeholder="000000"
+                    class="w-full text-center text-4xl font-black tracking-[0.6em] py-5 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all text-slate-800 placeholder-slate-200">
+            </div>
+
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Vous n'avez rien reçu ?</p>
+            <button type="button" onclick="window.handleForgotPassword()" class="text-[10px] font-black text-blue-600 uppercase underline hover:text-blue-800">Renvoyer un code</button>
+          </div>
+        `,
         showCancelButton: true,
-        confirmButtonText: 'Vérifier le code',
-        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Vérifier l\'accès',
         cancelButtonText: 'Annuler',
-        preConfirm: (code) => {
+        confirmButtonColor: '#0f172a', // Noir comme ta sidebar
+        cancelButtonColor: '#f1f5f9',
+        reverseButtons: true,
+        customClass: {
+          popup: 'rounded-[2.5rem] border-none shadow-2xl',
+          confirmButton: 'rounded-xl px-8 py-4 font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all',
+          cancelButton: 'rounded-xl px-8 py-4 font-bold uppercase text-xs tracking-widest text-slate-400 hover:text-slate-600 transition-all'
+        },
+        preConfirm: () => {
+          const code = document.getElementById('otp-input').value;
           if (!code || code.length !== 6 || isNaN(code)) {
-            Swal.showValidationMessage('Veuillez entrer les 6 chiffres du code');
+            Swal.showValidationMessage('Le code doit contenir 6 chiffres');
+            return false;
           }
           return code;
         }
       });
 
       if (otpCode) {
-        Swal.fire({ title: 'Vérification du code...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        // ... le reste de ta logique de vérification vers /verify-2fa reste identique
+        Swal.fire({ 
+            title: 'Authentification...', 
+            html: '<i class="fa-solid fa-circle-notch fa-spin text-blue-500 text-2xl"></i>', 
+            showConfirmButton: false, 
+            allowOutsideClick: false 
+        });
 
-        // Appel à la nouvelle route de vérification OTP
         const resFinal = await fetch(`${SIRH_CONFIG.apiBaseUrl}/verify-2fa`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -74,11 +105,10 @@ export async function handleLogin(e) {
         });
         
         const dFinal = await resFinal.json();
-
         if (dFinal.status === "success") {
           await finalizeLogin(dFinal);
         } else {
-          Swal.fire('Erreur', dFinal.message || 'Code incorrect ou expiré', 'error');
+          Swal.fire({ icon: 'error', title: 'Code invalide', text: 'Le code saisi est incorrect ou a expiré.', confirmButtonColor: '#0f172a' });
         }
       }
     }
