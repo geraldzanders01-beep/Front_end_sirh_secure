@@ -238,38 +238,62 @@ export function getDriveId(link) {
 
 
 
+ /**
+ * Transforme un tableau de produits (ou une chaîne) en badges HTML élégants
+ */
 export function formatProductTags(rawProducts) {
+    if (!rawProducts || rawProducts === "{}" || rawProducts === "[]") return "";
+
     let prods = [];
+
     try {
-        if (typeof rawProducts === 'string') prods = JSON.parse(rawProducts);
-        else if (Array.isArray(rawProducts)) prods = rawProducts;
-    } catch(e) { return ""; }
+        // CASE 1 : C'est déjà un tableau JS
+        if (Array.isArray(rawProducts)) {
+            prods = rawProducts;
+        } 
+        // CASE 2 : C'est une chaîne de caractères
+        else if (typeof rawProducts === 'string') {
+            // Si c'est le format spécifique de Postgres "{Item A,Item B}"
+            if (rawProducts.startsWith('{') && rawProducts.endsWith('}')) {
+                prods = rawProducts
+                    .slice(1, -1) // Enlever les accolades
+                    .split(',')    // Couper par virgule
+                    .map(s => s.trim().replace(/^"|"$/g, '')); // Nettoyer les guillemets éventuels
+            } 
+            // Si c'est du JSON classique "[...]"
+            else if (rawProducts.startsWith('[')) {
+                prods = JSON.parse(rawProducts);
+            } 
+            // C'est juste un texte simple
+            else {
+                prods = [rawProducts];
+            }
+        }
+    } catch (e) {
+        console.warn("Formatage produits ignoré :", e.message);
+        return "";
+    }
 
     if (!prods || prods.length === 0) return "";
 
+    // GÉNÉRATION DU HTML
     return `<div class="flex flex-wrap gap-1 mt-2">` + 
         prods.map(p => {
             let name = "";
-            // Si c'est un objet (ex: {id: 1, name: "X"})
+            
+            // Extraction du nom (Gère les objets legacy ou les strings simples)
             if (typeof p === 'object' && p !== null) {
                 name = p.name || p.NAME || p.Name || "Produit";
-            } 
-            // Si c'est une chaîne qui ressemble à du JSON
-            else if (typeof p === 'string' && p.startsWith('{')) {
-                try { 
-                    const obj = JSON.parse(p); 
-                    name = obj.name || obj.NAME || "Produit";
-                } catch(e) { name = p; }
-            } 
-            // Si c'est juste du texte
-            else {
-                name = p || "Produit";
+            } else {
+                name = String(p);
             }
-            
-            return `<span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[8px] font-black border border-indigo-100 uppercase">${name}</span>`;
+
+            // Sécurité : si après tout ça le nom est encore "{...}" on nettoie
+            if (name.startsWith('{')) name = "Article";
+
+            return `<span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[9px] font-black border border-blue-100 uppercase shadow-sm">${name}</span>`;
         }).join('') + `</div>`;
 }
-
 
 
 // Permet de convertir une image (Blob) en texte (Base64) pour la stocker hors-ligne
