@@ -321,68 +321,90 @@ export async function fetchLiveAttendance() {
 
 
 
-// On crée une variable hors de la fonction pour garder la carte en mémoire
 let leafletMap = null;
+let clusterGroup = null; // Remplace mapMarkersGroup pour le clustering
 
 export async function initLiveMap() {
     const mapContainer = document.getElementById('map');
     if (!mapContainer) return;
 
-    // 1. SI LA CARTE EXISTE DÉJÀ : On la rafraîchit simplement
+    // 1. INITIALISATION OU REDRESSAGE DE LA CARTE
     if (leafletMap) {
-        // Cette ligne est cruciale pour corriger les bugs d'affichage après un switch de vue
         setTimeout(() => { leafletMap.invalidateSize(); }, 200);
     } else {
-        // 2. INITIALISATION UNIQUE
-        leafletMap = L.map('map').setView([6.3654, 2.4183], 13);
+        // 💥 OPTIMISATION 500 AGENTS : On active 'preferCanvas' pour plus de fluidité
+        leafletMap = L.map('map', { preferCanvas: true }).setView([6.3654, 2.4183], 13);
+        
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: 'SIRH SECURE'
         }).addTo(leafletMap);
     }
 
-    // 3. NETTOYAGE DES ANCIENS MARQUEURS
-    // On crée un groupe de calques pour pouvoir les effacer facilement
-    if (!window.mapMarkersGroup) {
-        window.mapMarkersGroup = L.layerGroup().addTo(leafletMap);
+    // 2. GESTION DU GROUPE DE CLUSTERS (Regroupement intelligent)
+    if (!clusterGroup) {
+        // On crée le groupe de clusters une seule fois
+        clusterGroup = L.markerClusterGroup({
+            showCoverageOnHover: false, // Cache le polygone bleu moche au survol
+            maxClusterRadius: 50,       // Rayon de regroupement (en pixels)
+            spiderfyOnMaxZoom: true,    // Éclate les points si on est au zoom max sur un même bâtiment
+            disableClusteringAtZoom: 17 // À partir de ce zoom, on voit les points individuels quoi qu'il arrive
+        });
+        leafletMap.addLayer(clusterGroup);
     }
-    window.mapMarkersGroup.clearLayers();
+    
+    // On vide les anciens points avant de mettre les nouveaux
+    clusterGroup.clearLayers();
 
     try {
         const r = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/get-live-positions`);
         const positions = await r.json();
 
-        if (positions.length === 0) return;
+        if (!positions || positions.length === 0) return;
+
+        // 3. CRÉATION DES POINTS
+        const markers = []; // Stockage temporaire pour fitBounds
 
         positions.forEach(p => {
             if (!p.gps_lat || !p.gps_lon) return;
 
-            const iconColor = p.action === 'CLOCK_IN' ? '#10b981' : '#ef4444'; // Vert ou Rouge
+            const iconColor = p.action === 'CLOCK_IN' ? '#10b981' : '#ef4444';
             
+            // On utilise CircleMarker : beaucoup plus léger pour le processeur que des icônes images
             const marker = L.circleMarker([p.gps_lat, p.gps_lon], {
                 radius: 10,
                 fillColor: iconColor,
                 color: "#fff",
-                weight: 3,
+                weight: 2,
                 fillOpacity: 0.9
             });
 
+            // Contenu de la bulle (Popup)
             marker.bindPopup(`
-                <div style="text-align:center;">
-                    <img src="${p.employees.photo_url || ''}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;"><br>
-                    <b style="text-transform:uppercase;">${p.employees.nom}</b><br>
-                    <span style="font-size:10px;">${p.zone_detectee}</span><br>
-                    <small>${new Date(p.heure).toLocaleTimeString()}</small>
+                <div style="text-align:center; min-width:120px;">
+                    <div style="width:40px;height:40px;margin:0 auto 8px;border-radius:50%;overflow:hidden;border:2px solid ${iconColor}">
+                        <img src="${p.employees.photo_url || 'https://ui-avatars.com/api/?name='+p.employees.nom}" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <b style="text-transform:uppercase;font-size:12px;display:block;">${p.employees.nom}</b>
+                    <p style="margin:4px 0;font-size:10px;color:#64748b;">${p.zone_detectee}</p>
+                    <div style="background:#f1f5f9;padding:4px;border-radius:6px;font-size:9px;font-weight:bold;">
+                        ${p.action === 'CLOCK_IN' ? '🟢 EN POSTE' : '🔴 DÉPART'} - ${new Date(p.heure).toLocaleTimeString()}
+                    </div>
                 </div>
             `);
             
-            window.mapMarkersGroup.addLayer(marker);
+            // On ajoute le point au groupe de cluster
+            clusterGroup.addLayer(marker);
+            markers.push(marker);
         });
 
-        // Optionnel : Ajuster la vue pour voir tout le monde
-        const group = new L.featureGroup(window.mapMarkersGroup.getLayers());
-        leafletMap.fitBounds(group.getBounds());
+        // 4. AUTO-CADRAGE INTELLIGENT
+        // On n'ajuste la vue que s'il y a des agents, pour voir tout le monde d'un coup
+        if (markers.length > 0) {
+            const group = new L.featureGroup(markers);
+            leafletMap.fitBounds(group.getBounds(), { padding: [20, 20] });
+        }
 
     } catch (e) {
-        console.error("Erreur chargement positions:", e);
+        console.error("Erreur chargement carte haute capacité:", e);
     }
 }
