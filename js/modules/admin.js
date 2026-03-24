@@ -1393,3 +1393,83 @@ export function updateFileCountFeedback(input) {
   label.innerText =
     count > 1 ? `${count} PHOTOS SÉLECTIONNÉES` : `${count} PHOTO SÉLECTIONNÉE`;
 }
+
+
+
+
+// --- GESTION DU FORMULAIRE DE RÈGLES DE PAIE ---
+
+export function toggleTargetValues() {
+    const typeSelect = document.getElementById('rule-target-type');
+    const valueSelect = document.getElementById('rule-target-value');
+
+    if (!typeSelect || !valueSelect) return;
+
+    const type = typeSelect.value;
+
+    if (type === 'GLOBAL') {
+        // Cache le 2ème menu si c'est global
+        valueSelect.classList.add('hidden');
+        valueSelect.innerHTML = '';
+    } 
+    else if (type === 'ROLE') {
+        valueSelect.classList.remove('hidden');
+        // Récupère les rôles depuis le cache du navigateur
+        const roles = JSON.parse(sessionStorage.getItem("sirh_cache_roles") || "[]");
+        valueSelect.innerHTML = roles.map(r => `<option value="${r.role_name}">${r.role_name}</option>`).join('');
+    } 
+    else if (type === 'DEPARTMENT') {
+        valueSelect.classList.remove('hidden');
+        // Récupère les départements depuis le cache du navigateur
+        const depts = JSON.parse(sessionStorage.getItem("sirh_cache_depts") || "[]");
+        valueSelect.innerHTML = depts.map(d => `<option value="${d.code}">${d.label}</option>`).join('');
+    }
+}
+
+export async function saveSegmentedRule() {
+    const targetType = document.getElementById('rule-target-type').value;
+    const targetValue = document.getElementById('rule-target-value').value;
+    const source = document.getElementById('rule-source').value;
+    const operator = document.getElementById('rule-operator').value;
+    const threshold = document.getElementById('rule-threshold').value;
+    const actionType = document.getElementById('rule-action').value;
+    const amount = document.getElementById('rule-amount').value;
+
+    if (!threshold || !amount) {
+        return Swal.fire("Attention", "Veuillez remplir la valeur de condition et le montant.", "warning");
+    }
+
+    // Création d'un nom lisible
+    let ruleName = `Règle ${targetType}`;
+    if (targetType !== 'GLOBAL') ruleName += ` (${targetValue})`;
+    
+    Swal.fire({ title: 'Déploiement...', didOpen: () => Swal.showLoading() });
+
+    try {
+        const response = await secureFetch(`${SIRH_CONFIG.apiBaseUrl}/save-payroll-rule`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                rule_name: ruleName,
+                target_type: targetType,
+                target_value: targetType === 'GLOBAL' ? 'ALL' : targetValue,
+                data_source: source,
+                condition_operator: operator,
+                condition_value: threshold, 
+                action_type: actionType,
+                action_value: amount
+            })
+        });
+
+        if (response.ok) {
+            Swal.fire("Succès", "La règle d'automatisation est active.", "success");
+            document.getElementById('rule-threshold').value = '';
+            document.getElementById('rule-amount').value = '';
+        } else {
+            const err = await response.json();
+            throw new Error(err.error || "Erreur serveur");
+        }
+    } catch (e) {
+        Swal.fire("Erreur", e.message, "error");
+    }
+}
