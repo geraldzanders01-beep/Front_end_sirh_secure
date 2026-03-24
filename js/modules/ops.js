@@ -315,31 +315,59 @@ export async function handleClockInOut() {
                 };
             },
             willClose: () => { stopAllCameras(); },
-            preConfirm: () => {
-                let finalProof = AppState.proofBlob;
-                if (document.getElementById('proof-sign-area').classList.contains('hidden') === false && !window.visitSignPad.isEmpty()) {
-                    const dataUrl = window.visitSignPad.toDataURL('image/png');
-                    const arr = dataUrl.split(','), mime = arr[0].match(/:(.*?);/)[1], bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
-                    while(n--) u8arr[n] = bstr.charCodeAt(n);
-                    finalProof = new Blob([u8arr], {type:mime});
+               preConfirm: () => {
+                try {
+                    let finalProof = AppState.proofBlob || null;
+                    const signArea = document.getElementById('proof-sign-area');
+
+                    // Sécurité 1 : Vérifier la signature sans crasher
+                    if (signArea && !signArea.classList.contains('hidden') && window.visitSignPad && !window.visitSignPad.isEmpty()) {
+                        const dataUrl = window.visitSignPad.toDataURL('image/png');
+                        const arr = dataUrl.split(',');
+                        const mime = arr[0].match(/:(.*?);/)[1];
+                        const bstr = atob(arr[1]);
+                        let n = bstr.length;
+                        const u8arr = new Uint8Array(n);
+                        while(n--) u8arr[n] = bstr.charCodeAt(n);
+                        finalProof = new Blob([u8arr], {type: mime});
+                    }
+
+                    // Sécurité 2 : Récupérer les valeurs prudemment
+                    const outcomeEl = document.getElementById('swal-outcome');
+                    const reportEl = document.getElementById('swal-report');
+                    const lastExitEl = document.getElementById('last-exit-check');
+                    const prescripteurEl = document.getElementById('swal-prescripteur');
+                    const nomLibreEl = document.getElementById('swal-nom-libre');
+
+                    return {
+                        outcome: outcomeEl ? outcomeEl.value : 'VU',
+                        report: reportEl ? reportEl.value : '',
+                        isLastExit: lastExitEl ? lastExitEl.checked : false,
+                        prescripteur_id: prescripteurEl ? prescripteurEl.value : null,
+                        contact_nom_libre: nomLibreEl ? nomLibreEl.value : null,
+                        selectedProducts: Array.from(document.querySelectorAll('input[name="presented_prods"]:checked')).map(i => ({id: i.value, name: i.dataset.name})),
+                        proofFile: finalProof 
+                    };
+                } catch (error) {
+                    console.error("❌ Erreur preConfirm :", error);
+                    Swal.showValidationMessage("Une erreur technique empêche la validation.");
+                    return false; // Cela stoppe le bouton de tourner à l'infini
                 }
-                return {
-                    outcome: document.getElementById('swal-outcome').value,
-                    report: document.getElementById('swal-report').value,
-                    isLastExit: document.getElementById('last-exit-check').checked,
-                    prescripteur_id: document.getElementById('swal-prescripteur').value,
-                    contact_nom_libre: document.getElementById('swal-nom-libre').value,
-                    selectedProducts: Array.from(document.querySelectorAll('input[name="presented_prods"]:checked')).map(i => ({id: i.value, name: i.dataset.name})),
-                    proofFile: finalProof 
-                };
             }
-        });
+        }); 
 
-        if (!swalRes.isConfirmed) return; 
+        if (!swalRes.isConfirmed) return;
         AppState.formResult = swalRes.value;
-    }
 
-// --- 3. POINTAGE GPS & ENVOI ---
+        // 💥 LE SECRET ANTI-BLOCAGE EST ICI 💥
+        // On force un petit délai pour laisser le premier popup disparaître complètement 
+        // avant d'ouvrir le suivant. Ça évite les conflits d'animation de SweetAlert.
+        stopAllCameras();
+        await new Promise(resolve => setTimeout(resolve, 150));
+        // ----------------------------------------
+
+  
+    // --- 3. POINTAGE GPS & ENVOI ---
     Swal.fire({ title: 'Vérification...', text: 'Traitement du pointage...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
     try {
