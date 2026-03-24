@@ -2701,24 +2701,32 @@ export function downloadReportCSV(period = "monthly") {
 
 
 
-/**
- * Envoie les pointages stockés localement dès que le réseau revient
- */
 export async function syncOfflineData() {
     const queue = JSON.parse(localStorage.getItem("sirh_offline_queue") || "[]");
     
     if (queue.length === 0) return;
 
-    console.log(`📡 [SYNCHRO] Tentative d'envoi de ${queue.length} pointage(s) en attente...`);
+    console.log(`📡 [SYNCHRO] Tentative de transmission de ${queue.length} pointage(s) en attente...`);
 
-    let successCount = 0;
+    Swal.fire({
+        toast: true,
+        position: 'top-end',
+        title: 'Synchronisation...',
+        html: `Envoi de ${queue.length} action(s) au serveur...`,
+        didOpen: () => Swal.showLoading(),
+        showConfirmButton: false,
+    });
+
     const failedItems = [];
+    let successCount = 0;
 
-    for (const action of queue) {
+    // On utilise Promise.all pour envoyer en parallèle si possible
+    await Promise.all(queue.map(async (action) => {
         try {
-            // On tente l'envoi au serveur
-            const response = await secureFetch(SIRH_CONFIG.apiBaseUrl + "/clock", {
-                method: "POST",
+            // Le backend attend du JSON, on s'assure que le body est correct
+            const response = await secureFetch(URL_CLOCK_ACTION, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(action)
             });
 
@@ -2729,11 +2737,11 @@ export async function syncOfflineData() {
             }
         } catch (e) {
             console.error("❌ Échec de synchronisation pour un item :", e);
-            failedItems.push(action); // On le garde pour plus tard
+            failedItems.push(action); // On garde en file d'attente pour le prochain essai
         }
-    }
+    }));
 
-    // Mise à jour du stockage : on ne garde que ce qui a échoué
+    // Mise à jour de la file d'attente
     if (failedItems.length > 0) {
         localStorage.setItem("sirh_offline_queue", JSON.stringify(failedItems));
     } else {
@@ -2741,17 +2749,17 @@ export async function syncOfflineData() {
     }
 
     if (successCount > 0) {
-        // Rafraîchir l'interface pour être raccord avec le serveur
-        await refreshClockButton(); 
-        
         Swal.fire({
-            toast: true,
-            position: 'top-end',
             icon: 'success',
-            title: 'Synchro réussie',
-            text: `${successCount} pointage(s) transmis au serveur.`,
-            showConfirmButton: false,
-            timer: 4000
+            title: 'Synchronisation Réussie',
+            text: `${successCount} action(s) ont été transmises au serveur.`,
+            timer: 3000,
+            showConfirmButton: false
         });
+        
+        // On rafraîchit TOUT pour que l'interface soit parfaite
+        await refreshAllData(true);
+    } else {
+        Swal.fire('Échec de la synchro', 'Vérifiez votre connexion et réessayez.', 'error');
     }
 }
