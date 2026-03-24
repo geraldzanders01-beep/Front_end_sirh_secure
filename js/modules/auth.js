@@ -89,26 +89,38 @@ export async function handleLogin(e) {
         }
       });
 
-      if (otpCode) {
-        // ... le reste de ta logique de vérification vers /verify-2fa reste identique
+if (otpCode) {
         Swal.fire({ 
-            title: 'Authentification...', 
+            title: 'Vérification...', 
             html: '<i class="fa-solid fa-circle-notch fa-spin text-blue-500 text-2xl"></i>', 
             showConfirmButton: false, 
             allowOutsideClick: false 
         });
 
+        // On nettoie le code avant l'envoi
+        const cleanCode = String(otpCode).trim();
+
         const resFinal = await fetch(`${SIRH_CONFIG.apiBaseUrl}/verify-2fa`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ u: d.email, code: otpCode })
+            body: JSON.stringify({ 
+                u: d.email, 
+                code: cleanCode // Envoi du code nettoyé
+            })
         });
         
         const dFinal = await resFinal.json();
+        
         if (dFinal.status === "success") {
           await finalizeLogin(dFinal);
         } else {
-          Swal.fire({ icon: 'error', title: 'Code invalide', text: 'Le code saisi est incorrect ou a expiré.', confirmButtonColor: '#0f172a' });
+          // Affiche l'erreur exacte renvoyée par le serveur pour débugger
+          Swal.fire({ 
+            icon: 'error', 
+            title: 'Accès refusé', 
+            text: dFinal.message || 'Le code saisi est incorrect ou a expiré.', 
+            confirmButtonColor: '#0f172a' 
+          });
         }
       }
     }
