@@ -62,10 +62,11 @@ export async function refreshAllData(force = false) {
       tasks.push(window.fetchLogs());
     }
 
-    // 6. ESPACE PERSONNEL
-    if (AppState.currentView === "my-profile") {
+// 6. ESPACE PERSONNEL
+      if (AppState.currentView === "my-profile") {
       tasks.push(window.fetchPayrollData());
       tasks.push(window.fetchLeaveRequests());
+      tasks.push(window.fetchAttendanceReport('PERSONAL', 'monthly'));
     }
 
     // 7. GESTION MANAGERIALE (Validation des congés)
@@ -289,10 +290,11 @@ export function switchView(v) {
   if (v === "settings") window.fetchZones();
   if (v === "logs") window.fetchLogs(1);
   if (v === "recruitment") window.fetchCandidates();
-  if (v === "my-profile") {
+if (v === "my-profile") {
     window.loadMyProfile();
     window.fetchPayrollData();
     window.fetchLeaveRequests();
+    window.fetchAttendanceReport('PERSONAL', 'monthly'); 
   }
 
   // --- SEULE MODIFICATION ICI (Pour forcer la fermeture propre sur mobile) ---
