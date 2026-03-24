@@ -364,38 +364,66 @@ export async function initLiveMap() {
         // 3. CRÉATION DES POINTS
         const markers = []; // Stockage temporaire pour fitBounds
 
-        positions.forEach(p => {
+
+            positions.forEach(p => {
             if (!p.gps_lat || !p.gps_lon) return;
 
-            const iconColor = p.action === 'CLOCK_IN' ? '#10b981' : '#ef4444';
+            const isEntering = p.action === 'CLOCK_IN';
+            const iconColor = isEntering ? '#10b981' : '#ef4444'; // Vert (Arrivée) / Rouge (Départ)
             
-            // On utilise CircleMarker : beaucoup plus léger pour le processeur que des icônes images
+            // 1. FORMATAGE DE L'HEURE (Propre et lisible)
+            const dateObj = new Date(p.heure);
+            const heureFmt = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            const dateFmt = dateObj.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+
+            // 2. CRÉATION DU MARQUEUR
             const marker = L.circleMarker([p.gps_lat, p.gps_lon], {
                 radius: 10,
                 fillColor: iconColor,
-                color: "#fff",
+                color: "#ffffff",
                 weight: 2,
                 fillOpacity: 0.9
             });
 
-            // Contenu de la bulle (Popup)
+            // 3. LA BULLE D'INFO (Popup) - DESIGN "TOUR DE CONTRÔLE"
             marker.bindPopup(`
-                <div style="text-align:center; min-width:120px;">
-                    <div style="width:40px;height:40px;margin:0 auto 8px;border-radius:50%;overflow:hidden;border:2px solid ${iconColor}">
-                        <img src="${p.employees.photo_url || 'https://ui-avatars.com/api/?name='+p.employees.nom}" style="width:100%;height:100%;object-fit:cover;">
+                <div style="text-align:center; min-width:160px; font-family: 'Plus Jakarta Sans', sans-serif;">
+                    <!-- Photo de l'agent -->
+                    <div style="width:50px; height:50px; margin:0 auto 10px; border-radius:50%; overflow:hidden; border:3px solid ${iconColor}; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                        <img src="${p.employees.photo_url || 'https://ui-avatars.com/api/?name='+p.employees.nom}" style="width:100%; height:100%; object-fit:cover;">
                     </div>
-                    <b style="text-transform:uppercase;font-size:12px;display:block;">${p.employees.nom}</b>
-                    <p style="margin:4px 0;font-size:10px;color:#64748b;">${p.zone_detectee}</p>
-                    <div style="background:#f1f5f9;padding:4px;border-radius:6px;font-size:9px;font-weight:bold;">
-                        ${p.action === 'CLOCK_IN' ? '🟢 EN POSTE' : '🔴 DÉPART'} - ${new Date(p.heure).toLocaleTimeString()}
+
+                    <b style="text-transform:uppercase; font-size:13px; color:#0f172a; display:block; margin-bottom:2px;">${p.employees.nom}</b>
+                    <span style="font-size:10px; font-weight:bold; color:${iconColor}; text-transform:uppercase; letter-spacing:1px;">
+                        ${isEntering ? '● EN POSTE' : '○ DÉPART EFFECTUÉ'}
+                    </span>
+
+                    <hr style="margin:10px 0; border:0; border-top:1px solid #f1f5f9;">
+
+                    <!-- LIEU ET HEURE -->
+                    <div style="text-align:left; background:#f8fafc; padding:8px; border-radius:10px; border:1px solid #e2e8f0;">
+                        <p style="margin:0 0 5px 0; font-size:10px; color:#64748b;">
+                            <i class="fa-solid fa-location-dot" style="margin-right:5px;"></i> 
+                            <b style="color:#1e293b;">${p.zone_detectee || 'Zone Inconnue'}</b>
+                        </p>
+                        <p style="margin:0; font-size:10px; color:#64748b;">
+                            <i class="fa-solid fa-clock" style="margin-right:5px;"></i> 
+                            Le ${dateFmt} à <b>${heureFmt}</b>
+                        </p>
                     </div>
+
+                    <button onclick="window.openFullFolder('${p.employees.id}')" style="margin-top:10px; width:100%; background:#0f172a; color:white; border:0; padding:6px; border-radius:6px; font-size:9px; font-weight:bold; cursor:pointer; text-transform:uppercase;">
+                        Voir Dossier
+                    </button>
                 </div>
             `);
             
-            // On ajoute le point au groupe de cluster
             clusterGroup.addLayer(marker);
             markers.push(marker);
         });
+
+
+      
 
         // 4. AUTO-CADRAGE INTELLIGENT
         // On n'ajuste la vue que s'il y a des agents, pour voir tout le monde d'un coup
