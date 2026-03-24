@@ -282,34 +282,55 @@ document.addEventListener("touchend", (e) => {
   }
 });
 
+
+
+
+
 // --- Gestion du Réseau (Online/Offline) ---
 window.addEventListener("online", () => {
-  Swal.close();
-  Swal.fire({
-    icon: "success",
-    title: "Connexion Rétablie",
-    text: "Vous êtes de nouveau en ligne.",
-    toast: true,
-    position: "top-end",
-    timer: 3000,
-    showConfirmButton: false,
-  });
-  document.body.classList.remove("offline-mode");
-  Ops.syncOfflineData();
-  if (AppState.currentUser) UI.refreshAllData();
+    // 1. Nettoyage de l'UI
+    document.body.classList.remove("offline-mode");
+    
+    // 2. Alerte de retour au calme
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000
+    });
+    
+    Toast.fire({
+        icon: "success",
+        title: "Connexion Rétablie",
+        text: "Synchronisation des données..."
+    });
+
+    // 3. LANCEMENT DE LA SYNCHRONISATION
+    // On appelle la fonction de ops.js
+    if (typeof window.syncOfflineData === 'function') {
+        window.syncOfflineData();
+    }
+
+    // 4. Actualisation des données générales
+    if (AppState.currentUser) window.refreshAllData(false);
 });
 
 window.addEventListener("offline", () => {
-  Swal.fire({
-    icon: "warning",
-    title: "Connexion Perdue",
-    text: "Mode hors ligne activé.",
-    toast: true,
-    position: "top-end",
-    showConfirmButton: false,
-  });
-  document.body.classList.add("offline-mode");
+    // 1. Marquer l'interface visuellement
+    document.body.classList.add("offline-mode");
+
+    // 2. Alerte utilisateur
+    Swal.fire({
+        icon: "warning",
+        title: "Mode Hors-ligne",
+        text: "Connexion perdue. Vos pointages seront validés localement et stockés.",
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 5000
+    });
 });
+
 
 // --- Gestion de l'Installation PWA ---
 window.addEventListener("beforeinstallprompt", (e) => {
