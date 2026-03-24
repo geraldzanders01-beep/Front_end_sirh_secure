@@ -26,6 +26,7 @@ window.handleLogout = Auth.handleLogout;
 window.handleForgotPassword = Auth.handleForgotPassword;
 
 // --- Interface Utilisateur (UI) ---
+window.syncOfflineData = Ops.syncOfflineData;
 window.searchAgentOnMap = Dash.searchAgentOnMap;
 window.initLiveMap = Dash.initLiveMap;
 window.fetchAndApplyLabels = UI.fetchAndApplyLabels;
